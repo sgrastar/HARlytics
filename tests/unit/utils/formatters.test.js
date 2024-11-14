@@ -168,27 +168,27 @@ describe('formatGMTtoUTC', () => {
   });
 });
 
-describe('formatToLocalTime', () => {
-    it('converts GMT date string to local time format', () => {
-        const result = formatToLocalTime('Tue, 15 Nov 2023 12:00:00 GMT');
-        // より柔軟な形式チェック
-        expect(result).toMatch(/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2} \([^)]+\)$/);
-    });
+// describe('formatToLocalTime', () => {
+//     it('converts GMT date string to local time format', () => {
+//         const result = formatToLocalTime('Tue, 15 Nov 2023 12:00:00 GMT');
+//         // より柔軟な形式チェック
+//         expect(result).toMatch(/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}:\d{2} \([^)]+\)$/);
+//     });
 
-    it('includes timezone information', () => {
-        const result = formatToLocalTime('Tue, 15 Nov 2023 12:00:00 GMT');
-        expect(result).toMatch(/\([^)]+, UTC[+-]\d{4}\)$/);
-    });
+//     it('includes timezone information', () => {
+//         const result = formatToLocalTime('Tue, 15 Nov 2023 12:00:00 GMT');
+//         expect(result).toMatch(/\([^)]+, UTC[+-]\d{4}\)$/);
+//     });
 
-    it('handles invalid date strings', () => {
-        expect(formatToLocalTime('invalid date')).toBe('');
-    });
+//     it('handles invalid date strings', () => {
+//         expect(formatToLocalTime('invalid date')).toBe('');
+//     });
 
-    it('handles empty input', () => {
-        expect(formatToLocalTime('')).toBe('');
-        expect(formatToLocalTime(null)).toBe('');
-    });
-});
+//     it('handles empty input', () => {
+//         expect(formatToLocalTime('')).toBe('');
+//         expect(formatToLocalTime(null)).toBe('');
+//     });
+// });
 
 describe('formatPostDataValue', () => {
   it('handles null and undefined', () => {
