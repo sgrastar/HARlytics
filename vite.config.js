@@ -43,7 +43,7 @@ export default defineConfig({
 			"static/background.js",
       "src/lib/index.js"
 		],
-		reporter: ["text","json-summary"],
+		reporter: ["text","json-summary","json"],
 	},
     setupFiles: ['./tests/setup.js']
   }
