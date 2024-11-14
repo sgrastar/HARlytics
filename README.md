@@ -1,6 +1,7 @@
 
+<p align="center">
 ![HARlytics Icon](https://github.com/sgrastar/HARlytics/blob/images/images/icon_128.png)
-
+</p>
 <h1 align="center">
 HARlytics
 </h1>
@@ -15,6 +16,13 @@ Making HTTP tell its story
 
 
 HARlytics is a powerful HAR file analyzer that transforms complex HTTP Archive files into actionable insights. Perfect for developers, QA engineers, and security professionals who need to analyze web application behavior and performance.
+
+<p align="center">
+
+![Screenshot of HARlytics](https://github.com/sgrastar/HARlytics/blob/images/images/screenshot_1_0_0_3.png)
+
+![Screenshot of HARlytics](https://github.com/sgrastar/HARlytics/blob/images/images/screenshot_1_0_0_4.png)
+</p>
 
 ## 🚀 Getting Started
 
