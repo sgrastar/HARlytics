@@ -1,4 +1,6 @@
 
+![HARlytics Icon](https://github.com/sgrastar/HARlytics/blob/images/images/icon_128.png)
+
 <h1 align="center">
 HARlytics
 </h1>
