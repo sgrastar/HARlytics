@@ -31,4 +31,6 @@ jobs:
 
       - name: Vitest Coverage Report
         uses: davelosert/vitest-coverage-report-action@v2.7.0
+        with:
+          file-coverage-mode: 'all'
             
