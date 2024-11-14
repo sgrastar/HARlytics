@@ -1,6 +1,5 @@
-
 <p align="center">
-![HARlytics Icon](https://github.com/sgrastar/HARlytics/blob/images/images/icon_128.png)
+<img src="https://github.com/sgrastar/HARlytics/blob/images/images/icon_128.png" height="150" alt="HARlytics Icon">
 </p>
 <h1 align="center">
 HARlytics
