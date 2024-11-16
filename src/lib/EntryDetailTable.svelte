@@ -1,7 +1,7 @@
 <script>
   import { formatTimestamp, truncateText, httpStatusCSSClass, formatTime, formatBytes,formatGMTtoUTC, formatToLocalTime, formatPostDataValue, normalizePostData, exportToCSV } from '$lib/utils';
-  import { Button,Radio } from 'flowbite-svelte';
-  import { FileCsvOutline } from 'flowbite-svelte-icons';
+  import { Button,Radio,Tooltip } from 'flowbite-svelte';
+  import { FileCsvOutline, QuestionCircleSolid } from 'flowbite-svelte-icons';
 
 
   import EntryRow from '$lib/EntryRow_general.svelte';
@@ -229,10 +229,15 @@
 
 <div class="p-2">
   <div class="grid grid-cols-12 ">
-      <div class="col-span-3 flex gap-3">
+      <div class="col-span-3 flex gap-3" style="align-items: center;">
         <Radio bind:group={viewMode} value="entry" on:click={() => showByPage = false}>Entry View</Radio>
         {#if hasPagesInfo}
           <Radio bind:group={viewMode} value="page" on:click={() => showByPage = true}>Page View</Radio>
+          
+          <QuestionCircleSolid id="placement-4" size="sm" />
+          <Tooltip triggeredBy="#placement-4" placement='right'>
+            Page View will not display entries without page information.
+          </Tooltip>
         {:else}
           <Radio bind:group={viewMode} value="second" disabled>Page View</Radio>
         {/if}
@@ -249,7 +254,7 @@
 
 <div class="request-detail-table">
       {#if entries.length === 0}
-        <p>No data to display.</p>
+        <p style="text-align: center; line-height: 3em;">No data to display.<br>Please load the file or check your filter settings.</p>
       {:else}
       <div class="table-body">
         {#if showByPage && hasPagesInfo}

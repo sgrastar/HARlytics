@@ -55,7 +55,10 @@
               {isPathTruncated ? truncateText(entry.path, 50) : entry.path}
           </span>
       {:else}
-          {entry.path}
+      <span title={entry.url}>
+        {entry.path}
+      </span>
+          
       {/if}
   </div>
 
@@ -604,11 +607,12 @@
 
   .status.info,
   .status.success {
-    background: #99ffa2;
+    /* background: #99ffa2; */
+    background: rgb(49 196 141 / 0.6);
   }
   
   .status.redirect {
-    background: #eaff99;
+    background: #ebe15c;
   }
   
   .status.cliError {
@@ -618,6 +622,10 @@
   .status.srvError {
     background: #ff4554;
     color: #fff;
+  }
+
+  .status.other {
+    background: #eee;
   }
   
   .detail-row {
@@ -641,7 +649,7 @@
   } */
   .table-row.selected {
     /* box-shadow: 2px 2px 4px -2px #666 */
-    box-shadow: 4px 3px 10px -3px #666;
+    box-shadow: 4px 1px 10px -3px #666;
   }
   
   .table-row:focus {

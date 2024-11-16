@@ -37,7 +37,7 @@
     <h1 class="text-4xl font-bold text-black mb-4">
       <img src="favicon.png" alt="logo" style="display: inline-block; width:.75em"/> HARlytics
     </h1>
-    <p class="text-gray-600">
+    <p class="text-gray-600" style="text-align-last: justify; font-family:serif">
       {mounted ? "Making HTTP tell its story" : "Loading..."}
     </p>
   </div>

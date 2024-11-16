@@ -11,6 +11,7 @@
   import { generatePlantUMLHeaderAndTitle, generatePlantUMLQueryString, generatePlantUMLPostData, generatePlantUMLRequestCookies, generatePlantUMLResponse, generatePlantUMLResponseCookies} from '$lib/sequenceDiagramGenerator';
 
   import {estimateConnectionSpeed} from '$lib/estimateConnectionSpeed.js';
+  import SequenceExport from '$lib/components/SequenceExport.svelte';
   import PieChart from '$lib/components/PieChart.svelte';
   import { Fileupload, Input, Range, Label, Button, Toggle, Tabs, Badge, TabItem, MultiSelect, Dropdown, DropdownItem, DropdownDivider, Search, Textarea, Checkbox, Table, TableBody, TableBodyCell, TableBodyRow, TableHead, TableHeadCell, } from 'flowbite-svelte';
   import { ChevronDownOutline, ChevronDoubleRightOutline, ChevronDoubleLeftOutline,FileCsvOutline,DrawSquareOutline,ChartPieSolid, WindowOutline, BarsFromLeftOutline,  FilterSolid } from 'flowbite-svelte-icons';
@@ -788,7 +789,7 @@ $: methodCounts = entries.reduce((acc, entry) => {
               {#if isMethodFiltered}
                 <FilterSolid class="w-3 h-3 mr-1" />
               {/if}
-              HTTP Method Filter
+              Method Filter
               <ChevronDownOutline class="w-3 h-3 ml-2" />
               
             </Button>
@@ -831,7 +832,7 @@ $: methodCounts = entries.reduce((acc, entry) => {
                 {#if isStatusFiltered}
                   <FilterSolid class="w-3 h-3 mr-1" />
                 {/if}
-                HTTP Status Filter
+                Status Filter
                 <ChevronDownOutline class="w-3 h-3 ml-2" />
                 
               </Button>
@@ -945,105 +946,6 @@ $: methodCounts = entries.reduce((acc, entry) => {
         </div>
       </TabItem>
       
-      <!-- <TabItem>
-        <div slot="title" class="flex items-center gap-2">
-          <BarsFromLeftOutline size="sm" />Detail
-        </div>
-        <div id="analyzeDetailDisplay">
-          {#if selectedTypes.length === 0}
-            <p>No data to display.</p>
-          {:else if filteredEntries.length > 0}
-          <table>
-            <thead>
-              <tr>
-                <th class="path">
-                  Path
-                  {#if filteredEntries.some(entry => entry.path.length > 50)}
-                    <button type="button" on:click={togglePathTruncation} aria-label="Toggle path truncation">
-                      {#if isPathTruncated}
-                        <ChevronDoubleRightOutline />
-                      {:else}
-                        <ChevronDoubleLeftOutline />
-                      {/if}
-                    </button>
-                  {/if}
-                </th>
-                <th class="domain">
-                  Domain
-                  {#if filteredEntries.some(entry => entry.domain.length > 30)}
-                    <button type="button" on:click={toggleDomainTruncation} aria-label="Toggle domain truncation">
-                      {#if isDomainTruncated}
-                        <ChevronDoubleRightOutline />
-                      {:else}
-                        <ChevronDoubleLeftOutline />
-                      {/if}
-                    </button>
-                  {/if}
-                </th>
-                <th class="type">Type</th>
-                <th class="type">mimeType</th>
-                <th class="status">Status</th>
-                <th class="method">Method</th>
-                <th class="timestamp">Timestamp</th>
-                <th>Set<br>Cookies</th>
-                <th>Time</th>
-                <th>Size</th>
-                <th>isCached</th>
-                <th>age</th>
-                <th>dns</th>
-                <th>connect</th>
-                <th>ssl</th>
-                <th>send</th>
-                <th>wait</th>
-                <th>receive</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each filteredEntries as entry}
-                <tr style="border-bottom:1px solid #ccc">
-                  <th class="path">
-                    {#if entry.path.length > 50}
-                      <span title={entry.url}>{isPathTruncated ? truncateText(entry.path, 50) : entry.path}</span>
-                    {:else}
-                      {entry.path}
-                    {/if}
-                  </th>
-                  <th class="domain">
-                    {#if entry.domain.length > 30}
-                      <span title={entry.domain}>{isDomainTruncated ? truncateText(entry.domain, 30) : entry.domain}</span>
-                    {:else}
-                      {entry.domain}
-                    {/if}
-                  </th>
-                  <th class="minetype"><span>{entry.type}</span></th>
-                  <th class="minetype"><span>{entry.responseMimeType}</span></th>
-                  <th class="status {httpStatusCSSClass(entry.status)}">{entry.status}</th>
-                  <th class="method {entry.method}"><span>{entry.method}</span></th>
-                  <th class="timestamp">{entry.timestamp}</th>
-                  <td class="setCookies">{entry.setCookieCount}</td>
-                  <td class="time">{formatTime(entry.time)}</td>
-                  <td class="size">{formatBytes(entry.responseTotalSize)}</td>
-                  <td class="isCached">{entry.isCached}</td>
-                  <td class="age">{entry.age !== null ? entry.age : ''}</td>
-                  <td class="dns">{entry.timings.dns >= 0 ? formatTime(entry.timings.dns) : ''}</td>
-                  <td class="connect">{entry.timings.connect >= 0 ? formatTime(entry.timings.connect) : ''}</td>
-                  <td class="ssl">{entry.timings.ssl >= 0 ? formatTime(entry.timings.ssl) : ''}</td>
-                  <td class="send">{formatTime(entry.timings.send)}</td>
-                  <td class="wait">{formatTime(entry.timings.wait)}</td>
-                  <td class="receive">{formatTime(entry.timings.receive)}</td>
-                </tr>
-              {/each}
-            </tbody>
-            <tfoot>
-              <th></th>
-            </tfoot>
-          </table>
-          {:else}
-            <p>No data to display.</p>
-          {/if}
-            </div>
-      </TabItem>
-       -->
       <TabItem>
         <div slot="title" class="flex items-center gap-2">
           <DrawSquareOutline size="sm" />Sequence
@@ -1124,6 +1026,11 @@ $: methodCounts = entries.reduce((acc, entry) => {
           </div>
           <div class="col-span-2 bg-gray-100 p-4 rounded" >
             <h3 class="text-lg font-semibold mb-4">Export...</h3>
+
+            <div class="mb-2">
+              <h4 class="text-base mb-2">PNG/SVG Format</h4>
+              <SequenceExport {logFilename} />
+            </div>
             
             <div class="mb-2">
               <div class="mb-2 flex justify-between">
@@ -1340,7 +1247,7 @@ $: methodCounts = entries.reduce((acc, entry) => {
 
           
 
-          <div id="buildTimestamp">Build ver.20241113150412</div>
+          <div id="buildTimestamp">Build ver.20241115090014</div>
         </div>
       </TabItem>
     </Tabs>

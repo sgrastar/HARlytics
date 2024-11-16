@@ -183,13 +183,13 @@
     .absolute {
       position: absolute;
     }
-    .relative {
+    /* .relative {
       position: relative;
-    }
+    } */
     .h-full {
       height: 100%;
     }
-    .w-full {
+    /* .w-full {
       width: 100%;
     }
     .h-4 {
@@ -218,7 +218,7 @@
     }
     .border-gray-200 {
       border-color: #e5e7eb;
-    }
+    } */
 
     .waterfall-container {
         position: relative;
@@ -229,7 +229,7 @@
         --tooltip-x: 0px;
         /* overflow: hidden;  はみ出しを防ぐ */
     }
-
+/* 
     .grid-lines {
         position: absolute;
         inset: 0;
@@ -245,7 +245,7 @@
     .timing-bar {
         position: absolute;
         height: 100%;
-    }
+    } */
 
     .tooltip {
         position: absolute;
@@ -274,7 +274,7 @@
     }
 
     /* カラー定義 */
-    .blocked { background-color: #9ca3af; }
+    /* .blocked { background-color: #9ca3af; } */
     .dns { color: #60a5fa; }
     .connect { color: #f97316; }
     .ssl { color: #a855f7; }
