@@ -731,7 +731,7 @@ $: methodCounts = entries.reduce((acc, entry) => {
           <Label for="fileUpload">Select HAR file</Label>
           <Fileupload id="fileUpload" accept=".har" on:change={analyzeHAR}  size="sm" />
         </div>
-        
+        <!-- TODO オンラインバージョンでサンプルharファイルの用意&読み込み機能         -->
         <div class="mb-2">
           <span>Log version : {logVersion} / {logCreator}</span>
         </div>
@@ -774,6 +774,7 @@ $: methodCounts = entries.reduce((acc, entry) => {
           </div>
         </div>
 
+        <!-- BUG ボタンHover時の表示安定化  -->
         <div class="grid grid-cols-12 flex items-end">
 
           <div class="col-span-6">
@@ -1247,7 +1248,7 @@ $: methodCounts = entries.reduce((acc, entry) => {
 
           
 
-          <div id="buildTimestamp">Build ver.20241115090014</div>
+          <div id="buildTimestamp">Build ver.20241117225258</div>
         </div>
       </TabItem>
     </Tabs>

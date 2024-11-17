@@ -10,7 +10,7 @@ Making HTTP tell its story
 
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/{extension-id})](https://chrome.google.com/webstore/detail/{extension-id})
+<!-- [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/{extension-id})](https://chrome.google.com/webstore/detail/{extension-id}) -->
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsgrastar%2Fhar-analyzer.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsgrastar%2Fhar-analyzer?ref=badge_shield&issueType=license)
 
 
@@ -25,15 +25,17 @@ HARlytics is a powerful HAR file analyzer that transforms complex HTTP Archive f
 
 ## 🚀 Getting Started
 
-### Option 1: Chrome Extension
+### Option 1: Chrome Extension (Currently in preparation)
 
-1. Visit [Chrome Web Store](your-extension-url)
+<!-- 1. Visit [Chrome Web Store](your-extension-url) -->
+1. Visit Chrome Web Store
 2. Click "Add to Chrome"
 3. Click the Extensions menu (puzzle piece icon) in your browser toolbar and pin HARlytics for easy access
 
 ### Option 2: Web Application
 
 Access the web version directly:
+
 [https://harlytics.sgrastar.com/](https://harlytics.sgrastar.com/)
 
 ## ✨ Key Features
@@ -82,8 +84,6 @@ Access the web version directly:
    - Export sequence diagrams in multiple formats
    - Share findings with your team
 
-## 📸 Screenshots
-(Screenshots will be added soon)
 
 ## 🔒 Privacy & Security
 
@@ -96,21 +96,24 @@ Access the web version directly:
 
 Built with these amazing tools, libraries, and packages. Thanks to all the open-source contributors who made this project possible.
 
- - **Framework & UI**: Svelte 4(JavaScript), Flowbite-Svelte, Flowbite-Svelte-icon, Tailwind CSS
+ - **Framework & UI**: Svelte, Flowbite-Svelte, Flowbite-Svelte-icon, Tailwind CSS
  - **Testing & Coverage**: Vitest, jest-dom
  - **Data Visualization**: Mermaid, D3.js
  - **Build Tools**: Vite, PostCSS, Autoprefixer
  - **Browser Extension**: SvelteKit Chrome Extension Adapter
 
-##  Support
+<!-- ##  Support
 
-Need help? Please create an [Issue](https://github.com/sgrastar/HARlytics/issues) on our GitHub repository.
+Need help? Please create an [Issue](https://github.com/sgrastar/HARlytics/issues) on our GitHub repository. -->
 
 ## 📋 Roadmap
 
 Coming features:
 - Sanitize confidential and personal information
+- Cache/CDN-specific views
+- SAML/OIDC-specific views
 - Compare two HAR files
+- View using the initiator information in the HAR file
 
 ## 📄 License
 

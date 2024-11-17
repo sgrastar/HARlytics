@@ -19,46 +19,95 @@ export function generateMermaidHeaderAndTitle(addTitle, sequenceTitle, addAutoNu
     return mermaidCode;
   }
   
+  // BUG 一部のharファイルでエラー発生。修正
   export function generateMermaidQueryString(entry, addRequestQueryString, truncateQueryStrings, truncateQueryStringsLength) {
-    if (addRequestQueryString && entry.requestQueryString && entry.requestQueryString.length > 0) {
-      let requestQueryStringString = '';
-      
-      // 特別な処理が必要なクエリパラメータかどうかをチェック
-      const isComplexFontQuery = entry.requestQueryString.some(q => 
-        q.name === 'family' && (q.value.includes(';') || q.value.includes('@'))
-      );
-
-      if (isComplexFontQuery) {
-        // フォント関連の複雑なクエリの場合、簡略化して表示
-        requestQueryStringString = entry.requestQueryString.map(qString => {
-          if (qString.name === 'family') {
-            //console.log(`${escapeForMermaid(qString.name)}: ${escapeForMermaid(qString.value)}`);
-            return `${escapeForMermaid(qString.name)}: [Font Family Settings]`;
-          }
-          
-          return `${escapeForMermaid(qString.name)}: ${escapeForMermaid(qString.value)}`;
-          
-        }).join('<br>');
-      } else if (truncateQueryStrings) {
-        // 通常の切り詰め処理
-        requestQueryStringString = entry.requestQueryString.map(qString => 
-          `${truncateAndEscape(qString.name, truncateQueryStringsLength)}: ${truncateAndEscape(qString.value, truncateQueryStringsLength)}`
-        ).join('<br>');
-      } else {
-        // 通常の処理（切り詰めなし）
-        requestQueryStringString = entry.requestQueryString.map(qString => {
-          const escapedName = escapeForMermaid(qString.name);
-          const escapedValue = escapeForMermaid(qString.value);
-          return `${escapedName}: ${escapedValue}`;
-        }).join('<br>');
+    try {
+      if (!addRequestQueryString || !entry.requestQueryString || entry.requestQueryString.length === 0) {
+        return '';
       }
-
+  
+      // デバッグログ
+      console.log('Processing generateMermaidQueryString:', {
+        domain: entry.domain,
+        queryCount: entry.requestQueryString.length
+      });
+  
+      // 特別な処理が必要なクエリパラメータの検出
+      const hasComplexQueries = entry.requestQueryString.some(q => {
+        const hasSpecialChars = q.value && (
+          q.value.includes(';') || 
+          q.value.includes('@') || 
+          q.value.includes('%') ||
+          q.value.includes('|') ||
+          q.value.includes('{') ||
+          q.value.includes('}')
+        );
+        if (hasSpecialChars) {
+          console.log('Found complex query parameter:', {
+            name: q.name,
+            valuePreview: q.value?.substring(0, 50)
+          });
+        }
+        return hasSpecialChars;
+      });
+  
+      let requestQueryStringString = '';
+  
+      // クエリパラメータの処理
+      const processedQueries = entry.requestQueryString.map(qString => {
+        const name = qString.name || '';
+        let value = qString.value || '';
+  
+        // 複雑なクエリの場合は簡略化
+        if (hasComplexQueries && value && (
+          value.includes(';') || 
+          value.includes('@') ||
+          value.includes('%') ||
+          value.includes('|') ||
+          value.includes('{') ||
+          value.includes('}')
+        )) {
+          value = '[Complex Value]';
+        } else if (truncateQueryStrings) {
+          // 通常の切り詰め処理
+          return `${truncateAndEscape(name, truncateQueryStringsLength)}: ${truncateAndEscape(value, truncateQueryStringsLength)}`;
+        }
+  
+        // 安全なエスケープ処理
+        const escapedName = escapeForMermaid(name);
+        const escapedValue = value === '[Complex Value]' ? value : escapeForMermaid(value);
+        
+        return `${escapedName}: ${escapedValue}`;
+      });
+  
+      requestQueryStringString = processedQueries.join('<br>');
+  
+      // 最終的なMermaidコードの生成
       const result = `note over ${escapeForMermaid(entry.domain)}: [Query String]<br>${requestQueryStringString}\n`;
-      // デバッグ用のログ出力（必要に応じて）
-      // console.log(result);
+  
+      // 生成されたコードの検証
+      const previewLength = Math.min(result.length, 100);
+      console.log('Generated Mermaid code preview:', {
+        preview: result.substring(0, previewLength),
+        totalLength: result.length,
+        queryCount: processedQueries.length
+      });
+  
       return result;
+  
+    } catch (error) {
+      console.error('Error in generateMermaidQueryString:', {
+        error: error.message,
+        stack: error.stack,
+        entryInfo: {
+          domain: entry?.domain,
+          queryCount: entry?.requestQueryString?.length
+        }
+      });
+      
+      // エラー時は安全な出力を返す
+      return `note over ${escapeForMermaid(entry?.domain || 'unknown')}: [Query String Processing Error]\n`;
     }
-    return '';
   }
 
   export function generateMermaidPostData(entry, addRequestPostData, truncatePostData, truncatePostDataLength) {
