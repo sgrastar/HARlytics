@@ -27,10 +27,10 @@ export function generateMermaidHeaderAndTitle(addTitle, sequenceTitle, addAutoNu
       }
   
       // デバッグログ
-      console.log('Processing generateMermaidQueryString:', {
-        domain: entry.domain,
-        queryCount: entry.requestQueryString.length
-      });
+      // console.log('Processing generateMermaidQueryString:', {
+      //   domain: entry.domain,
+      //   queryCount: entry.requestQueryString.length
+      // });
   
       // 特別な処理が必要なクエリパラメータの検出
       const hasComplexQueries = entry.requestQueryString.some(q => {
@@ -43,10 +43,10 @@ export function generateMermaidHeaderAndTitle(addTitle, sequenceTitle, addAutoNu
           q.value.includes('}')
         );
         if (hasSpecialChars) {
-          console.log('Found complex query parameter:', {
-            name: q.name,
-            valuePreview: q.value?.substring(0, 50)
-          });
+          // console.log('Found complex query parameter:', {
+          //   name: q.name,
+          //   valuePreview: q.value?.substring(0, 50)
+          // });
         }
         return hasSpecialChars;
       });
@@ -87,11 +87,11 @@ export function generateMermaidHeaderAndTitle(addTitle, sequenceTitle, addAutoNu
   
       // 生成されたコードの検証
       const previewLength = Math.min(result.length, 100);
-      console.log('Generated Mermaid code preview:', {
-        preview: result.substring(0, previewLength),
-        totalLength: result.length,
-        queryCount: processedQueries.length
-      });
+      // console.log('Generated Mermaid code preview:', {
+      //   preview: result.substring(0, previewLength),
+      //   totalLength: result.length,
+      //   queryCount: processedQueries.length
+      // });
   
       return result;
   

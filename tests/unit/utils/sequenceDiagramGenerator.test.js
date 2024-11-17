@@ -121,7 +121,8 @@ describe('Mermaid Sequence Diagram Generator', () => {
           { name: 'display', value: 'swap' }
         ]
       };
-      const expected = 'note over example.com: [Query String]<br>family: [Font Family Settings]<br>display: swap\n';
+      // 期待値を[Complex Value]に更新
+      const expected = 'note over example.com: [Query String]<br>family: [Complex Value]<br>display: swap\n';
       expect(generateMermaidQueryString(mockEntry, true, true, 20)).toBe(expected);
     });
   
@@ -181,7 +182,8 @@ describe('Mermaid Sequence Diagram Generator', () => {
           { name: 'regular', value: 'normal_value' }
         ]
       };
-      const expected = 'note over example.com: [Query String]<br>family: [Font Family Settings]<br>display: swap<br>regular: normal_value\n';
+      // 期待値を[Complex Value]に更新
+      const expected = 'note over example.com: [Query String]<br>family: [Complex Value]<br>display: swap<br>regular: normal_value\n';
       expect(generateMermaidQueryString(mockEntry, true, false, 20)).toBe(expected);
     });
   });
