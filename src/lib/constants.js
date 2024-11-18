@@ -9,14 +9,35 @@
 //   ];
 
 export const statusRanges = [
-  { label: '1xx', min: 100, max: 199 },  // Information responses
-  { label: '2xx', min: 200, max: 299 },  // Successful responses
-  { label: '3xx', min: 300, max: 399 },  // Redirection messages
-  { label: '4xx', min: 400, max: 499 },  // Client error responses
-  { label: '5xx', min: 500, max: 599 },  // Server error responses
-  { label: 'Other', other: true }        // Invalid or non-standard codes
+  { label: "1xx", min: 100, max: 199 }, // Information responses
+  { label: "2xx", min: 200, max: 299 }, // Successful responses
+  { label: "3xx", min: 300, max: 399 }, // Redirection messages
+  { label: "4xx", min: 400, max: 499 }, // Client error responses
+  { label: "5xx", min: 500, max: 599 }, // Server error responses
+  { label: "Other", other: true }, // Invalid or non-standard codes
 ];
-  
-  export const communicationTypes = ['Fetch/XHR', 'Doc', 'CSS', 'JS', 'Font', 'Img', 'Media', 'Manifest', 'WS', 'Wasm', 'Other'];
-  
-  export const httpMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'CONNECT', 'HEAD'];
+
+export const communicationTypes = [
+  "Fetch/XHR",
+  "Doc",
+  "CSS",
+  "JS",
+  "Font",
+  "Img",
+  "Media",
+  "Manifest",
+  "WS",
+  "Wasm",
+  "Other",
+];
+
+export const httpMethods = [
+  "GET",
+  "POST",
+  "PUT",
+  "DELETE",
+  "PATCH",
+  "OPTIONS",
+  "CONNECT",
+  "HEAD",
+];

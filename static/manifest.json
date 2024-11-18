@@ -1,21 +1,21 @@
 {
-    "manifest_version": 3,
-    "name": "HARlytics",
-    "version": "0.1.1",
-    "description": "HARlytics is a powerful HAR file analyzer that transforms complex HTTP Archive files into actionable insights.",
-    "icons": {
+  "manifest_version": 3,
+  "name": "HARlytics",
+  "version": "0.1.1",
+  "description": "HARlytics is a powerful HAR file analyzer that transforms complex HTTP Archive files into actionable insights.",
+  "icons": {
+    "16": "favicon.png",
+    "48": "favicon.png",
+    "128": "favicon.png"
+  },
+  "action": {
+    "default_icon": {
       "16": "favicon.png",
       "48": "favicon.png",
       "128": "favicon.png"
-    },
-    "action": {
-      "default_icon": {
-        "16": "favicon.png",
-        "48": "favicon.png",
-        "128": "favicon.png"
-      }
-    },
-    "background": {
-      "service_worker": "background.js"
     }
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
 }

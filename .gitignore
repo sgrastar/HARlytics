@@ -1,4 +1,6 @@
 .DS_Store
+.prettierrc
+.prettierignore
 node_modules
 /build
 /.svelte-kit
