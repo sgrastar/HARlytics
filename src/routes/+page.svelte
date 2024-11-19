@@ -49,6 +49,7 @@
   import SequenceExport from "$lib/components/SequenceExport.svelte";
   import PieChart from "$lib/components/PieChart.svelte";
   import {
+    Alert,
     Fileupload,
     Input,
     Range,
@@ -85,6 +86,8 @@
   } from "flowbite-svelte-icons";
   import mermaid from "mermaid";
 
+  let showEmptyFileAlert = false;
+  let showFileErrorAlert = false;
   let logFilename = "";
   let logVersion = "";
   let logCreator = "";
@@ -173,6 +176,8 @@
 
   function analyzeHAR(event) {
     const file = event.target.files[0];
+    if (!file) return;
+
     logFilename = file.name;
     // Initialize
     logVersion = "";
@@ -183,230 +188,277 @@
     hasPostData = false;
     hasContentData = false;
     hasHeaderAuthData = false;
+    showEmptyFileAlert = false;
+    showFileErrorAlert = false;
+
+    // リセット
+    pages = [];
+    entries = [];
+    urlFilter = "";
+    statusCounts = {};
+    typeCounts = {};
+    uniqueDomains = [];
+    domainCounts = {};
+    selectedDomains = [];
+    selectedValues = new Set();
 
     const reader = new FileReader();
 
     reader.onload = function (e) {
-      const harContent = JSON.parse(e.target.result);
-      pages = harContent.log.pages;
-      entries = harContent.log.entries;
-      logVersion = harContent.log.version;
-      logCreator =
-        harContent.log.creator.name +
-        "(" +
-        harContent.log.creator.version +
-        ")";
+      try {
+        const harContent = JSON.parse(e.target.result);
 
-      pages ? (hasPagesInfo = true) : (hasPagesInfo = false);
-      harContent.log.entries[0]._initiator
-        ? (hasInitiatorInfo = true)
-        : (hasInitiatorInfo = false);
-
-      entries = entries.map((entry) => {
-        const pageref =
-          hasPagesInfo && entry.pageref ? entry.pageref : "NoPageRef";
-        const url = new URL(entry.request.url);
-        const domain = url.hostname;
-        const path = url.pathname;
-
-        if (entry.request.postData) {
-          hasPostData = true;
-        }
-        if (
-          entry.response.headers.filter(
-            (header) => header.name.toLowerCase() === "set-cookie",
-          ).length
-        ) {
-          hasCookieData = true;
+        // HARファイルの基本的な構造チェック
+        if (!harContent.log || !Array.isArray(harContent.log.entries)) {
+          showFileErrorAlert = true;
+          return;
         }
 
-        function hasHeader(headers, name) {
-          return headers.some(
-            (header) => header.name.toLowerCase() === name.toLowerCase(),
+        // 空のHARファイルチェック
+        if (harContent.log.entries.length === 0) {
+          showEmptyFileAlert = true;
+          return;
+        }
+
+        pages = harContent.log.pages || [];
+        entries = harContent.log.entries;
+        logVersion = harContent.log.version;
+        logCreator =
+          harContent.log.creator.name +
+          "(" +
+          harContent.log.creator.version +
+          ")";
+
+        pages ? (hasPagesInfo = true) : (hasPagesInfo = false);
+        harContent.log.entries[0]._initiator
+          ? (hasInitiatorInfo = true)
+          : (hasInitiatorInfo = false);
+
+        entries = entries.map((entry) => {
+          const pageref =
+            hasPagesInfo && entry.pageref ? entry.pageref : "NoPageRef";
+          const url = new URL(entry.request.url);
+          const domain = url.hostname;
+          const path = url.pathname;
+
+          if (entry.request.postData) {
+            hasPostData = true;
+          }
+          if (
+            entry.response.headers.filter(
+              (header) => header.name.toLowerCase() === "set-cookie",
+            ).length
+          ) {
+            hasCookieData = true;
+          }
+
+          function hasHeader(headers, name) {
+            return headers.some(
+              (header) => header.name.toLowerCase() === name.toLowerCase(),
+            );
+          }
+
+          const hasAuthHeader = hasHeader(
+            entry.request.headers,
+            "Authorization",
           );
-        }
+          const hasApiKey =
+            hasHeader(entry.request.headers, "x-api-key") ||
+            hasHeader(entry.request.headers, "api-key");
+          const hasCustomAuth = hasHeader(
+            entry.request.headers,
+            "x-custom-auth",
+          );
+          const hasSessionToken =
+            hasHeader(entry.request.headers, "x-session-token") ||
+            hasHeader(entry.request.headers, "session-token");
+          const hasCSRFToken =
+            hasHeader(entry.request.headers, "x-csrf-token") ||
+            hasHeader(entry.request.headers, "x-xsrf-token");
+          const hasAppKey = hasHeader(
+            entry.request.headers,
+            "x-application-key",
+          );
+          const hasClientId = hasHeader(entry.request.headers, "x-client-id");
+          const hasDeviceToken = hasHeader(
+            entry.request.headers,
+            "x-device-token",
+          );
+          const hasAccessToken = hasHeader(
+            entry.request.headers,
+            "x-access-token",
+          );
+          const hasRefreshToken = hasHeader(
+            entry.request.headers,
+            "x-refresh-token",
+          );
+          const hasTenantId = hasHeader(entry.request.headers, "x-tenant-id");
+          const hasAuthToken = hasHeader(entry.request.headers, "x-auth-token");
+          const hasTrackingId = hasHeader(
+            entry.request.headers,
+            "x-tracking-id",
+          );
+          const hasUserId = hasHeader(entry.request.headers, "x-user-id");
+          const hasSubscriptionKey = hasHeader(
+            entry.request.headers,
+            "ocp-apim-subscription-key",
+          );
+          const hasOrgId = hasHeader(
+            entry.request.headers,
+            "x-organization-id",
+          );
+          const hasAccountId = hasHeader(entry.request.headers, "x-account-id");
+          const hasOTP = hasHeader(entry.request.headers, "x-otp");
+          const hasWorkspaceId = hasHeader(
+            entry.request.headers,
+            "x-workspace-id",
+          );
+          const hasSignature = hasHeader(entry.request.headers, "x-signature");
+          const hasProjectId = hasHeader(entry.request.headers, "x-project-id");
+          const hasPartnerId = hasHeader(entry.request.headers, "x-partner-id");
+          const hasInstanceId = hasHeader(
+            entry.request.headers,
+            "x-instance-id",
+          );
 
-        const hasAuthHeader = hasHeader(entry.request.headers, "Authorization");
-        const hasApiKey =
-          hasHeader(entry.request.headers, "x-api-key") ||
-          hasHeader(entry.request.headers, "api-key");
-        const hasCustomAuth = hasHeader(entry.request.headers, "x-custom-auth");
-        const hasSessionToken =
-          hasHeader(entry.request.headers, "x-session-token") ||
-          hasHeader(entry.request.headers, "session-token");
-        const hasCSRFToken =
-          hasHeader(entry.request.headers, "x-csrf-token") ||
-          hasHeader(entry.request.headers, "x-xsrf-token");
-        const hasAppKey = hasHeader(entry.request.headers, "x-application-key");
-        const hasClientId = hasHeader(entry.request.headers, "x-client-id");
-        const hasDeviceToken = hasHeader(
-          entry.request.headers,
-          "x-device-token",
-        );
-        const hasAccessToken = hasHeader(
-          entry.request.headers,
-          "x-access-token",
-        );
-        const hasRefreshToken = hasHeader(
-          entry.request.headers,
-          "x-refresh-token",
-        );
-        const hasTenantId = hasHeader(entry.request.headers, "x-tenant-id");
-        const hasAuthToken = hasHeader(entry.request.headers, "x-auth-token");
-        const hasTrackingId = hasHeader(entry.request.headers, "x-tracking-id");
-        const hasUserId = hasHeader(entry.request.headers, "x-user-id");
-        const hasSubscriptionKey = hasHeader(
-          entry.request.headers,
-          "ocp-apim-subscription-key",
-        );
-        const hasOrgId = hasHeader(entry.request.headers, "x-organization-id");
-        const hasAccountId = hasHeader(entry.request.headers, "x-account-id");
-        const hasOTP = hasHeader(entry.request.headers, "x-otp");
-        const hasWorkspaceId = hasHeader(
-          entry.request.headers,
-          "x-workspace-id",
-        );
-        const hasSignature = hasHeader(entry.request.headers, "x-signature");
-        const hasProjectId = hasHeader(entry.request.headers, "x-project-id");
-        const hasPartnerId = hasHeader(entry.request.headers, "x-partner-id");
-        const hasInstanceId = hasHeader(entry.request.headers, "x-instance-id");
+          hasHeaderAuthData =
+            hasAuthHeader ||
+            hasApiKey ||
+            hasCustomAuth ||
+            hasSessionToken ||
+            hasCSRFToken ||
+            hasAppKey ||
+            hasClientId ||
+            hasDeviceToken ||
+            hasAccessToken ||
+            hasRefreshToken ||
+            hasTenantId ||
+            hasAuthToken ||
+            hasTrackingId ||
+            hasUserId ||
+            hasSubscriptionKey ||
+            hasOrgId ||
+            hasAccountId ||
+            hasOTP ||
+            hasWorkspaceId ||
+            hasProjectId ||
+            hasSignature ||
+            hasPartnerId ||
+            hasInstanceId;
 
-        hasHeaderAuthData =
-          hasAuthHeader ||
-          hasApiKey ||
-          hasCustomAuth ||
-          hasSessionToken ||
-          hasCSRFToken ||
-          hasAppKey ||
-          hasClientId ||
-          hasDeviceToken ||
-          hasAccessToken ||
-          hasRefreshToken ||
-          hasTenantId ||
-          hasAuthToken ||
-          hasTrackingId ||
-          hasUserId ||
-          hasSubscriptionKey ||
-          hasOrgId ||
-          hasAccountId ||
-          hasOTP ||
-          hasWorkspaceId ||
-          hasProjectId ||
-          hasSignature ||
-          hasPartnerId ||
-          hasInstanceId;
+          const referer = entry.request.headers.find(
+            (header) => header.name.toLowerCase() === "referer",
+          )?.value;
+          const requestPostData = parsePostData(entry.request.postData);
+          const setCookieCount = entry.response.headers.filter(
+            (header) => header.name.toLowerCase() === "set-cookie",
+          ).length;
+          const responseContentLength = entry.response.headers.find(
+            (header) => header.name.toLowerCase() === "content-length",
+          )?.value;
+          const age = entry.response.headers.find(
+            (header) => header.name.toLowerCase() === "age",
+          )?.value;
+          const ageInSeconds = age ? parseInt(age, 10) : null;
+          const cacheControl =
+            entry.response.headers.find(
+              (header) => header.name.toLowerCase() === "cache-control",
+            )?.value || "";
+          const parsedCacheControl = parseCacheControl(cacheControl);
+          const isCached = isResponseCached(ageInSeconds, parsedCacheControl);
 
-        const referer = entry.request.headers.find(
-          (header) => header.name.toLowerCase() === "referer",
-        )?.value;
-        const requestPostData = parsePostData(entry.request.postData);
-        const setCookieCount = entry.response.headers.filter(
-          (header) => header.name.toLowerCase() === "set-cookie",
-        ).length;
-        const responseContentLength = entry.response.headers.find(
-          (header) => header.name.toLowerCase() === "content-length",
-        )?.value;
-        const age = entry.response.headers.find(
-          (header) => header.name.toLowerCase() === "age",
-        )?.value;
-        const ageInSeconds = age ? parseInt(age, 10) : null;
-        const cacheControl =
-          entry.response.headers.find(
-            (header) => header.name.toLowerCase() === "cache-control",
-          )?.value || "";
-        const parsedCacheControl = parseCacheControl(cacheControl);
-        const isCached = isResponseCached(ageInSeconds, parsedCacheControl);
+          return {
+            pages: pages,
+            pageref: pageref,
+            url: entry.request.url,
+            method: entry.request.method,
+            domain: domain,
+            path: path,
+            referer: referer,
+            startedDateTime: entry.startedDateTime,
+            time: entry.time,
+            timings: entry.timings,
+            initiator: entry._initiator,
+            requestHeaderAll: entry.request.headers,
+            requestPostData: requestPostData,
+            requestBodySize: entry.request.bodySize,
+            responseHeaderAll: entry.response.headers,
+            responseHeaderSize: entry.response.headersSize,
+            responseBodySize: entry.response.bodySize,
+            responseTotalSize:
+              entry.response.headersSize + entry.response.bodySize > 0
+                ? entry.response.headersSize + entry.response.bodySize
+                : 0,
+            responseContentLength: responseContentLength,
+            timestamp: formatTimestamp(new Date(entry.startedDateTime)),
+            age: ageInSeconds,
+            cacheControl: parsedCacheControl,
+            isCached: isCached,
+            status: entry.response.status,
+            values: entry.request.cookies,
+            requestQueryString: entry.request.queryString,
+            requestCookies: entry.request.cookies,
+            responseCookies: entry.response.cookies,
+            setCookieCount: setCookieCount,
+            type: getCommunicationType(entry),
+            responseMimeType: entry.response.content.mimeType
+              ? entry.response.content.mimeType.split(";")[0]
+              : "",
+            hasHeaderAuthData: hasHeaderAuthData,
+          };
+        });
 
-        return {
-          pages: pages,
-          pageref: pageref,
-          url: entry.request.url,
-          method: entry.request.method,
-          domain: domain,
-          path: path,
-          referer: referer,
-          startedDateTime: entry.startedDateTime,
-          time: entry.time,
-          timings: entry.timings,
-          initiator: entry._initiator,
-          requestHeaderAll: entry.request.headers,
-          requestPostData: requestPostData,
-          requestBodySize: entry.request.bodySize,
-          responseHeaderAll: entry.response.headers,
-          responseHeaderSize: entry.response.headersSize,
-          responseBodySize: entry.response.bodySize,
-          responseTotalSize:
-            entry.response.headersSize + entry.response.bodySize > 0
-              ? entry.response.headersSize + entry.response.bodySize
-              : 0,
-          responseContentLength: responseContentLength,
-          timestamp: formatTimestamp(new Date(entry.startedDateTime)),
-          age: ageInSeconds,
-          cacheControl: parsedCacheControl,
-          isCached: isCached,
-          status: entry.response.status,
-          values: entry.request.cookies,
-          requestQueryString: entry.request.queryString,
-          requestCookies: entry.request.cookies, // リクエストのCookieを追加
-          responseCookies: entry.response.cookies, // レスポンスのCookieを追加
-          setCookieCount: setCookieCount,
-          type: getCommunicationType(entry),
-          responseMimeType: entry.response.content.mimeType
-            ? entry.response.content.mimeType.split(";")[0]
-            : "",
-          //responseMimeType: getCommunicationType(entry)
-          hasHeaderAuthData: hasHeaderAuthData,
-        };
-      });
+        hasHeaderAuthData = entries.some((entry) => entry.hasHeaderAuthData);
 
-      hasHeaderAuthData = entries.some((entry) => entry.hasHeaderAuthData);
+        selectedValues = new Set([
+          ...entries.flatMap((entry) =>
+            entry.requestCookies.map((cookie) => cookie.name),
+          ),
+          ...entries.flatMap((entry) =>
+            entry.responseCookies.map((cookie) => cookie.name),
+          ),
+        ]);
 
-      //selectedValues = new Set(entries.flatMap(entry => entry.values.map(value => value.name)));
+        statusCounts = entries.reduce((acc, entry) => {
+          const statusRange = statusRanges.find(
+            (range) =>
+              (range.other &&
+                (entry.status < 100 ||
+                  entry.status >= 600 ||
+                  isNaN(entry.status))) ||
+              (entry.status >= range.min && entry.status <= range.max),
+          );
+          acc[statusRange.label] = (acc[statusRange.label] || 0) + 1;
+          return acc;
+        }, {});
 
-      selectedValues = new Set([
-        ...entries.flatMap((entry) =>
-          entry.requestCookies.map((cookie) => cookie.name),
-        ),
-        ...entries.flatMap((entry) =>
-          entry.responseCookies.map((cookie) => cookie.name),
-        ),
-      ]);
+        typeCounts = entries.reduce((acc, entry) => {
+          acc[entry.type] = (acc[entry.type] || 0) + 1;
+          return acc;
+        }, {});
 
-      statusCounts = entries.reduce((acc, entry) => {
-        const statusRange = statusRanges.find(
-          (range) =>
-            (range.other &&
-              (entry.status < 100 ||
-                entry.status >= 600 ||
-                isNaN(entry.status))) ||
-            (entry.status >= range.min && entry.status <= range.max),
-        );
-        acc[statusRange.label] = (acc[statusRange.label] || 0) + 1;
-        return acc;
-      }, {});
+        uniqueDomains = [...new Set(entries.map((entry) => entry.domain))];
 
-      typeCounts = entries.reduce((acc, entry) => {
-        acc[entry.type] = (acc[entry.type] || 0) + 1;
-        return acc;
-      }, {});
+        domainCounts = entries.reduce((acc, entry) => {
+          acc[entry.domain] = (acc[entry.domain] || 0) + 1;
+          return acc;
+        }, {});
 
-      uniqueDomains = [...new Set(entries.map((entry) => entry.domain))];
+        isUrlTruncated = true;
+        truncatedValues = {};
+        selectedValues.forEach((valueName) => {
+          truncatedValues[valueName] = true;
+        });
 
-      domainCounts = entries.reduce((acc, entry) => {
-        acc[entry.domain] = (acc[entry.domain] || 0) + 1;
-        return acc;
-      }, {});
+        sequenceTitle = "Sequence: " + logFilename;
+      } catch (error) {
+        console.error("Error parsing HAR file:", error);
+        showFileErrorAlert = true;
+      }
+    };
 
-      isUrlTruncated = true;
-      truncatedValues = {};
-      selectedValues.forEach((valueName) => {
-        truncatedValues[valueName] = true;
-      });
-
-      sequenceTitle = "Sequence: " + logFilename;
-
-      //const connectionSpeed = estimateConnectionSpeed(entries);
-      //console.log(connectionSpeed);
+    reader.onerror = function () {
+      showFileErrorAlert = true;
     };
 
     reader.readAsText(file);
@@ -1050,6 +1102,25 @@
             size="sm"
           />
         </div>
+
+        {#if showEmptyFileAlert}
+          <Alert color="yellow" dismissable>
+            <span class="font-medium">Caution!</span>
+            The selected HAR file ({logFilename}) contains no entries.
+            <br />
+            Please select another HAR file or create a new one using your browser.
+          </Alert>
+        {/if}
+
+        {#if showFileErrorAlert}
+          <Alert color="red" dismissable>
+            <span class="font-medium">Error!</span>
+            An error occurred while loading the HAR file.
+            <br />
+            Please verify that the file is in the correct HAR format.
+          </Alert>
+        {/if}
+
         <!-- TODO オンラインバージョンでサンプルharファイルの用意&読み込み機能         -->
         <div class="mb-2">
           <span>Log version : {logVersion} / {logCreator}</span>
@@ -1728,7 +1799,7 @@
             </div>
           {/if}
 
-          <div id="buildTimestamp">Build ver.20241119181126</div>
+          <div id="buildTimestamp">Build ver.20241119184716</div>
         </div>
       </TabItem>
     </Tabs>
