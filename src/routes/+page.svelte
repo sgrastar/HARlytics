@@ -158,7 +158,7 @@
   onMount(() => {
     // initialize
 
-    console.log("the component has mounted");
+    //console.log("the component has mounted");
     mermaid.initialize({
       startOnLoad: false,
       theme: "base",
@@ -420,54 +420,135 @@
     const mimeType = postData.mimeType
       ? postData.mimeType.split(";")[0].trim()
       : "";
-    //console.log(mimeType);
 
     let requestPostData = null;
-    if (mimeType === "application/x-www-form-urlencoded") {
-      requestPostData = {
-        mimeType: mimeType,
-        text: decodeURIComponent(postData.text),
-        params: postData.params.map((param) => ({
-          name: decodeURIComponent(param.name),
-          value: escapeForSequence(decodeURIComponent(param.value)),
-        })),
+
+    const detectBinaryFormat = (data) => {
+      const signatures = {
+        // GZIP
+        gzip: data.startsWith("\x1F\x8B"),
+        // ZIP
+        zip: data.startsWith("PK\x03\x04"),
+        // PDF
+        pdf: data.startsWith("%PDF"),
+        // PNG
+        png: data.startsWith("\x89PNG"),
+        // JPEG
+        jpeg: data.startsWith("\xFF\xD8\xFF"),
+        // GIF
+        gif: data.startsWith("GIF87a") || data.startsWith("GIF89a"),
+        // Brotli
+        brotli: data.startsWith("\xCE\xB2\xCF\x81"),
+        // Zstandard
+        zstd: data.startsWith("\x28\xB5\x2F\xFD"),
+        // LZMA
+        lzma: data.startsWith("\x5D\x00\x00"),
+        // Protobuf
+        protobuf: /[\x00-\x1F]/.test(data) && !/[\x20-\x7E]/.test(data),
       };
-    } else if (mimeType === "text/plain") {
-      requestPostData = {
-        mimeType: mimeType,
-        text: escapeForSequence(decodeURIComponent(postData.text)),
-      };
-    } else if (mimeType === "application/json") {
-      try {
-        const decodedText = decodeURIComponent(postData.text);
-        const jsonData = JSON.parse(decodedText);
-        requestPostData = {
-          mimeType: mimeType,
-          text: decodedText,
-          params: Object.entries(jsonData).map(([name, value]) => ({
-            name: decodeURIComponent(name),
-            value: escapeForSequence(decodeURIComponent(value.toString())),
-          })),
-        };
-      } catch (error) {
-        requestPostData = {
-          mimeType: mimeType,
-          text: escapeForSequence(decodeURIComponent(postData.text)),
-        };
+
+      for (const [format, detect] of Object.entries(signatures)) {
+        if (detect) return format;
       }
-    } else {
-      if (mimeType === "" || mimeType === null) {
-        requestPostData = null;
+      return null;
+    };
+
+    try {
+      if (mimeType === "application/x-www-form-urlencoded") {
+        try {
+          requestPostData = {
+            mimeType: mimeType,
+            text: decodeURIComponent(postData.text),
+            params: postData.params.map((param) => ({
+              name: decodeURIComponent(param.name),
+              value: escapeForSequence(decodeURIComponent(param.value)),
+            })),
+          };
+        } catch (e) {
+          requestPostData = {
+            mimeType: mimeType,
+            text: postData.text,
+            params: postData.params,
+          };
+        }
+      } else if (mimeType === "text/plain") {
+        try {
+          requestPostData = {
+            mimeType: mimeType,
+            text: escapeForSequence(decodeURIComponent(postData.text)),
+          };
+        } catch (e) {
+          requestPostData = {
+            mimeType: mimeType,
+            text: escapeForSequence(postData.text),
+          };
+        }
+      } else if (mimeType === "application/json") {
+        const binaryFormat = detectBinaryFormat(postData.text);
+        if (binaryFormat) {
+          requestPostData = {
+            mimeType: mimeType,
+            text: `[${binaryFormat.toUpperCase()} Data]`,
+            format: binaryFormat,
+          };
+        } else {
+          try {
+            const decodedText = decodeURIComponent(postData.text);
+            const jsonData = JSON.parse(decodedText);
+            requestPostData = {
+              mimeType: mimeType,
+              text: decodedText,
+              params: Object.entries(jsonData).map(([name, value]) => ({
+                name: decodeURIComponent(name),
+                value: escapeForSequence(String(value)),
+              })),
+            };
+          } catch (error) {
+            requestPostData = {
+              mimeType: mimeType,
+              text: postData.text,
+              error: true,
+            };
+          }
+        }
       } else {
-        requestPostData = {
-          mimeType: mimeType,
-          text: "Not supported data",
-        };
+        // その他のバイナリMIMEタイプの処理
+        const binaryMimeTypes = [
+          "application/octet-stream",
+          "application/x-protobuf",
+          "application/x-msgpack",
+          "application/x-www-form-urlencoded",
+          "application/zip",
+          "application/x-gzip",
+          "application/pdf",
+          "image/",
+        ];
+
+        if (mimeType === "" || mimeType === null) {
+          requestPostData = null;
+        } else if (binaryMimeTypes.some((type) => mimeType.startsWith(type))) {
+          const binaryFormat = detectBinaryFormat(postData.text);
+          requestPostData = {
+            mimeType: mimeType,
+            text: binaryFormat
+              ? `[${binaryFormat.toUpperCase()} Data]`
+              : "[Binary Data]",
+            format: binaryFormat || "unknown",
+          };
+        } else {
+          requestPostData = {
+            mimeType: mimeType,
+            text: "[Unsupported Data Type]",
+          };
+        }
       }
-      // requestPostData = {
-      //   mimeType: mimeType,
-      //   text: escapeForSequence(decodeURIComponent(postData.text))
-      // };
+    } catch (e) {
+      console.error("Error in parsePostData:", e);
+      return {
+        mimeType: mimeType,
+        text: "[Parse Error]",
+        error: true,
+      };
     }
 
     return requestPostData;
@@ -487,42 +568,53 @@
   $: typeFilterStyle = isTypeFiltered ? "primary" : "light";
 
   $: filteredEntries = entries.filter((entry) => {
-    const domain_path = entry.domain + entry.path;
-    const url = domain_path.toLowerCase();
-    const urlFilters = urlFilter
-      .split(",")
-      .map((filter) => filter.trim().toLowerCase());
-
-    const matchesUrlFilter = urlFilters.every((filter) => {
-      if (filter.startsWith("-")) {
-        return !url.includes(filter.slice(1));
-      } else {
-        return filter === "" || url.includes(filter);
+    try {
+      if (!entry?.domain || !entry?.path) {
+        console.warn("Entry missing domain or path:", entry);
+        return false;
       }
-    });
+      const domain_path = String(entry.domain + entry.path);
+      const url = domain_path.toLowerCase();
+      const urlFilters = urlFilter
+        .split(",")
+        .map((filter) => filter.trim().toLowerCase());
 
-    const matchesTypeFilter =
-      selectedTypes.length === 0 ? false : selectedTypes.includes(entry.type);
-    const matchesStatusFilter = selectedStatusRanges.some(
-      (range) =>
-        (range.other &&
-          (entry.status < 100 || entry.status >= 600 || isNaN(entry.status))) ||
-        (entry.status >= range.min && entry.status <= range.max),
-    );
-    const matchesDomainFilter =
-      selectedDomains.length === 0 || selectedDomains.includes(entry.domain);
-    const matchesMethodFilter =
-      selectedMethods.length === 0
-        ? false
-        : selectedMethods.includes(entry.method);
+      const matchesUrlFilter = urlFilters.every((filter) => {
+        if (filter.startsWith("-")) {
+          return !url.includes(filter.slice(1));
+        } else {
+          return filter === "" || url.includes(filter);
+        }
+      });
 
-    return (
-      matchesUrlFilter &&
-      matchesTypeFilter &&
-      matchesStatusFilter &&
-      matchesDomainFilter &&
-      matchesMethodFilter
-    );
+      const matchesTypeFilter =
+        selectedTypes.length === 0 ? false : selectedTypes.includes(entry.type);
+      const matchesStatusFilter = selectedStatusRanges.some(
+        (range) =>
+          (range.other &&
+            (entry.status < 100 ||
+              entry.status >= 600 ||
+              isNaN(entry.status))) ||
+          (entry.status >= range.min && entry.status <= range.max),
+      );
+      const matchesDomainFilter =
+        selectedDomains.length === 0 || selectedDomains.includes(entry.domain);
+      const matchesMethodFilter =
+        selectedMethods.length === 0
+          ? false
+          : selectedMethods.includes(entry.method);
+
+      return (
+        matchesUrlFilter &&
+        matchesTypeFilter &&
+        matchesStatusFilter &&
+        matchesDomainFilter &&
+        matchesMethodFilter
+      );
+    } catch (e) {
+      console.error("Error filtering entry:", e, entry);
+      return false;
+    }
   });
 
   //$: allValueNames = new Set(entries.flatMap(entry => entry.values.map(value => value.name)));
@@ -1636,7 +1728,7 @@
             </div>
           {/if}
 
-          <div id="buildTimestamp">Build ver.20241119135622</div>
+          <div id="buildTimestamp">Build ver.20241119180534</div>
         </div>
       </TabItem>
     </Tabs>
