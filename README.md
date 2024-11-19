@@ -103,19 +103,15 @@ Built with these amazing tools, libraries, and packages. Thanks to all the open-
  - **Build Tools**: Vite, PostCSS, Autoprefixer
  - **Browser Extension**: SvelteKit Chrome Extension Adapter
 
-<!-- ##  Support
-
-Need help? Please create an [Issue](https://github.com/sgrastar/HARlytics/issues) on our GitHub repository. -->
-
 ## 📋 Roadmap
 
-Coming features:
-- ~~Save sequence diagrams as images~~
-- Sanitize confidential and personal information
-- Cache/CDN-specific views
-- SAML/OIDC-specific views
-- Compare two HAR files
-- View using the initiator information in the HAR file
+Please refer to the following issues for future development plans.
+
+[TODO List](https://github.com/sgrastar/HARlytics/issues/1)
+
+Please create a new issue for feature requests or bug reports.
+
+[Issues](https://github.com/sgrastar/HARlytics/issues)
 
 ## 📄 License
 
