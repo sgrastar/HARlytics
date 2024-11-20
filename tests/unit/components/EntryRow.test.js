@@ -286,6 +286,7 @@ describe("EntryRow advanced functionality", () => {
       "DELETE",
       "PATCH",
       "OPTIONS",
+      "CONNECT",
       "HEAD",
     ];
 

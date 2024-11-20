@@ -353,9 +353,22 @@
           const setCookieCount = entry.response.headers.filter(
             (header) => header.name.toLowerCase() === "set-cookie",
           ).length;
-          const responseContentLength = entry.response.headers.find(
-            (header) => header.name.toLowerCase() === "content-length",
-          )?.value;
+          // const responseContentLength = entry.response.headers.find(
+          //   (header) => header.name.toLowerCase() === "content-length",
+          // )?.value;
+          const responseContentLength = (() => {
+            const contentLengthHeader = entry.response.headers.find(
+              (header) => header.name.toLowerCase() === "content-length",
+            );
+
+            if (!contentLengthHeader?.value) return 0;
+
+            if (typeof contentLengthHeader.value === "string") {
+              const parsed = parseInt(contentLengthHeader.value, 10);
+              return isNaN(parsed) ? 0 : parsed;
+            }
+            return contentLengthHeader.value;
+          })();
           const age = entry.response.headers.find(
             (header) => header.name.toLowerCase() === "age",
           )?.value;
@@ -383,12 +396,24 @@
             requestPostData: requestPostData,
             requestBodySize: entry.request.bodySize,
             responseHeaderAll: entry.response.headers,
-            responseHeaderSize: entry.response.headersSize,
-            responseBodySize: entry.response.bodySize,
-            responseTotalSize:
-              entry.response.headersSize + entry.response.bodySize > 0
-                ? entry.response.headersSize + entry.response.bodySize
-                : 0,
+            responseHeaderSize: entry.response.headersSize || 0,
+            responseBodySize: entry.response.bodySize || 0,
+            responseTotalSize: (() => {
+              const headerSize = entry.response.headersSize || 0;
+              const bodySize = entry.response.bodySize || 0;
+              if (headerSize === -1 && bodySize === -1) {
+                return "undefined";
+              }
+
+              const validHeaderSize = headerSize === -1 ? 0 : headerSize;
+              const validBodySize = bodySize === -1 ? 0 : bodySize;
+              const total = validHeaderSize + validBodySize;
+              return total > 0 ? total : "undefined";
+            })(),
+            // responseContentLength:
+            //   entry.response.headers.find(
+            //     (header) => header.name.toLowerCase() === "content-length",
+            //   )?.value || "undefined",
             responseContentLength: responseContentLength,
             timestamp: formatTimestamp(new Date(entry.startedDateTime)),
             age: ageInSeconds,
@@ -473,8 +498,7 @@
       ? postData.mimeType.split(";")[0].trim()
       : "";
 
-    let requestPostData = null;
-
+    // バイナリデータを検出する関数
     const detectBinaryFormat = (data) => {
       const signatures = {
         // GZIP
@@ -505,7 +529,42 @@
       return null;
     };
 
+    // バイナリMIMEタイプのリスト
+    const binaryMimeTypes = [
+      "application/octet-stream",
+      "application/x-protobuf",
+      "application/x-msgpack",
+      // "application/x-www-form-urlencoded",
+      "application/zip",
+      "application/x-gzip",
+      "application/pdf",
+      "image/",
+      "audio/",
+      "video/",
+      "application/x-binary",
+    ];
+
+    let requestPostData = null;
     try {
+      // バイナリデータの検出
+      const isBinaryMimeType = binaryMimeTypes.some((type) =>
+        mimeType.startsWith(type),
+      );
+      const binaryFormat = postData.text
+        ? detectBinaryFormat(postData.text)
+        : null;
+
+      if (binaryFormat || isBinaryMimeType) {
+        return {
+          mimeType: mimeType,
+          text: binaryFormat
+            ? `[${binaryFormat.toUpperCase()} Data]`
+            : "[Binary Data]",
+          format: binaryFormat || "unknown",
+          isBinary: true,
+        };
+      }
+
       if (mimeType === "application/x-www-form-urlencoded") {
         try {
           requestPostData = {
@@ -536,61 +595,32 @@
           };
         }
       } else if (mimeType === "application/json") {
-        const binaryFormat = detectBinaryFormat(postData.text);
-        if (binaryFormat) {
+        try {
+          const decodedText = decodeURIComponent(postData.text);
+          const jsonData = JSON.parse(decodedText);
           requestPostData = {
             mimeType: mimeType,
-            text: `[${binaryFormat.toUpperCase()} Data]`,
-            format: binaryFormat,
+            text: decodedText,
+            params: Object.entries(jsonData).map(([name, value]) => ({
+              name: decodeURIComponent(name),
+              value: escapeForSequence(String(value)),
+            })),
           };
-        } else {
-          try {
-            const decodedText = decodeURIComponent(postData.text);
-            const jsonData = JSON.parse(decodedText);
-            requestPostData = {
-              mimeType: mimeType,
-              text: decodedText,
-              params: Object.entries(jsonData).map(([name, value]) => ({
-                name: decodeURIComponent(name),
-                value: escapeForSequence(String(value)),
-              })),
-            };
-          } catch (error) {
-            requestPostData = {
-              mimeType: mimeType,
-              text: postData.text,
-              error: true,
-            };
-          }
+        } catch (error) {
+          requestPostData = {
+            mimeType: mimeType,
+            text: postData.text,
+            error: true,
+          };
         }
       } else {
-        // その他のバイナリMIMEタイプの処理
-        const binaryMimeTypes = [
-          "application/octet-stream",
-          "application/x-protobuf",
-          "application/x-msgpack",
-          "application/x-www-form-urlencoded",
-          "application/zip",
-          "application/x-gzip",
-          "application/pdf",
-          "image/",
-        ];
-
         if (mimeType === "" || mimeType === null) {
           requestPostData = null;
-        } else if (binaryMimeTypes.some((type) => mimeType.startsWith(type))) {
-          const binaryFormat = detectBinaryFormat(postData.text);
-          requestPostData = {
-            mimeType: mimeType,
-            text: binaryFormat
-              ? `[${binaryFormat.toUpperCase()} Data]`
-              : "[Binary Data]",
-            format: binaryFormat || "unknown",
-          };
         } else {
           requestPostData = {
             mimeType: mimeType,
             text: "[Unsupported Data Type]",
+            isUnsupported: true,
           };
         }
       }
@@ -1799,7 +1829,7 @@
             </div>
           {/if}
 
-          <div id="buildTimestamp">Build ver.20241119184716</div>
+          <div id="buildTimestamp">Build ver.20241120162236</div>
         </div>
       </TabItem>
     </Tabs>

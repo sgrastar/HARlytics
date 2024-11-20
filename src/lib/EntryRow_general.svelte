@@ -112,9 +112,10 @@
   <!-- {console.log(entry.responseContentLength + ' / ' + formatBytes(entry.responseContentLength))} -->
 
   <div class="size cell">
-    {typeof entry.responseContentLength !== "undefined"
+    {formatBytes(entry.responseContentLength)}
+    <!-- {typeof entry.responseContentLength !== "undefined"
       ? formatBytes(entry.responseContentLength)
-      : ""}
+      : ""} -->
   </div>
   <div class="cached cell">{entry.isCached ? entry.isCached : ""}</div>
   <!-- <div class="age cell">{entry.age !== null ? entry.age : ''}</div> -->

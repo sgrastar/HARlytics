@@ -1,10 +1,11 @@
 import { truncateText, splitByLength } from "$lib/utils";
 
-export function escapeForMermaid(str) {
-  return str.replace(/:/g, "&#58;").replace(/\n/g, "<br>");
-}
+// export function escapeForMermaid(str) {
+//   return str.replace(/:/g, "&#58;").replace(/\n/g, "<br>");
+// }
 
 export function truncateAndEscape(str, length) {
+  if (!str) return "";
   return escapeForMermaid(truncateText(str, length));
 }
 
@@ -23,7 +24,6 @@ export function generateMermaidHeaderAndTitle(
   return mermaidCode;
 }
 
-// BUG 一部のharファイルでエラー発生。修正
 export function generateMermaidQueryString(
   entry,
   addRequestQueryString,
@@ -33,7 +33,7 @@ export function generateMermaidQueryString(
   try {
     if (
       !addRequestQueryString ||
-      !entry.requestQueryString ||
+      !entry?.requestQueryString ||
       entry.requestQueryString.length === 0
     ) {
       return "";
@@ -64,42 +64,47 @@ export function generateMermaidQueryString(
       return hasSpecialChars;
     });
 
-    let requestQueryStringString = "";
-
     // クエリパラメータの処理
     const processedQueries = entry.requestQueryString.map((qString) => {
-      const name = qString.name || "";
-      let value = qString.value || "";
+      try {
+        const name = qString?.name || "";
+        let value = qString?.value || "";
 
-      // 複雑なクエリの場合は簡略化
-      if (
-        hasComplexQueries &&
-        value &&
-        (value.includes(";") ||
-          value.includes("@") ||
-          value.includes("%") ||
-          value.includes("|") ||
-          value.includes("{") ||
-          value.includes("}"))
-      ) {
-        value = "[Complex Value]";
-      } else if (truncateQueryStrings) {
-        // 通常の切り詰め処理
-        return `${truncateAndEscape(
-          name,
-          truncateQueryStringsLength
-        )}: ${truncateAndEscape(value, truncateQueryStringsLength)}`;
+        // 複雑なクエリの場合は簡略化
+        if (
+          hasComplexQueries &&
+          value &&
+          (value.includes(";") ||
+            value.includes("@") ||
+            value.includes("%") ||
+            value.includes("|") ||
+            value.includes("{") ||
+            value.includes("}"))
+        ) {
+          value = "[Complex Value]";
+        } else if (truncateQueryStrings) {
+          // 通常の切り詰め処理
+          return `${truncateAndEscape(
+            name,
+            truncateQueryStringsLength
+          )}: ${truncateAndEscape(value, truncateQueryStringsLength)}`;
+        }
+
+        // 安全なエスケープ処理
+        const escapedName = escapeForMermaid(name);
+        const escapedValue =
+          value === "[Complex Value]" ? value : escapeForMermaid(value);
+
+        return `${escapedName}: ${escapedValue}`;
+      } catch (e) {
+        console.error('Error processing query parameter:', e);
+        return '[Invalid Parameter]';
       }
-
-      // 安全なエスケープ処理
-      const escapedName = escapeForMermaid(name);
-      const escapedValue =
-        value === "[Complex Value]" ? value : escapeForMermaid(value);
-
-      return `${escapedName}: ${escapedValue}`;
     });
 
-    requestQueryStringString = processedQueries.join("<br>");
+    const requestQueryStringString = processedQueries
+      .filter(q => q) // 無効なエントリを除外
+      .join("<br>");
 
     // 最終的なMermaidコードの生成
     const result = `note over ${escapeForMermaid(
@@ -115,6 +120,7 @@ export function generateMermaidQueryString(
     // });
 
     return result;
+
   } catch (error) {
     console.error("Error in generateMermaidQueryString:", {
       error: error.message,
@@ -138,36 +144,93 @@ export function generateMermaidPostData(
   truncatePostData,
   truncatePostDataLength
 ) {
-  if (addRequestPostData && entry.requestPostData) {
-    let postDataString = "";
-
-    if (truncatePostData) {
-      postDataString = entry.requestPostData.params
-        ? entry.requestPostData.params
-            .map(
-              (param) =>
-                `${truncateAndEscape(
-                  param.name,
-                  truncatePostDataLength
-                )}: ${truncateAndEscape(param.value, truncatePostDataLength)}`
-            )
-            .join("<br>")
-        : truncateAndEscape(entry.requestPostData.text, truncatePostDataLength);
-    } else {
-      postDataString = entry.requestPostData.params
-        ? entry.requestPostData.params
-            .map((param) => {
-              const lines = splitByLength(`${param.name}: ${param.value}`, 50);
-              return escapeForMermaid(lines.join("<br>"));
-            })
-            .join("<br>")
-        : escapeForMermaid(
-            splitByLength(entry.requestPostData.text, 50).join("<br>")
-          );
+  try {
+    if (!addRequestPostData || !entry?.requestPostData) {
+      return "";
     }
-    return `note over ${entry.domain}: [postData] ${entry.requestPostData.mimeType}<br>${postDataString}\n`;
+
+    //console.log(entry.requestPostData);
+
+    let postDataString = "";
+    const mimeType = entry.requestPostData.mimeType || "unknown";
+
+    if (entry.requestPostData.params) {
+      postDataString = entry.requestPostData.params
+        .map(param => {
+          try {
+            const name = param?.name || '';
+            const value = param?.value || '';
+            
+            // 問題のある文字パターンをチェック
+            const hasProblematicChars = value.match(/[\\=&]/);
+            
+            if (hasProblematicChars) {
+              // URL エンコードされた値の場合は固定テキストで置換
+              return `${name}: [URL-encoded value]`;
+            }
+            
+            const escapedValue = escapeForMermaid(value);
+
+            if (truncatePostData) {
+              return `${truncateText(name, truncatePostDataLength)}: ${truncateText(escapedValue, truncatePostDataLength)}`;
+            }
+            return `${name}: ${escapedValue}`;
+          } catch (e) {
+            console.error('Error processing POST parameter:', e);
+            return '[Invalid Parameter]';
+          }
+        })
+        .filter(param => param)
+        .join('<br>');
+    } else if (entry.requestPostData.text) {
+      if (mimeType.includes('json') || entry.requestPostData.text.trim().startsWith('{') || entry.requestPostData.text.trim().startsWith('\\{\\')) {
+        postDataString = '[Complex JSON Data]';
+      } else if (mimeType.includes('text/plain')) {
+        const hasProblematicChars = entry.requestPostData.text.match(/[\\=&]/);
+        
+        if (hasProblematicChars) {
+          postDataString = '[URL-encoded data]';
+        } else {
+          postDataString = escapeForMermaid(entry.requestPostData.text);
+        }
+      }else {
+        const text = entry.requestPostData.text;
+        if (truncatePostData) {
+          postDataString = truncateText(escapeForMermaid(text), truncatePostDataLength);
+        } else {
+          postDataString = escapeForMermaid(text);
+        }
+      }
+    }
+
+    // MIMEタイプは常に表示し、パラメータがある場合のみ改行を追加
+    return `note over ${escapeForMermaid(entry.domain)}: [postData] ${mimeType}${postDataString ? '<br>' + postDataString : ''}\n`;
+
+  } catch (error) {
+    console.error('Error in generateMermaidPostData:', error);
+    return `note over ${escapeForMermaid(entry.domain)}: [Error processing POST data]\n`;
   }
-  return "";
+}
+
+export function escapeForMermaid(str) {
+  if (!str) return "";
+
+  if (str.includes('&amp;')) {
+    return str;
+  }
+  
+  return str
+  .replace(/\\/g, '') 
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/:/g, '&#58;')
+    .replace(/\{/g, '&#123;')
+    .replace(/\}/g, '&#125;')
+    .replace(/\|/g, '&#124;')
+    .replace(/\n/g, '<br>')
+    .replace(/@/g, '&#64;')
+    .replace(/%/g, '&#37;')
+    .replace(/&(?![#a-zA-Z0-9]+;)/g, '&amp;');
 }
 
 export function generateMermaidRequestCookies(

@@ -109,6 +109,10 @@ export function formatTime(time) {
 }
 
 export function formatBytes(bytes) {
+  // undefinedやNaNのチェックを追加
+  if (bytes === undefined || bytes === null || isNaN(bytes) || bytes === -1) {
+    return "-";
+  }
   if (bytes === 0) return "0 B";
 
   const units = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
@@ -118,6 +122,7 @@ export function formatBytes(bytes) {
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   // toFixedを必ず適用して、小数点以下1桁を表示
   const value = (bytes / Math.pow(1024, i)).toFixed(1);
+  // console.log('bytes:'+bytes+" / " + sign < 0 ? "-" + value + " " + units[i] : value + " " + units[i])
 
   return sign < 0 ? "-" + value + " " + units[i] : value + " " + units[i];
 }
