@@ -202,11 +202,18 @@ export function isResponseCached(ageInSeconds, parsedCacheControl) {
 }
 
 export function getCommunicationType(entry) {
-  // WebSocketの判定を最初に行う
+  //console.log(entry);
   if (entry._webSocketMessages) {
     return "WS";
   }
 
+  if (entry.request?.url && (
+    entry.request.url.endsWith('/favicon.ico') || 
+    entry.request.url.toLowerCase().includes('favicon.ico')
+  )) {
+    return "Other";
+  }
+  
   const contentType = entry.response.content.mimeType;
   if (!contentType) {
     return "Other";
@@ -214,12 +221,25 @@ export function getCommunicationType(entry) {
 
   if (
     contentType.includes("application/xml") ||
-    contentType.includes("text/xml")
+    contentType.includes("text/xml") ||
+    contentType.includes("application/soap+xml") ||
+    contentType.includes("application/xhtml+xml") ||
+    contentType.includes("application/atom+xml") ||
+    contentType.includes("application/rss+xml") ||
+    contentType.includes("application/vnd.google-earth.kml+xml")
   ) {
     return "Fetch/XHR";
   }
 
-  // XMLベースのドキュメントタイプの判定
+  if (
+    contentType.includes("image/svg+xml") ||
+    contentType.includes("image/svg") ||
+    (entry.request?.url && entry.request.url.toLowerCase().endsWith('.svg'))
+  ) {
+    return "Img";
+  }
+  
+  // XMLbase Documents
   if (
     contentType.includes("html") ||
     contentType.includes("xhtml") ||
@@ -228,12 +248,82 @@ export function getCommunicationType(entry) {
     return "Doc";
   }
 
-  // マニフェストファイルの判定
+  // Manifest file
   if (contentType.includes("manifest")) {
     return "Manifest";
   }
 
-  // その他のタイプの判定
+  if (
+    contentType.includes("manifest") ||
+    contentType.includes("application/manifest+json") ||
+    contentType.includes("text/cache-manifest")
+  ) {
+    return "Manifest";
+  }
+
+  if (
+    contentType.includes("json") ||
+    contentType.includes("application/ld+json") ||
+    contentType.includes("application/schema+json") ||
+    contentType.includes("application/geo+json")
+  ) {
+    return "Fetch/XHR";
+  }
+
+  if (
+    contentType.includes("css") ||
+    contentType.includes("text/css") ||
+    contentType.includes("style")
+  ) {
+    return "CSS";
+  }
+
+  if (
+    contentType.includes("javascript") ||
+    contentType.includes("application/x-javascript") ||
+    contentType.includes("application/ecmascript") ||
+    contentType.includes("text/javascript") ||
+    contentType.includes("module") ||
+    entry.request.url.toLowerCase().endsWith('.js') ||
+    entry.request.url.toLowerCase().endsWith('.mjs')
+  ) {
+    return "JS";
+  }
+
+  if (
+    contentType.includes("font") ||
+    contentType.includes("application/x-font") ||
+    contentType.includes("application/font") ||
+    contentType.includes("font/ttf") ||
+    contentType.includes("font/otf") ||
+    contentType.includes("font/woff") ||
+    contentType.includes("font/woff2") ||
+    entry.request.url.toLowerCase().match(/\.(ttf|otf|woff|woff2|eot)$/)
+  ) {
+    return "Font";
+  }
+
+  if (
+    contentType.includes("audio") ||
+    contentType.includes("video") ||
+    contentType.includes("application/ogg") ||
+    contentType.includes("application/x-mpegURL") ||
+    contentType.includes("application/vnd.apple.mpegURL") ||
+    contentType.includes("application/dash+xml") ||
+    entry.request.url.toLowerCase().match(/\.(mp3|mp4|wav|ogg|m4a|m4v|webm|oga|ogv)$/)
+    ) {
+    return "Media";
+  }
+
+  if (
+    contentType.includes("wasm") ||
+    contentType.includes("application/wasm") ||
+    (entry.request?.url && entry.request.url.toLowerCase().endsWith('.wasm'))
+  ) {
+    return "Wasm";
+  }
+
+  // Other type
   if (contentType.includes("json")) {
     return "Fetch/XHR";
   } else if (contentType.includes("css")) {

@@ -78,6 +78,7 @@
       <nav
         class="md:ml-auto flex flex-wrap items-center space-x-2 text-base justify-center"
       >
+      <div id="buildTimestamp" class="text-xs">v0.1.2 (Build: 20241120142751 UTC)</div>
         {#if isLive}
           <Badge large color="indigo" class="ml-4">Cloud Edition</Badge>
         {/if}

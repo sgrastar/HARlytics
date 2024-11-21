@@ -298,7 +298,8 @@
                     <th class="payloadName name-col">Name</th>
                     <th class="payloadValue value-col">Value</th>
                   </tr>
-
+                  
+                  <!-- #TODO postDataの値が2回表示されることがある -->
                   {#each postDataParams as param}
                     <tr>
                       <td class="payloadName name-col">{param.name}</td>

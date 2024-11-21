@@ -1,30 +1,36 @@
 import fs from "fs";
 import path from "path";
 
-const sourceFile = path.join(process.cwd(), "./src/routes/+page.svelte");
+// package.jsonとソースファイルのパスを設定
+const packageFile = path.join(process.cwd(), "./package.json");
+const layoutFile = path.join(process.cwd(), "./src/routes/+layout.svelte");
 
+// package.jsonを読み込んでバージョンを取得
+const packageJson = JSON.parse(fs.readFileSync(packageFile, 'utf-8'));
+const version = packageJson.version;
+
+// UTCタイムスタンプを生成
 const now = new Date();
-const timestamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(
+const timestamp = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(
   2,
-  "0"
-)}${String(now.getDate()).padStart(2, "0")}${String(now.getHours()).padStart(
+  "0")}${String(now.getUTCDate()).padStart(2, "0")}${String(now.getUTCHours()).padStart(
   2,
-  "0"
-)}${String(now.getMinutes()).padStart(2, "0")}${String(
-  now.getSeconds()
+  "0")}${String(now.getUTCMinutes()).padStart(2, "0")}${String(
+  now.getUTCSeconds()
 ).padStart(2, "0")}`;
 
-fs.readFile(sourceFile, "utf-8", (err, content) => {
+// レイアウトファイルを読み込んで更新
+fs.readFile(layoutFile, "utf-8", (err, content) => {
   if (err) throw err;
 
   const regex = /<div id="buildTimestamp">(.*?)<\/div>/;
   const updatedContent = content.replace(
     regex,
-    `<div id="buildTimestamp">Build ver.${timestamp}</div>`
+    `<div id="buildTimestamp" class="text-xs">v${version} (Build: ${timestamp} UTC)</div>`
   );
 
-  fs.writeFile(sourceFile, updatedContent, "utf-8", (err) => {
+  fs.writeFile(layoutFile, updatedContent, "utf-8", (err) => {
     if (err) throw err;
-    console.log(`Build timestamp added to ${sourceFile}`);
+    console.log(`Version ${version} and UTC build timestamp added to ${layoutFile}`);
   });
 });
