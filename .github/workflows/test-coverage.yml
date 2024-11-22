@@ -35,16 +35,16 @@ jobs:
           file-coverage-mode: 'all'
 
       - name: Build extension
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
         run: pnpm run build
         
       - name: Create extension archive
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
         run: |
           node chromePackage.js
           
       - name: Upload extension artifact
-        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
         uses: actions/upload-artifact@v4
         with:
           name: extension-package
