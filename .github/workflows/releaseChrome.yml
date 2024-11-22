@@ -17,9 +17,10 @@ jobs:
       (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'pull_request')
 
     steps:
-      - name: Download extension artifact
-        uses: actions/download-artifact@v4
+      - uses: dawidd6/action-download-artifact@v3
         with:
+          workflow: Test Coverage
+          workflow_conclusion: success
           name: extension-package
 
       - name: Submit to Chrome Web Store

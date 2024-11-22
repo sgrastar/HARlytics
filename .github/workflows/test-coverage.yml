@@ -49,4 +49,3 @@ jobs:
         with:
           name: extension-package
           path: extension.zip
-          retention-days: 1
