@@ -1,14 +1,26 @@
-const zipFolder = require("zip-folder");
-let folderName = "./build";
+import archiver from 'archiver';
+import { createWriteStream } from 'fs';
+import { resolve } from 'path';
 
-let zipName = "extension.zip";
+const folderName = './build';
+const zipName = 'extension.zip';
 
-zipFolder(folderName, zipName, function (err) {
-  if (err) {
-    console.log("oh no!", err);
-  } else {
-    console.log(
-      `Successfully zipped the ${folderName} directory and store as ${zipName}`
-    );
-  }
+const output = createWriteStream(resolve(zipName));
+const archive = archiver('zip', {
+    zlib: { level: 9 } // Maximum compression
 });
+
+archive.pipe(output);
+
+output.on('close', () => {
+    console.log(`Successfully zipped the ${folderName} directory and stored as ${zipName}`);
+    console.log(`Total bytes: ${archive.pointer()}`);
+});
+
+archive.on('error', (err) => {
+    console.error('Error creating zip file:', err);
+    process.exit(1);
+});
+
+archive.directory(folderName, false);
+await archive.finalize();
