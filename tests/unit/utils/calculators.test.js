@@ -97,6 +97,9 @@ describe("isResponseCached", () => {
 
 describe("getCommunicationType", () => {
   const createEntry = (mimeType, webSocketMessages = undefined) => ({
+    request:{
+      url:'https://example.com/'
+    },
     response: {
       content: { mimeType },
     },
@@ -108,9 +111,9 @@ describe("getCommunicationType", () => {
       "Fetch/XHR"
     );
     expect(getCommunicationType(createEntry("application/xml"))).toBe(
-      "Fetch/XHR"
+      "Doc"
     );
-    expect(getCommunicationType(createEntry("text/xml"))).toBe("Fetch/XHR");
+    expect(getCommunicationType(createEntry("text/xml"))).toBe("Doc");
   });
 
   it("identifies document types", () => {

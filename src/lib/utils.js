@@ -219,17 +219,17 @@ export function getCommunicationType(entry) {
     return "Other";
   }
 
-  if (
-    contentType.includes("application/xml") ||
-    contentType.includes("text/xml") ||
-    contentType.includes("application/soap+xml") ||
-    contentType.includes("application/xhtml+xml") ||
-    contentType.includes("application/atom+xml") ||
-    contentType.includes("application/rss+xml") ||
-    contentType.includes("application/vnd.google-earth.kml+xml")
-  ) {
-    return "Fetch/XHR";
-  }
+  // if (
+  //   contentType.includes("application/xml") ||
+  //   contentType.includes("text/xml") ||
+  //   contentType.includes("application/soap+xml") ||
+  //   contentType.includes("application/xhtml+xml") ||
+  //   contentType.includes("application/atom+xml") ||
+  //   contentType.includes("application/rss+xml") ||
+  //   contentType.includes("application/vnd.google-earth.kml+xml")
+  // ) {
+  //   return "Fetch/XHR";
+  // }
 
   if (
     contentType.includes("image/svg+xml") ||

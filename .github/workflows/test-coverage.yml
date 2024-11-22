@@ -2,9 +2,9 @@ name: Test Coverage
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, main ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, main ]
 
 jobs:
   test:
@@ -33,4 +33,20 @@ jobs:
         uses: davelosert/vitest-coverage-report-action@v2.7.0
         with:
           file-coverage-mode: 'all'
-            
+
+      - name: Build extension
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+        run: pnpm run build
+        
+      - name: Create extension archive
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+        run: |
+          node chromePackage.js
+          
+      - name: Upload extension artifact
+        if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-package
+          path: extension.zip
+          retention-days: 1
