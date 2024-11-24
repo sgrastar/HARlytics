@@ -72,6 +72,7 @@
     TableBodyRow,
     TableHead,
     TableHeadCell,
+    Tooltip
   } from "flowbite-svelte";
   import {
     ChevronDownOutline,
@@ -83,6 +84,7 @@
     WindowOutline,
     BarsFromLeftOutline,
     FilterSolid,
+    QuestionCircleSolid
   } from "flowbite-svelte-icons";
   import mermaid from "mermaid";
 
@@ -850,52 +852,70 @@
 
   // マウスが離れてからドロップダウンを閉じるまでの遅延時間（ミリ秒）
   const CLOSE_DELAY = 200;
+  let activeDropdown = null;
 
   function handleMouseEnter(type) {
-    clearTimeout(methodTimer);
-    clearTimeout(statusTimer);
-    clearTimeout(typeTimer);
+  // 前のドロップダウンを閉じる
+  if (activeDropdown && activeDropdown !== type) {
+    handleMouseLeave(activeDropdown);
+  }
+  
+  clearTimeout(methodTimer);
+  clearTimeout(statusTimer);
+  clearTimeout(typeTimer);
 
+  activeDropdown = type;
+  
+  switch (type) {
+    case "method":
+      methodDropdownOpen = true;
+      statusDropdownOpen = false;
+      typeDropdownOpen = false;
+      break;
+    case "status":
+      methodDropdownOpen = false;
+      statusDropdownOpen = true;
+      typeDropdownOpen = false;
+      break;
+    case "type":
+      methodDropdownOpen = false;
+      statusDropdownOpen = false;
+      typeDropdownOpen = true;
+      break;
+  }
+}
+
+function handleMouseLeave(type) {
+  const timer = setTimeout(() => {
+    if (activeDropdown === type) {
+      activeDropdown = null;
+    }
+    
     switch (type) {
       case "method":
-        methodDropdownOpen = true;
+        methodDropdownOpen = false;
         break;
       case "status":
-        statusDropdownOpen = true;
+        statusDropdownOpen = false;
         break;
       case "type":
-        typeDropdownOpen = true;
+        typeDropdownOpen = false;
         break;
     }
-  }
+  }, CLOSE_DELAY);
 
-  function handleMouseLeave(type) {
-    const timer = setTimeout(() => {
-      switch (type) {
-        case "method":
-          methodDropdownOpen = false;
-          break;
-        case "status":
-          statusDropdownOpen = false;
-          break;
-        case "type":
-          typeDropdownOpen = false;
-          break;
-      }
-    }, CLOSE_DELAY);
-
-    switch (type) {
-      case "method":
-        methodTimer = timer;
-        break;
-      case "status":
-        statusTimer = timer;
-        break;
-      case "type":
-        typeTimer = timer;
-        break;
-    }
+  switch (type) {
+    case "method":
+      methodTimer = timer;
+      break;
+    case "status":
+      statusTimer = timer;
+      break;
+    case "type":  
+      typeTimer = timer;
+      break;
   }
+}
 
   function handleStatusRangeClick(statusRange) {
     if (selectedStatusRanges.includes(statusRange)) {
@@ -1538,8 +1558,18 @@
             </div>
           </div>
           <div class="col-span-8 p-4">
-            <h3 class="text-lg font-semibold">Sequence Preview (Mermaid)</h3>
-            <!--<textarea on:input={textFieldUpdated} bind:value={mermaidCode} rows="10" style="width: 50em;"></textarea>-->
+            <div class="flex items-center gap-2">
+              <h3 class="text-lg font-semibold">Sequence Preview (Mermaid)</h3>
+              <QuestionCircleSolid id="placement-4" size="sm" />
+            </div>
+            <Tooltip triggeredBy="#placement-4" placement="right">
+              Due to limitations of Marmaid and PlantUML,<br>the following values ​​may be escaped or displayed in<br>a simplified form without displaying their contents.<br>
+              <ul>
+                <li>- postData values</li>
+                <li>- JSON values</li>
+                <li>- URL encoded values</li>
+              </ul>
+            </Tooltip>
             <div id="graph" bind:this={marmaidDivElem}></div>
           </div>
           <div class="col-span-2 bg-gray-100 p-4 rounded">
