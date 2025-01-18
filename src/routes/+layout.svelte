@@ -1,13 +1,18 @@
 <script>
   import "../app.css";
   import { onMount } from "svelte";
-  import { Badge, Button, Modal } from "flowbite-svelte";
+  import { Badge, Button, Modal, DarkMode  } from "flowbite-svelte";
+  import {
+    GithubSolid
+  } from "flowbite-svelte-icons";
 
   let isLive = false;
   let scrollingModal = false;
   let licenseText = "";
   let mounted = false;
   let fadeOut = false;
+
+  let btnClass = 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-xl p-2';
 
   onMount(async () => {
     if (typeof window !== "undefined") {
@@ -80,6 +85,7 @@
       <nav
         class="md:ml-auto flex flex-wrap items-center space-x-2 text-base justify-center"
       >
+      <!-- <DarkMode {btnClass} /> -->
       <div id="buildTimestamp" class="text-xs">v0.1.4 (Build: 20241122145722 UTC)</div>
         {#if isLive}
           <Badge large color="indigo" class="ml-4">Cloud Edition</Badge>
@@ -91,6 +97,9 @@
           on:click={() => (scrollingModal = true)}
           autoclose>License</Button
         >
+        <a href="https://github.com/sgrastar/HARlytics" target="_blank">
+          <GithubSolid />
+        </a>
       </nav>
     </div>
   </header>

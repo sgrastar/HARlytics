@@ -113,7 +113,7 @@
 
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
-  class="waterfall-container"
+  class="waterfall-container bg-gray-200 dark:bg-gray-700"
   bind:this={container}
   on:mousemove={handleMouseMove}
   on:mouseleave={handleMouseLeave}
@@ -246,7 +246,7 @@
     position: relative;
     width: 100%;
     height: 1rem;
-    background-color: #f3f4f6;
+    /* background-color: #f3f4f6; */
     border-radius: 0.25rem;
     --tooltip-x: 0px;
     /* overflow: hidden;  はみ出しを防ぐ */

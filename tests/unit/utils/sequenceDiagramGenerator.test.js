@@ -24,7 +24,25 @@ describe("Mermaid Sequence Diagram Generator", () => {
       const expected = "test&#58;value<br>new line";
       expect(escapeForMermaid(input)).toBe(expected);
     });
+
+  it("should escape semicolons and hash symbols", () => {
+    const input = "path;jsessionid=123#section";
+    const expected = "path&#59;jsessionid=123&#35;section";
+    expect(escapeForMermaid(input)).toBe(expected);
   });
+
+  it("should handle URL with jsessionid", () => {
+    const input = "https://example.com/path;jsessionid=ABC123";
+    const expected = "https&#58;//example.com/path&#59;jsessionid=ABC123";
+    expect(escapeForMermaid(input)).toBe(expected);
+  });
+
+  it("should handle multiple special characters", () => {
+    const input = "path;id=123#section@domain:8080";
+    const expected = "path&#59;id=123&#35;section&#64;domain&#58;8080";
+    expect(escapeForMermaid(input)).toBe(expected);
+  });
+});
 
   describe("generateMermaidHeaderAndTitle", () => {
     it("should generate Mermaid header without options", () => {

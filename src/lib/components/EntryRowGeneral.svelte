@@ -1,5 +1,5 @@
 <script>
-  import WaterfallBar from "$lib/WaterfallBar.svelte";
+  import WaterfallBar from "$lib/components/WaterfallBar.svelte";
 
   export let entry;
   export let entries = [];
@@ -38,7 +38,7 @@
 <div
   class="table-row {hasPageInfo ? 'indent' : ''} entry-row {isIndented
     ? 'page-entry'
-    : ''}"
+    : ''}  text-gray-900 dark:text-gray-300 border-b border-solid border-gray-300 dark:border-gray-700"
   on:click={() => toggleEntryDetails(entry)}
   on:keydown={(e) => handleKeyDown(e, entry)}
   role="button"
@@ -651,9 +651,14 @@
 
   .table-row {
     display: flex;
-    border-bottom: 1px solid #eee;
+    /* border-bottom: 1px solid #eee; */
     padding: 0 0.5rem;
   }
+
+  :global(.dark .table-row) {
+    /* border-bottom: 1px solid #333; */
+  }
+
 
   .header-cell,
   .cell {

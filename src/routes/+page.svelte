@@ -26,9 +26,10 @@
     httpMethods,
   } from "$lib/constants";
 
-  import EntryDetailTable from "$lib/EntryDetailTable.svelte";
+  import EntryDetailTable from "$lib/components/EntryDetailTable.svelte";
 
   import {
+    truncateAndEscapeMarmaid,
     generateMermaidHeaderAndTitle,
     generateMermaidQueryString,
     generateMermaidPostData,
@@ -37,6 +38,7 @@
     generateMermaidResponseCookies,
   } from "$lib/sequenceDiagramGenerator";
   import {
+    //truncateAndEscapePlantUML,
     generatePlantUMLHeaderAndTitle,
     generatePlantUMLQueryString,
     generatePlantUMLPostData,
@@ -93,6 +95,7 @@
   let logFilename = "";
   let logVersion = "";
   let logCreator = "";
+  let logComment = "";
   let hasPagesInfo = false;
   let hasInitiatorInfo = false;
   let hasCookieData = false;
@@ -184,6 +187,7 @@
     // Initialize
     logVersion = "";
     logCreator = "";
+    logComment = "";
     hasPagesInfo = false;
     hasInitiatorInfo = false;
     hasCookieData = false;
@@ -230,8 +234,8 @@
           "(" +
           harContent.log.creator.version +
           ")";
-
-        pages ? (hasPagesInfo = true) : (hasPagesInfo = false);
+        logComment = harContent.log.comment || "";
+        hasPagesInfo = pages.length > 0;
         harContent.log.entries[0]._initiator
           ? (hasInitiatorInfo = true)
           : (hasInitiatorInfo = false);
@@ -1048,7 +1052,9 @@ function handleMouseLeave(type) {
     );
 
     filteredEntries.forEach((entry) => {
-      const truncatedPath = truncateText(entry.path, 70);
+      //const truncatedPath = truncateAndEscapeMarmaid(entry.path, 70);
+      const truncatedPath = truncateText(entry.path, 70).replace(/#/g, "#35;").replace(/;/g, "#59;");
+      //console.log(truncatedPath);
       const requestArrow = `[${entry.method}] ${truncatedPath}`;
       const responseArrow = `${entry.status} - ${entry.responseMimeType}`;
 
@@ -1172,8 +1178,9 @@ function handleMouseLeave(type) {
         {/if}
 
         <!-- TODO オンラインバージョンでサンプルharファイルの用意&読み込み機能         -->
-        <div class="mb-2">
+        <div class="mb-2 text-gray-900 dark:text-gray-300">
           <span>Log version : {logVersion} / {logCreator}</span>
+          <p>{logComment}</p>
         </div>
         <div class="mb-2">
           {#if hasPagesInfo == true}
@@ -1199,7 +1206,7 @@ function handleMouseLeave(type) {
         </div>
       </div>
 
-      <div class="col-span-9 bg-gray-200 p-2 rounded">
+      <div class="col-span-9  p-2 rounded bg-gray-0 dark:bg-gray-700">
         <div class="grid grid-cols-12 mb-2 flex items-center">
           <div class="col-span-10" id="domainFilterDiv">
             <Label for="domainFilter">Filter by Domain:</Label>
@@ -1218,7 +1225,6 @@ function handleMouseLeave(type) {
           </div>
         </div>
 
-        <!-- BUG ボタンHover時の表示安定化  -->
         <div class="grid grid-cols-12 flex items-end">
           <div class="col-span-6">
             <Label for="urlFilter">URL Filters (any match):</Label>
@@ -1858,8 +1864,6 @@ function handleMouseLeave(type) {
               </div>
             </div>
           {/if}
-
-          <div id="buildTimestamp">Build ver.20241120162236</div>
         </div>
       </TabItem>
     </Tabs>
@@ -1877,9 +1881,9 @@ function handleMouseLeave(type) {
     height: 100%;
   }
 
-  :global(#domainFilterDiv div[role="listbox"]) {
+  /* :global(#domainFilterDiv div[role="listbox"]) {
     background: #fff;
-  }
+  } */
 
   :global(#domainFilterDiv div[role="listbox"] span) {
     height: 4.2em;

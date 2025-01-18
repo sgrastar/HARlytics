@@ -26,8 +26,15 @@ export default defineConfig({
     environment: "jsdom",
     include: ["tests/**/*.{test,spec}.{js,ts}"],
     // Svelteコンポーネントのテストに必要な設定
+    // deps: {
+    //   inline: ["mermaid"],
+    // },
     deps: {
-      inline: ["mermaid"],
+      optimizer: {
+        web: {
+          include: ["mermaid"]
+        }
+      }
     },
     coverage: {
       exclude: [
@@ -36,6 +43,8 @@ export default defineConfig({
         "**/tests/**",
         "**.config.js",
         "**/estimateConnectionSpeed.js",
+        "chromePackage.js",
+        "vite.config.js",
         "src/routes/+layout.js",
         "src/routes/+page.js",
         "build.js",

@@ -4,7 +4,7 @@ import { truncateText, splitByLength } from "$lib/utils";
 //   return str.replace(/:/g, "&#58;").replace(/\n/g, "<br>");
 // }
 
-export function truncateAndEscape(str, length) {
+export function truncateAndEscapeMarmaid(str, length) {
   if (!str) return "";
   return escapeForMermaid(truncateText(str, length));
 }
@@ -84,10 +84,10 @@ export function generateMermaidQueryString(
           value = "[Complex Value]";
         } else if (truncateQueryStrings) {
           // 通常の切り詰め処理
-          return `${truncateAndEscape(
+          return `${truncateAndEscapeMarmaid(
             name,
             truncateQueryStringsLength
-          )}: ${truncateAndEscape(value, truncateQueryStringsLength)}`;
+          )}: ${truncateAndEscapeMarmaid(value, truncateQueryStringsLength)}`;
         }
 
         // 安全なエスケープ処理
@@ -220,17 +220,24 @@ export function escapeForMermaid(str) {
   }
   
   return str
+  .replace(/#/g, "&#35;")
+  //.replace(/;/g, '&#59;')
+  .replace(/:/g, '&#58;')
+  
+  
+  //.replace(/;/g, "&#59;")
+  .replace(/(?<!&#\d{2,3});/g, '&#59;')
   .replace(/\\/g, '') 
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/:/g, '&#58;')
+    
     .replace(/\{/g, '&#123;')
     .replace(/\}/g, '&#125;')
     .replace(/\|/g, '&#124;')
     .replace(/\n/g, '<br>')
     .replace(/@/g, '&#64;')
-    .replace(/%/g, '&#37;')
-    .replace(/&(?![#a-zA-Z0-9]+;)/g, '&amp;');
+    .replace(/%/g, '&#37;');
+    //.replace(/&(?![#a-zA-Z0-9]+;)/g, '&amp;');
 }
 
 export function generateMermaidRequestCookies(
@@ -246,10 +253,10 @@ export function generateMermaidRequestCookies(
       cookieString = entry.requestCookies
         .map(
           (cookie) =>
-            `${truncateAndEscape(
+            `${truncateAndEscapeMarmaid(
               cookie.name,
               truncateReqCookieLength
-            )}: ${truncateAndEscape(cookie.value, truncateReqCookieLength)}`
+            )}: ${truncateAndEscapeMarmaid(cookie.value, truncateReqCookieLength)}`
         )
         .join("<br>");
     } else {
@@ -297,10 +304,10 @@ export function generateMermaidResponseCookies(
       cookieString = entry.responseCookies
         .map(
           (cookie) =>
-            `${truncateAndEscape(
+            `${truncateAndEscapeMarmaid(
               cookie.name,
               truncateResCookieLength
-            )}: ${truncateAndEscape(cookie.value, truncateResCookieLength)}`
+            )}: ${truncateAndEscapeMarmaid(cookie.value, truncateResCookieLength)}`
         )
         .join("<br>");
     } else {

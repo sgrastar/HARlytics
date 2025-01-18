@@ -14,7 +14,7 @@
   import { Button, Radio, Tooltip } from "flowbite-svelte";
   import { FileCsvOutline, QuestionCircleSolid } from "flowbite-svelte-icons";
 
-  import EntryRow from "$lib/EntryRowGeneral.svelte";
+  import EntryRow from "$lib/components/EntryRowGeneral.svelte";
 
   export let entries = [];
   export let pages = [];
@@ -288,7 +288,7 @@
 
 <div class="request-detail-table">
   {#if entries.length === 0}
-    <p style="text-align: center; line-height: 3em;">
+    <p style="text-align: center; line-height: 3em;" class=" text-gray-900 dark:text-gray-300">
       No data to display.<br />Please load the file or check your filter
       settings.
     </p>
