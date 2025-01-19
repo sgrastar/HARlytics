@@ -37,10 +37,10 @@ fs.readFile(manifestFile, "utf-8", (err, content) => {
 fs.readFile(layoutFile, "utf-8", (err, content) => {
   if (err) throw err;
   
-  const regex = /\<div class="version"\>(.*?)\<\/div\>/;
+  const regex = /\<div id="buildTimestamp" class="text-xs"\>(.*?)\<\/div\>/;
   const updatedContent = content.replace(
     regex,
-    `<div class="version">v${version} (Build: ${timestamp} UTC)</div>`
+    `<div id="buildTimestamp" class="text-xs">v${version} (Build: ${timestamp} UTC)</div>`
   );
   
   fs.writeFile(layoutFile, updatedContent, "utf-8", (err) => {

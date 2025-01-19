@@ -24,6 +24,36 @@ export function generateMermaidHeaderAndTitle(
   return mermaidCode;
 }
 
+export function generateMermaidRequest(
+  entry,
+  addLifeline
+) {
+  let line;
+  const truncatedPath = truncateText(entry.path, 70);
+  const processedPath = truncatedPath.split(/([#;])/).map((part, index, array) => {
+    if (part === '#') {
+      return '#35;';
+    }
+    if (part === ';') {
+      const nextPart = array[index + 1] || '';
+      if (nextPart.includes('=')) {
+        return '#59;';
+      }
+      return '#59;';
+    }
+    return part;
+  }).join('');
+
+  const requestArrow = `[${entry.method}] ${processedPath}`;
+
+  line = `Browser->>${entry.domain}: ${requestArrow}\n`;
+  if (addLifeline) {
+    line += `  activate ${entry.domain}\n`;
+  }
+  return line;
+  
+}
+
 export function generateMermaidQueryString(
   entry,
   addRequestQueryString,
@@ -274,7 +304,7 @@ export function generateMermaidRequestCookies(
 
 export function generateMermaidResponse(entry, addLifeline) {
   let responseCode = "";
-  const responseArrow = `${entry.status} - ${entry.responseMimeType}`;
+  const responseArrow = `${entry.status} - ${entry.responseMimeType.replace(/;/g, "#59;")}`;
 
   if (entry.status >= 300 && entry.status <= 399) {
     responseCode += `${entry.domain} -->> Browser: ${responseArrow}\n`;
@@ -344,6 +374,21 @@ export function generatePlantUMLHeaderAndTitle(
     plantUMLCode += "autonumber\n";
   }
   return plantUMLCode;
+}
+
+export function generatePlantUMLRequest(
+  entry,
+  addLifeline
+) {
+  let line;
+  const truncatedPath = truncateText(entry.path, 70);
+  const requestArrow = `[${entry.method}] ${truncatedPath}`;
+
+  line = `Browser -> "${entry.domain}": ${requestArrow}\n`;
+  if (addLifeline) {
+    line += `activate "${entry.domain}"\n`;
+  }
+  return line;
 }
 
 export function generatePlantUMLQueryString(

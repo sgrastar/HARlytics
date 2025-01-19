@@ -31,6 +31,7 @@
   import {
     truncateAndEscapeMarmaid,
     generateMermaidHeaderAndTitle,
+    generateMermaidRequest,
     generateMermaidQueryString,
     generateMermaidPostData,
     generateMermaidRequestCookies,
@@ -40,6 +41,7 @@
   import {
     //truncateAndEscapePlantUML,
     generatePlantUMLHeaderAndTitle,
+    generatePlantUMLRequest,
     generatePlantUMLQueryString,
     generatePlantUMLPostData,
     generatePlantUMLRequestCookies,
@@ -1052,16 +1054,21 @@ function handleMouseLeave(type) {
     );
 
     filteredEntries.forEach((entry) => {
-      //const truncatedPath = truncateAndEscapeMarmaid(entry.path, 70);
-      const truncatedPath = truncateText(entry.path, 70).replace(/#/g, "#35;").replace(/;/g, "#59;");
-      //console.log(truncatedPath);
-      const requestArrow = `[${entry.method}] ${truncatedPath}`;
-      const responseArrow = `${entry.status} - ${entry.responseMimeType}`;
+      // //const truncatedPath = truncateAndEscapeMarmaid(entry.path, 70);
+      // const truncatedPath = truncateText(entry.path, 70).replace(/#/g, "#35;").replace(/;/g, "#59;");
+      // //console.log(truncatedPath);
+      // const requestArrow = `[${entry.method}] ${truncatedPath}`;
+      // const responseArrow = `${entry.status} - ${entry.responseMimeType}`;
 
-      mermaidCode += `  Browser->>${entry.domain}: ${requestArrow}\n`;
-      if (addLifeline) {
-        mermaidCode += `  activate ${entry.domain}\n`;
-      }
+      // mermaidCode += `  Browser->>${entry.domain}: ${requestArrow}\n`;
+      // if (addLifeline) {
+      //   mermaidCode += `  activate ${entry.domain}\n`;
+      // }
+
+      mermaidCode += generateMermaidRequest(
+        entry,
+        addLifeline
+      );
 
       mermaidCode += generateMermaidQueryString(
         entry,
@@ -1105,13 +1112,15 @@ function handleMouseLeave(type) {
     );
 
     filteredEntries.forEach((entry) => {
-      const truncatedPath = truncateText(entry.path, 70);
-      const requestArrow = `[${entry.method}] ${truncatedPath}`;
+      // const truncatedPath = truncateText(entry.path, 70);
+      // const requestArrow = `[${entry.method}] ${truncatedPath}`;
 
-      plantUMLCode += `Browser -> "${entry.domain}": ${requestArrow}\n`;
-      if (addLifeline) {
-        plantUMLCode += `activate "${entry.domain}"\n`;
-      }
+      // plantUMLCode += `Browser -> "${entry.domain}": ${requestArrow}\n`;
+      // if (addLifeline) {
+      //   plantUMLCode += `activate "${entry.domain}"\n`;
+      // }
+
+      plantUMLCode += generatePlantUMLRequest(entry, addLifeline);
 
       plantUMLCode += generatePlantUMLQueryString(
         entry,

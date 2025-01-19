@@ -3,6 +3,7 @@ import {
   escapeForMermaid,
   truncateAndEscape,
   generateMermaidHeaderAndTitle,
+  generateMermaidRequest,
   generateMermaidQueryString,
   generateMermaidPostData,
   generateMermaidRequestCookies,
@@ -60,6 +61,76 @@ describe("Mermaid Sequence Diagram Generator", () => {
       const result = generateMermaidHeaderAndTitle(false, "", true);
       expect(result).toBe("sequenceDiagram\nautonumber\n");
     });
+  });
+
+  describe("generateMermaidRequest", () => {
+    const mockEntry1 = {
+      domain: "example.com",
+      path: "/path/to/page",
+      method: "GET",
+    };
+
+    const mockEntry2 = {
+      domain: "example.com",
+      path: "/path#heading",
+      method: "GET",
+    };
+    
+    const mockEntry3 = {
+      domain: "example.com",
+      path: "/path;jsessionid=ABC123",
+      method: "GET",
+    };
+
+    const mockEntry4 = {
+      domain: "example.com",
+      path: "/path;version=1;format=json",
+      method: "GET",
+    };
+
+    const mockEntry5 = {
+      domain: "example.com",
+      path: "/path;param=value#section",
+      method: "GET",
+    };
+
+    it("should should handle request", () => {
+      const result = generateMermaidRequest(mockEntry1, false);
+      const expected = "Browser->>example.com: [GET] /path/to/page\n";
+      expect(result).toBe(expected);
+    });
+
+    it("should should handle request with addLifeline", () => {
+      const result = generateMermaidRequest(mockEntry1, true);
+      const expected = "Browser->>example.com: [GET] /path/to/page\n  activate example.com\n";
+      expect(result).toBe(expected);
+    });
+
+    it("should should handle request with fragment", () => {
+      const result = generateMermaidRequest(mockEntry2, false);
+      const expected = "Browser->>example.com: [GET] /path#35;heading\n";
+      expect(result).toBe(expected);
+    });
+    
+    it("should should handle request with jsessionid", () => {
+      const result = generateMermaidRequest(mockEntry3, false);
+      const expected = "Browser->>example.com: [GET] /path#59;jsessionid=ABC123\n";
+      expect(result).toBe(expected);
+    });
+
+    it("should should handle request with multiple semicolons", () => {
+      const result = generateMermaidRequest(mockEntry4, false);
+      const expected = "Browser->>example.com: [GET] /path#59;version=1#59;format=json\n";
+      expect(result).toBe(expected);
+    });
+
+    it("should should handle request with combined patterns", () => {
+      const result = generateMermaidRequest(mockEntry5, false);
+      const expected = "Browser->>example.com: [GET] /path#59;param=value#35;section\n";
+      expect(result).toBe(expected);
+    });
+
+    
   });
 
   describe("generateMermaidResponse", () => {
