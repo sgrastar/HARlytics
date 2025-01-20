@@ -24,6 +24,7 @@
     statusRanges,
     communicationTypes,
     httpMethods,
+    messageElements,
   } from "$lib/constants";
 
   import EntryDetailTable from "$lib/components/EntryDetailTable.svelte";
@@ -113,6 +114,7 @@
   let filterTimer = null;
   let statusCounts = {};
   let typeCounts = {};
+  let messageTypeCounts = {};
   let uniqueDomains = [];
   let domainCounts = {};
   let selectedDomains = [];
@@ -159,6 +161,9 @@
   let allStatusSelected = true;
 
   let selectedTypes = [...communicationTypes];
+
+  let selectedMessageElements = [...messageElements];
+  let allMessageElementsSelected = true;
 
   //For Display Cookie
   let selectedValues = new Set();
@@ -470,6 +475,26 @@
           return acc;
         }, {});
 
+        messageTypeCounts = entries.reduce((acc, entry) => {
+        // Auth
+        if (entry.hasHeaderAuthData) {
+          acc["Authorization"] = (acc["Authorization"] || 0) + 1;
+        }
+        // Query
+        if (entry.requestQueryString && entry.requestQueryString.length > 0) {
+          acc["QueryParameter"] = (acc["QueryParameter"] || 0) + 1;
+        }
+        // PostData
+        if (entry.requestPostData) {
+          acc["PostData"] = (acc["PostData"] || 0) + 1;
+        }
+        // Cookie (set-cookieの数を使用)
+        if (entry.setCookieCount > 0) {
+          acc["Set-Cookie"] = (acc["Set-Cookie"] || 0) + 1;
+        }
+        return acc;
+      }, {});
+
         uniqueDomains = [...new Set(entries.map((entry) => entry.domain))];
 
         domainCounts = entries.reduce((acc, entry) => {
@@ -647,15 +672,13 @@
   $: isMethodFiltered = !allMethodsSelected;
   $: isStatusFiltered = !allStatusSelected;
   $: isTypeFiltered = !allSelected;
+  $: isMessageElementFiltered = !allMessageElementsSelected;
 
   // ボタンのスタイルを動的に設定
-  $: methodFilterStyle = isMethodFiltered
-    ? "primary" // オレンジ背景、白文字
-    : "light"; // 灰色背景、黒文字
-
+  $: methodFilterStyle = isMethodFiltered ? "primary" : "light";
   $: statusFilterStyle = isStatusFiltered ? "primary" : "light";
-
   $: typeFilterStyle = isTypeFiltered ? "primary" : "light";
+  $: messageElementFilterStyle = isMessageElementFiltered ? "primary" : "light";
 
   $: filteredEntries = entries.filter((entry) => {
     try {
@@ -679,6 +702,7 @@
 
       const matchesTypeFilter =
         selectedTypes.length === 0 ? false : selectedTypes.includes(entry.type);
+      
       const matchesStatusFilter = selectedStatusRanges.some(
         (range) =>
           (range.other &&
@@ -687,6 +711,23 @@
               isNaN(entry.status))) ||
           (entry.status >= range.min && entry.status <= range.max),
       );
+      console.log(selectedStatusRanges);
+
+      const matchesMessageElementFilter = selectedMessageElements.length === 0 ? false : selectedMessageElements.some(type => {
+        switch (type) {
+          case "Authorization":
+            return entry.hasHeaderAuthData;
+          case "QueryParameter":
+            return entry.requestQueryString && entry.requestQueryString.length > 0;
+          case "PostData":
+            return entry.requestPostData;
+          case "Set-Cookie":
+            return entry.setCookieCount > 0;
+          default:
+            return false;
+        }
+      });
+
       const matchesDomainFilter =
         selectedDomains.length === 0 || selectedDomains.includes(entry.domain);
       const matchesMethodFilter =
@@ -699,7 +740,8 @@
         matchesTypeFilter &&
         matchesStatusFilter &&
         matchesDomainFilter &&
-        matchesMethodFilter
+        matchesMethodFilter &&
+        matchesMessageElementFilter
       );
     } catch (e) {
       console.error("Error filtering entry:", e, entry);
@@ -850,11 +892,14 @@
   let methodDropdownOpen = false;
   let statusDropdownOpen = false;
   let typeDropdownOpen = false;
+  let messageElementDropdownOpen = false;
+  
 
   // ホバー状態とクリック状態を管理するタイマー
   let methodTimer;
   let statusTimer;
   let typeTimer;
+  let messageElementTimer;
 
   // マウスが離れてからドロップダウンを閉じるまでの遅延時間（ミリ秒）
   const CLOSE_DELAY = 200;
@@ -869,6 +914,7 @@
   clearTimeout(methodTimer);
   clearTimeout(statusTimer);
   clearTimeout(typeTimer);
+  clearTimeout(messageElementTimer);
 
   activeDropdown = type;
   
@@ -877,16 +923,25 @@
       methodDropdownOpen = true;
       statusDropdownOpen = false;
       typeDropdownOpen = false;
+      messageElementDropdownOpen = false;
       break;
     case "status":
       methodDropdownOpen = false;
       statusDropdownOpen = true;
       typeDropdownOpen = false;
+      messageElementDropdownOpen = false;
       break;
     case "type":
       methodDropdownOpen = false;
       statusDropdownOpen = false;
       typeDropdownOpen = true;
+      messageElementDropdownOpen = false;
+      break;
+    case "messageElement":
+      methodDropdownOpen = false;
+      statusDropdownOpen = false;
+      typeDropdownOpen = false;
+      messageElementDropdownOpen = true;
       break;
   }
 }
@@ -907,6 +962,9 @@ function handleMouseLeave(type) {
       case "type":
         typeDropdownOpen = false;
         break;
+      case "messageElement":
+        messageElementDropdownOpen = false;
+        break;
     }
   }, CLOSE_DELAY);
 
@@ -919,6 +977,9 @@ function handleMouseLeave(type) {
       break;
     case "type":  
       typeTimer = timer;
+      break;
+    case "messageElement":  
+      messageElementTimer = timer;
       break;
   }
 }
@@ -975,6 +1036,20 @@ function handleMouseLeave(type) {
     } else {
       selectedTypes = [];
     }
+  }
+
+  function handleMessageElementClick(type) {
+    if (selectedMessageElements.includes(type)) {
+      selectedMessageElements = selectedMessageElements.filter(t => t !== type);
+    } else {
+      selectedMessageElements = [...selectedMessageElements, type];
+    }
+    allMessageElementsSelected = selectedMessageElements.length === messageElements.length;
+  }
+
+  function handleAllMessageElementsChange(event) {
+    allMessageElementsSelected = event.target.checked;
+    selectedMessageElements = allMessageElementsSelected ? [...messageElements] : [];
   }
 
   function handleSelectAllDomains() {
@@ -1215,7 +1290,7 @@ function handleMouseLeave(type) {
         </div>
       </div>
 
-      <div class="col-span-9  p-2 rounded bg-gray-0 dark:bg-gray-700">
+      <div class="col-span-9 p-2 rounded bg-gray-0 dark:bg-gray-700">
         <div class="grid grid-cols-12 mb-2 flex items-center">
           <div class="col-span-10" id="domainFilterDiv">
             <Label for="domainFilter">Filter by Domain:</Label>
@@ -1235,7 +1310,7 @@ function handleMouseLeave(type) {
         </div>
 
         <div class="grid grid-cols-12 flex items-end">
-          <div class="col-span-6">
+          <div class="col-span-4">
             <Label for="urlFilter">URL Filters (any match):</Label>
             <Search
               type="text"
@@ -1404,6 +1479,63 @@ function handleMouseLeave(type) {
                 </div>
               </div>
             {/if}
+          </div>
+
+          <!-- svelte-ignore a11y-no-static-element-interactions -->
+          <div
+          class="relative inline-block col-span-2 ml-2"
+          on:mouseenter={() => handleMouseEnter("messageElement")}
+          on:mouseleave={() => handleMouseLeave("messageElement")}
+          >
+          <Button color={messageElementFilterStyle} size="sm" class="w-full">
+            {#if isMessageElementFiltered}
+              <FilterSolid class="w-3 h-3 mr-1" />
+            {/if}
+            Message Filter
+            <ChevronDownOutline class="w-3 h-3 ml-2" />
+          </Button>
+
+          {#if messageElementDropdownOpen}
+            <div class="absolute z-50 w-50">
+              <div class="bg-white rounded shadow dark:bg-gray-800 p-3 space-y-3 text-sm">
+                <div class="px-4 py-2">
+                  <div class="flex items-center">
+                    <Toggle
+                      class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600"
+                      size="small"
+                      bind:checked={allMessageElementsSelected}
+                      on:change={handleAllMessageElementsChange}
+                    >
+                      All
+                    </Toggle>
+                  </div>
+                </div>
+                <DropdownDivider />
+                {#each messageElements as type}
+                  <div class="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-600">
+                    <Checkbox
+                      checked={selectedMessageElements.includes(type)}
+                      on:click={() => handleMessageElementClick(type)}
+                    >
+                      {type} ({filteredEntries.filter(entry => {
+                        switch (type) {
+                          case "Authorization":
+                            return entry.hasHeaderAuthData;
+                          case "QueryParameter":
+                            return entry.requestQueryString && entry.requestQueryString.length > 0;
+                          case "PostData":
+                            return entry.requestPostData;
+                          case "Set-Cookie":
+                            //return entry.requestCookies.length > 0 || entry.responseCookies.length > 0;
+                            return entry.setCookieCount > 0;
+                        }
+                      }).length}/{messageTypeCounts[type] || 0})
+                    </Checkbox>
+                  </div>
+                {/each}
+              </div>
+            </div>
+          {/if}
           </div>
 
           <!-- </div> -->

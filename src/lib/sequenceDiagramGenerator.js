@@ -79,9 +79,9 @@ export function generateMermaidQueryString(
     const hasComplexQueries = entry.requestQueryString.some((q) => {
       const hasSpecialChars =
         q.value &&
-        (q.value.includes(";") ||
-          q.value.includes("@") ||
-          q.value.includes("%") ||
+        (//q.value.includes(";") ||
+          //q.value.includes("@") ||
+          //q.value.includes("%") ||
           q.value.includes("|") ||
           q.value.includes("{") ||
           q.value.includes("}"));
@@ -104,9 +104,9 @@ export function generateMermaidQueryString(
         if (
           hasComplexQueries &&
           value &&
-          (value.includes(";") ||
-            value.includes("@") ||
-            value.includes("%") ||
+          (//value.includes(";") ||
+            //value.includes("@") ||
+            //value.includes("%") ||
             value.includes("|") ||
             value.includes("{") ||
             value.includes("}"))
@@ -265,8 +265,8 @@ export function escapeForMermaid(str) {
     .replace(/\}/g, '&#125;')
     .replace(/\|/g, '&#124;')
     .replace(/\n/g, '<br>')
-    .replace(/@/g, '&#64;')
-    .replace(/%/g, '&#37;');
+    //.replace(/@/g, '&#64;')
+    //.replace(/%/g, '&#37;');
     //.replace(/&(?![#a-zA-Z0-9]+;)/g, '&amp;');
 }
 

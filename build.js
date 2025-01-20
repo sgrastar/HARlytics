@@ -10,13 +10,13 @@ const version = packageJson.version;
 
 // Create UTC Timestamp
 const now = new Date();
-const timestamp = `${now.getUTCFullYear()}${String(now.getUTCMonth() + 1).padStart(
+const timestamp = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(
   2,
   "0"
-)}${String(now.getUTCDate()).padStart(2, "0")}${String(now.getUTCHours()).padStart(
+)}-${String(now.getUTCDate()).padStart(2, "0")} ${String(now.getUTCHours()).padStart(
   2,
   "0"
-)}${String(now.getUTCMinutes()).padStart(2, "0")}${String(
+)}:${String(now.getUTCMinutes()).padStart(2, "0")}:${String(
   now.getUTCSeconds()
 ).padStart(2, "0")}`;
 
@@ -37,10 +37,10 @@ fs.readFile(manifestFile, "utf-8", (err, content) => {
 fs.readFile(layoutFile, "utf-8", (err, content) => {
   if (err) throw err;
   
-  const regex = /\<div id="buildTimestamp" class="text-xs"\>(.*?)\<\/div\>/;
+  const regex = /\<div id="buildTimestamp" class="text-xs" title="(.*?)"\>(.*?)\<\/div\>/;
   const updatedContent = content.replace(
     regex,
-    `<div id="buildTimestamp" class="text-xs">v${version} (Build: ${timestamp} UTC)</div>`
+    `<div id="buildTimestamp" class="text-xs" title="Build: ${timestamp} UTC">v${version}</div>`
   );
   
   fs.writeFile(layoutFile, updatedContent, "utf-8", (err) => {
