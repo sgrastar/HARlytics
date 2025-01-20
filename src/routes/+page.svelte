@@ -476,24 +476,23 @@
         }, {});
 
         messageTypeCounts = entries.reduce((acc, entry) => {
-        // Auth
-        if (entry.hasHeaderAuthData) {
-          acc["Authorization"] = (acc["Authorization"] || 0) + 1;
-        }
-        // Query
-        if (entry.requestQueryString && entry.requestQueryString.length > 0) {
-          acc["QueryParameter"] = (acc["QueryParameter"] || 0) + 1;
-        }
-        // PostData
-        if (entry.requestPostData) {
-          acc["PostData"] = (acc["PostData"] || 0) + 1;
-        }
-        // Cookie (set-cookieの数を使用)
-        if (entry.setCookieCount > 0) {
-          acc["Set-Cookie"] = (acc["Set-Cookie"] || 0) + 1;
-        }
-        return acc;
-      }, {});
+          if (entry.hasHeaderAuthData) {
+            acc["Authorization"] = (acc["Authorization"] || 0) + 1;
+          }
+          if (entry.requestQueryString && entry.requestQueryString.length > 0) {
+            acc["QueryParameter"] = (acc["QueryParameter"] || 0) + 1;
+          }
+          if (entry.requestPostData) {
+            acc["PostData"] = (acc["PostData"] || 0) + 1;
+          }
+          if (entry.setCookieCount > 0) {
+            acc["Set-Cookie"] = (acc["Set-Cookie"] || 0) + 1;
+          }
+          if (!hasAnyMessageElement(entry)) {  // Plain用のカウント追加
+            acc["Plain"] = (acc["Plain"] || 0) + 1;
+          }
+          return acc;
+        }, {});
 
         uniqueDomains = [...new Set(entries.map((entry) => entry.domain))];
 
@@ -520,6 +519,13 @@
     };
 
     reader.readAsText(file);
+  }
+
+  function hasAnyMessageElement(entry) {
+    return entry.hasHeaderAuthData || 
+          (entry.requestQueryString && entry.requestQueryString.length > 0) ||
+          entry.requestPostData ||
+          entry.setCookieCount > 0;
   }
 
   function parsePostData(postData) {
@@ -711,7 +717,7 @@
               isNaN(entry.status))) ||
           (entry.status >= range.min && entry.status <= range.max),
       );
-      console.log(selectedStatusRanges);
+      //console.log(selectedStatusRanges);
 
       const matchesMessageElementFilter = selectedMessageElements.length === 0 ? false : selectedMessageElements.some(type => {
         switch (type) {
@@ -723,6 +729,8 @@
             return entry.requestPostData;
           case "Set-Cookie":
             return entry.setCookieCount > 0;
+          case "Plain":
+            return !hasAnyMessageElement(entry);
           default:
             return false;
         }
@@ -1528,6 +1536,8 @@ function handleMouseLeave(type) {
                           case "Set-Cookie":
                             //return entry.requestCookies.length > 0 || entry.responseCookies.length > 0;
                             return entry.setCookieCount > 0;
+                          case "Plain":
+                            return !hasAnyMessageElement(entry);
                         }
                       }).length}/{messageTypeCounts[type] || 0})
                     </Checkbox>

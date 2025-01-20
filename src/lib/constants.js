@@ -46,5 +46,6 @@ export const messageElements = [
   "Authorization",  // hasHeaderAuthData
   "PostData",       // hasPostData
   "QueryParameter", // entry.requestQueryString.length > 0
-  "Set-Cookie"         // hasCookieData
+  "Set-Cookie",         // hasCookieData
+  "Plain"
 ];

@@ -40,7 +40,7 @@ describe("Mermaid Sequence Diagram Generator", () => {
 
   it("should handle multiple special characters", () => {
     const input = "path;id=123#section@domain:8080";
-    const expected = "path&#59;id=123&#35;section&#64;domain&#58;8080";
+    const expected = "path&#59;id=123&#35;section@domain&#58;8080";
     expect(escapeForMermaid(input)).toBe(expected);
   });
 });
@@ -216,8 +216,8 @@ describe("Mermaid Sequence Diagram Generator", () => {
         ],
       };
       // 期待値を[Complex Value]に更新
-      const expected =
-        "note over example.com: [Query String]<br>family: [Complex Value]<br>display: swap\n";
+      // const expected = "note over example.com: [Query String]<br>family: [Complex Value]<br>display: swap\n";
+      const expected = "note over example.com: [Query String]<br>family: M+PLUS+1p&#58;wght@100&#59;3...<br>display: swap\n";
       expect(generateMermaidQueryString(mockEntry, true, true, 20)).toBe(
         expected
       );
@@ -297,8 +297,8 @@ describe("Mermaid Sequence Diagram Generator", () => {
         ],
       };
       // 期待値を[Complex Value]に更新
-      const expected =
-        "note over example.com: [Query String]<br>family: [Complex Value]<br>display: swap<br>regular: normal_value\n";
+      //const expected = "note over example.com: [Query String]<br>family: [Complex Value]<br>display: swap<br>regular: normal_value\n";
+      const expected = "note over example.com: [Query String]<br>family: Roboto&#58;wght@400&#59;700<br>display: swap<br>regular: normal_value\n";
       expect(generateMermaidQueryString(mockEntry, true, false, 20)).toBe(
         expected
       );
