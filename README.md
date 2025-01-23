@@ -10,6 +10,7 @@ Making HTTP tell its story
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/hecpjmmgpbecpeigmoilgcljdkidlbgm)](https://chrome.google.com/webstore/detail/hecpjmmgpbecpeigmoilgcljdkidlbgm)
+[![Edge Add-ons Download](https://img.shields.io/badge/Edge%20Add--ons-Download-blue)](https://microsoftedge.microsoft.com/addons/detail/harlytics/dhhndkibkdekohnpmhaeeegkcpmpjben)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsgrastar%2Fhar-analyzer.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsgrastar%2Fhar-analyzer?ref=badge_shield&issueType=license)
 
 
@@ -24,11 +25,11 @@ HARlytics is a powerful HAR file analyzer that transforms complex HTTP Archive f
 
 ## 🚀 Getting Started
 
-### Option 1: Chrome Extension
+### Option 1: Chrome or Edge Extension
 
 <!-- 1. Visit [Chrome Web Store](your-extension-url) -->
-1. Visit [Chrome Web Store](https://chrome.google.com/webstore/detail/hecpjmmgpbecpeigmoilgcljdkidlbgm)
-2. Click "Add to Chrome"
+1. Visit [Chrome Web Store](https://chrome.google.com/webstore/detail/hecpjmmgpbecpeigmoilgcljdkidlbgm) or [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/harlytics/dhhndkibkdekohnpmhaeeegkcpmpjben)
+2. Click "Add to Chrome" or "Get" button
 3. Click the Extensions menu (puzzle piece icon) in your browser toolbar and pin HARlytics for easy access
 
 ### Option 2: Web Application
