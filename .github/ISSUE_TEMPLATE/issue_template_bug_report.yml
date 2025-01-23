@@ -1,14 +1,14 @@
-name: Bug Report
+name: 🕷️ Bug Report
 description: File a bug report
-title: "[Bug]: "
-labels: ["bug"]
+title: "[Bug] "
+labels: ["bug","triage"]
 assignees:
  - sgrastar
 body:
  - type: dropdown
    id: bug-type
    attributes:
-     label: Bug Type
+     label: Problem Type
      options:
        - File Loading
        - List Display
@@ -16,6 +16,8 @@ body:
        - Sequence Diagram Display
        - Sequence Diagram Download
        - Other Screen Display
+       - Chrome web store page / Edge add-on page
+       - Website / Documentation
        - Other
    validations:
      required: true

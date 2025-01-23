@@ -1,0 +1,63 @@
+name: ✨ Feature Request
+description: Share your ideas to make HARlytics even better!
+title: "[Feature] "
+labels: ["enhancement","triage"]
+assignees:
+ - sgrastar
+body:
+ - type: markdown
+   attributes:
+     value: |
+       Thanks for helping make HARlytics better! 🚀
+       Let us know what feature you'd like to see added.
+
+ - type: dropdown
+   id: feature-category
+   attributes:
+     label: What type of feature is this?
+     options:
+       - 📊 Better HAR Analysis
+       - 📈 New Visualizations
+       - 💾 Export & Sharing Options
+       - 🎨 UI Improvements
+       - ⚡ Performance Enhancement
+       - 🔌 Integration with Other Tools
+       - 🎯 Other
+   validations:
+     required: true
+
+ - type: textarea
+   id: problem
+   attributes:
+     label: What's the current challenge?
+     description: Tell us what you're trying to do and what's getting in your way
+     placeholder: |
+       Example: "When I'm analyzing multiple HAR files, I wish I could..."
+       or "It would be really helpful if I could..."
+   validations:
+     required: true
+
+ - type: textarea
+   id: solution
+   attributes:
+     label: What's your ideal solution?
+     description: How do you imagine this feature working?
+     placeholder: |
+       Example: "Add a button that lets me..."
+       or "Create a view that shows..."
+   validations:
+     required: true
+
+ - type: textarea
+   id: benefits
+   attributes:
+     label: How would this help?
+     description: What are the benefits of adding this feature?
+     placeholder: |
+       Example: "This would save time by..."
+       or "This would help me better understand..."
+
+ - type: markdown
+   attributes:
+     value: |
+       Thanks for taking the time to fill this out! 🙏
