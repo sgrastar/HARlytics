@@ -1,0 +1,72 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug"]
+assignees:
+ - sgrastar
+body:
+ - type: dropdown
+   id: bug-type
+   attributes:
+     label: Bug Type
+     options:
+       - File Loading
+       - List Display
+       - List Detail View
+       - Sequence Diagram Display
+       - Sequence Diagram Download
+       - Other Screen Display
+       - Other
+   validations:
+     required: true
+
+ - type: textarea
+   id: bug-description
+   attributes:
+     label: Bug Description
+     description: Please describe the bug and steps to reproduce it
+     placeholder: |
+       1. Go to '...'
+       2. Click on '...'
+       3. Error appears
+   validations:
+     required: true
+
+ - type: markdown
+   attributes:
+     value: |
+       **Important:** Do not attach HAR files directly. If you need to send HAR files, please sanitize them first using [HAR File Sanitizer](https://har-sanitizer.pages.dev/) to remove authentication, cookies, and session information.
+
+ - type: dropdown
+   id: environment
+   attributes:
+     label: Environment
+     options:
+       - Chrome Extension
+       - Edge Add-on
+       - Cloud Edition
+       - Local Environment
+       - Other
+   validations:
+     required: true
+
+ - type: dropdown
+   id: operating-system
+   attributes:
+     label: Operating System
+     options:
+       - Windows
+       - Mac
+       - Linux
+       - Other
+   validations:
+     required: true
+
+ - type: input
+   id: version
+   attributes:
+     label: Version
+     description: Version number can be found in the top right corner starting with 'v'
+     placeholder: 0.5.1
+   validations:
+     required: true
