@@ -112,7 +112,11 @@ Please refer to the following issues for future development plans.
 
 Please create a new issue for feature requests or bug reports.
 
-[Issues](https://github.com/sgrastar/HARlytics/issues)
+[Bug Report](https://github.com/sgrastar/HARlytics/issues/new?template=issue_template_bug_report.yml)
+
+[Feature Request](https://github.com/sgrastar/HARlytics/issues/new?template=issue_template_feature_request.yml)
+
+
 
 ## 📄 License
 
