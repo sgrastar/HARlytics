@@ -34,19 +34,29 @@ jobs:
             
             if (!content) return;
             
-            // Detect HAR file attachments
-            const attachmentUrls = content.match(/https:\/\/github\.com\/[^)]+\.har/g) || [];
+            // Detect file attachments with potentially sensitive content
+            // Pattern matches GitHub attachment URLs for various file types
+            const attachmentPattern = /https:\/\/github\.com\/[^)\s]+\.(har|json|txt|log)/gi;
+            const attachmentUrls = content.match(attachmentPattern) || [];
+            
             if (attachmentUrls.length === 0) return;
 
-            // Check each HAR file for sensitive information
+            // Check each file for sensitive information
             const { execSync } = require('child_process');
             let foundSensitive = false;
             let detectedPatterns = new Set();
-
+            let checkedFiles = new Set();
+            
             for (const url of attachmentUrls) {
               try {
-                const result = execSync(`python .github/scripts/har_checker.py "${url}"`);
+                // Extract filename for logging
+                const filename = url.split('/').pop();
+                if (checkedFiles.has(filename)) continue;
+                checkedFiles.add(filename);
+                
+                const result = execSync(`python .github/scripts/content_checker.py "${url}"`);
                 const checkResult = JSON.parse(result.toString());
+                
                 if (checkResult.contains_sensitive) {
                   foundSensitive = true;
                   checkResult.detected_patterns.forEach(pattern => detectedPatterns.add(pattern));
@@ -58,18 +68,22 @@ jobs:
 
             if (foundSensitive) {
                 const warningMessage = `⚠️ Security Warning
-                We detected potentially sensitive information in the attached HAR file(s).
-                Detected information types: ${Array.from(detectedPatterns).join(', ')}
 
-                For security reasons:
-                - Please remove the HAR file containing sensitive information
+                We detected potentially sensitive information in the attached file(s).
+                Found sensitive data types: ${Array.from(detectedPatterns).join(', ')}
+
+                Security recommendations:
+                - Remove files containing sensitive information
                 - Extract and share only the necessary information
-                - Make sure to remove any cookies, session data, or authentication tokens
-                - Consider using tools to sanitize HAR files before sharing
+                - Remove any cookies, session data, authentication tokens
+                - Consider using tools to sanitize logs and request data
+                - Double-check the content before re-uploading
 
-                If you need help sanitizing the HAR file, please let us know.`;
+                Need help sanitizing the files? Let us know and we'll guide you through the process.
 
-              // Add warning to issue or comment
+                Files checked: ${Array.from(checkedFiles).join(', ')}`;
+
+
               if (comment) {
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
