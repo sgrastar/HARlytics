@@ -1,0 +1,88 @@
+name: Issue Security Check
+
+on:
+  issues:
+    types: [opened, edited]
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  check-attachments:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Check for sensitive attachments
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { issue, comment } = context.payload;
+            const content = comment ? comment.body : issue.body;
+            
+            if (!content) return;
+            
+            // Detect HAR file attachments
+            const attachmentUrls = content.match(/https:\/\/github\.com\/[^)]+\.har/g) || [];
+            if (attachmentUrls.length === 0) return;
+
+            // Check each HAR file for sensitive information
+            const { execSync } = require('child_process');
+            let foundSensitive = false;
+            let detectedPatterns = new Set();
+
+            for (const url of attachmentUrls) {
+              try {
+                const result = execSync(`python .github/scripts/har_checker.py "${url}"`);
+                const checkResult = JSON.parse(result.toString());
+                if (checkResult.contains_sensitive) {
+                  foundSensitive = true;
+                  checkResult.detected_patterns.forEach(pattern => detectedPatterns.add(pattern));
+                }
+              } catch (error) {
+                console.error(`Error checking ${url}: ${error}`);
+              }
+            }
+
+            if (foundSensitive) {
+                const warningMessage = `⚠️ Security Warning
+                We detected potentially sensitive information in the attached HAR file(s).
+                Detected information types: ${Array.from(detectedPatterns).join(', ')}
+
+                For security reasons:
+                - Please remove the HAR file containing sensitive information
+                - Extract and share only the necessary information
+                - Make sure to remove any cookies, session data, or authentication tokens
+                - Consider using tools to sanitize HAR files before sharing
+
+                If you need help sanitizing the HAR file, please let us know.`;
+
+              // Add warning to issue or comment
+              if (comment) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: warningMessage
+                });
+              } else {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `${warningMessage}\n\n---\n\n${issue.body}`
+                });
+              }
+            }
