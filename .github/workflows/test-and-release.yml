@@ -79,6 +79,7 @@ jobs:
         run: |
           # Upload package
           UPLOAD_RESPONSE=$(curl -X POST \
+            --verbose \
             -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
             -H "X-ClientID: ${{ secrets.EDGE_CLIENT_ID }}" \
             -H "Content-Type: application/zip" \
@@ -90,6 +91,7 @@ jobs:
           # Wait for upload to complete
           while true; do
             STATUS=$(curl -X GET \
+              --verbose \
               -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
               -H "X-ClientID: ${{ secrets.EDGE_CLIENT_ID }}" \
               https://api.addons.microsoftedge.microsoft.com/v1/products/${{ secrets.EDGE_PRODUCT_ID }}/submissions/draft/package/operations/$OPERATION_ID \
@@ -107,6 +109,7 @@ jobs:
           
           # Publish submission
           PUBLISH_RESPONSE=$(curl -X POST \
+            --verbose \
             -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
             -H "X-ClientID: ${{ secrets.EDGE_CLIENT_ID }}" \
             -d '{"notes":"Automated deployment"}' \
