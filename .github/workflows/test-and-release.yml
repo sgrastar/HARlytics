@@ -96,7 +96,7 @@ jobs:
           fi
           
           # Extract operation ID from Location header
-          OPERATION_ID=$(echo "$UPLOAD_RESPONSE" | grep -i "Location:" | cut -d'/' -f8)
+          OPERATION_ID=$(echo "$UPLOAD_RESPONSE" | grep -i "Location:" | awk '{print $2}')
           
           if [ -z "$OPERATION_ID" ]; then
             echo "Failed to get operation ID from response"
