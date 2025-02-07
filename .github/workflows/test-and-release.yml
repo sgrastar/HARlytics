@@ -84,7 +84,7 @@ jobs:
             -H "X-ClientID: ${{ secrets.EDGE_CLIENT_ID }}" \
             -H "Content-Type: application/zip" \
             -T extension.zip \
-            https://api.addons.microsoftedge.microsoft.com/v1.1/products/${{ secrets.EDGE_PRODUCT_ID }}/submissions/draft/package)
+            https://api.addons.microsoftedge.microsoft.com/v1/products/${{ secrets.EDGE_PRODUCT_ID }}/submissions/draft/package)
           
           UPLOAD_HTTP_CODE=$(echo "$UPLOAD_RESPONSE" | tail -n1)
           UPLOAD_BODY=$(echo "$UPLOAD_RESPONSE" | sed '$d')
