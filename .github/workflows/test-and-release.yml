@@ -1,4 +1,3 @@
-# .github/workflows/test-and-release.yml
 name: Test and Release
 
 on:
@@ -62,9 +61,10 @@ jobs:
       - name: Create extension archive
         run: |
           node chromePackage.js
-          
+
+      # Chrome Web Store deployment
       - name: Submit to Chrome Web Store
-        if: ${{ !contains(github.event.head_commit.message, '[skip-release]') }}
+        if: ${{ !contains(github.event.head_commit.message, '[skip-release]') && !contains(github.event.head_commit.message, '[skip-release-chrome]') }}
         run: |
           npx chrome-webstore-upload-cli@2 upload --source extension.zip --auto-publish
         env:
@@ -72,3 +72,42 @@ jobs:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
+
+      # Microsoft Edge Add-on deployment
+      - name: Submit to Microsoft Edge Add-ons
+        if: ${{ !contains(github.event.head_commit.message, '[skip-release]') && !contains(github.event.head_commit.message, '[skip-release-edge]') }}
+        run: |
+          # Upload package
+          UPLOAD_RESPONSE=$(curl -X POST \
+            -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
+            -H "X-ClientID: ${{ secrets.EDGE_CLIENT_ID }}" \
+            -H "Content-Type: application/zip" \
+            -T extension.zip \
+            https://api.addons.microsoftedge.microsoft.com/v1/products/${{ secrets.EDGE_PRODUCT_ID }}/submissions/draft/package)
+          
+          OPERATION_ID=$(echo $UPLOAD_RESPONSE | jq -r '.operationId')
+          
+          # Wait for upload to complete
+          while true; do
+            STATUS=$(curl -X GET \
+              -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
+              -H "X-ClientID: ${{ secrets.EDGE_CLIENT_ID }}" \
+              https://api.addons.microsoftedge.microsoft.com/v1/products/${{ secrets.EDGE_PRODUCT_ID }}/submissions/draft/package/operations/$OPERATION_ID \
+              | jq -r '.status')
+            
+            if [ "$STATUS" = "Succeeded" ]; then
+              break
+            elif [ "$STATUS" = "Failed" ]; then
+              echo "Package upload failed"
+              exit 1
+            fi
+            
+            sleep 10
+          done
+          
+          # Publish submission
+          PUBLISH_RESPONSE=$(curl -X POST \
+            -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
+            -H "X-ClientID: ${{ secrets.EDGE_CLIENT_ID }}" \
+            -d '{"notes":"Automated deployment"}' \
+            https://api.addons.microsoftedge.microsoft.com/v1/products/${{ secrets.EDGE_PRODUCT_ID }}/submissions)

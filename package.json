@@ -1,6 +1,6 @@
 {
   "name": "harlytics",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "preinstall": "npx only-allow pnpm",
@@ -8,7 +8,7 @@
     "build": "node ./build.js && vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --exclude 'vite.config.js'",
     "test:e2e": "playwright test"
   },
   "devDependencies": {

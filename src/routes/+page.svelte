@@ -1332,7 +1332,7 @@ function handleMouseLeave(type) {
 
           <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div
-            class="relative inline-block col-span-2 ml-2"
+            class="relative inline-block col-span-2 ml-2" data-testid="method-filter"
             on:mouseenter={() => handleMouseEnter("method")}
             on:mouseleave={() => handleMouseLeave("method")}
           >
@@ -1383,7 +1383,7 @@ function handleMouseLeave(type) {
 
           <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div
-            class="relative inline-block col-span-2 ml-2"
+            class="relative inline-block col-span-2 ml-2" data-testid="status-filter"
             on:mouseenter={() => handleMouseEnter("status")}
             on:mouseleave={() => handleMouseLeave("status")}
           >
@@ -1440,7 +1440,7 @@ function handleMouseLeave(type) {
 
           <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div
-            class="relative inline-block col-span-2 ml-2"
+            class="relative inline-block col-span-2 ml-2" data-testid="type-filter"
             on:mouseenter={() => handleMouseEnter("type")}
             on:mouseleave={() => handleMouseLeave("type")}
           >
@@ -1491,7 +1491,7 @@ function handleMouseLeave(type) {
 
           <!-- svelte-ignore a11y-no-static-element-interactions -->
           <div
-          class="relative inline-block col-span-2 ml-2"
+          class="relative inline-block col-span-2 ml-2" data-testid="message-filter"
           on:mouseenter={() => handleMouseEnter("messageElement")}
           on:mouseleave={() => handleMouseLeave("messageElement")}
           >

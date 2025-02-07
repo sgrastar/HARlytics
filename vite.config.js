@@ -37,6 +37,7 @@ export default defineConfig({
       }
     },
     coverage: {
+      include: ['src/**/*'],
       exclude: [
         "**/build/**",
         "**/.svelte-kit/**",
@@ -44,7 +45,6 @@ export default defineConfig({
         "**.config.js",
         "**/estimateConnectionSpeed.js",
         "chromePackage.js",
-        "vite.config.js",
         "src/routes/+layout.js",
         "src/routes/+page.js",
         "build.js",
