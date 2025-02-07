@@ -77,9 +77,9 @@ jobs:
       - name: Submit to Microsoft Edge Add-ons
         if: ${{ !contains(github.event.head_commit.message, '[skip-release]') && !contains(github.event.head_commit.message, '[skip-release-edge]') }}
         run: |
-          # Upload package
           echo "Uploading package to Edge Add-ons..."
-                      UPLOAD_RESPONSE=$(curl -v -s -w "\n%{http_code}" -X POST \
+          # -i オプションでレスポンスヘッダーも取得しますが、後続の出力ではヘッダー情報は表示しません
+          UPLOAD_RESPONSE=$(curl -s -i -w "\n%{http_code}" -X POST \
             -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
             -H "X-ClientID: ${{ secrets.EDGE_CLIENT_ID }}" \
             -H "Content-Type: application/zip" \
@@ -91,22 +91,22 @@ jobs:
           
           if [ "$UPLOAD_HTTP_CODE" != "202" ]; then
             echo "Failed to upload package. HTTP Code: $UPLOAD_HTTP_CODE"
-            echo "Response: $UPLOAD_BODY"
+            echo "Response omitted for security reasons."
             exit 1
           fi
           
-          # Extract operation ID from Location header
-          OPERATION_ID=$(echo "$UPLOAD_RESPONSE" | grep -i "Location:" | awk '{print $2}')
+          # Location ヘッダーから OPERATION_ID を抽出（改行コードを削除）
+          OPERATION_ID=$(echo "$UPLOAD_RESPONSE" | grep -i "Location:" | awk '{print $2}' | tr -d '\r')
           
           if [ -z "$OPERATION_ID" ]; then
             echo "Failed to get operation ID from response"
-            echo "Response: $UPLOAD_BODY"
+            echo "Response omitted for security reasons."
             exit 1
           fi
           
           echo "Package uploaded. Operation ID: $OPERATION_ID"
           
-          # Wait for upload to complete
+          # アップロード完了まで待機
           echo "Waiting for upload to complete..."
           MAX_ATTEMPTS=30
           ATTEMPT=1
@@ -124,7 +124,7 @@ jobs:
             
             if [ "$STATUS_HTTP_CODE" != "200" ]; then
               echo "Failed to get status. HTTP Code: $STATUS_HTTP_CODE"
-              echo "Response: $STATUS_BODY"
+              echo "Response omitted for security reasons."
               exit 1
             fi
             
@@ -135,7 +135,7 @@ jobs:
               break
             elif [ "$STATUS" = "Failed" ]; then
               echo "Upload failed"
-              echo "Response: $STATUS_BODY"
+              echo "Response omitted for security reasons."
               exit 1
             fi
             
@@ -148,7 +148,7 @@ jobs:
             sleep 10
           done
           
-          # Publish submission
+          # サブミッションの公開
           echo "Publishing submission..."
           PUBLISH_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
             -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
@@ -162,7 +162,7 @@ jobs:
           
           if [ "$PUBLISH_HTTP_CODE" != "202" ]; then
             echo "Failed to publish submission. HTTP Code: $PUBLISH_HTTP_CODE"
-            echo "Response: $PUBLISH_BODY"
+            echo "Response omitted for security reasons."
             exit 1
           fi
           
