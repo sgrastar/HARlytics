@@ -46,6 +46,7 @@ Access the web version directly:
 - Multi-domain filtering with quick toggles
 - HTTP method filtering (GET, POST, PUT, etc.)
 - Status code and MIME type filtering
+- Filter by presence of Authorization headers, PostData, Query Parameters, and Set-Cookie headers
 - Flexible URL pattern matching
 - Real-time filter updates
 
