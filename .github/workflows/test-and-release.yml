@@ -78,7 +78,7 @@ jobs:
         if: ${{ !contains(github.event.head_commit.message, '[skip-release]') && !contains(github.event.head_commit.message, '[skip-release-edge]') }}
         run: |
           echo "Uploading package to Edge Add-ons..."
-          # -i オプションでレスポンスヘッダーも取得しますが、後続の出力ではヘッダー情報は表示しません
+          # -i オプションでレスポンスヘッダーも取得しますが、出力時に秘密情報は隠します
           UPLOAD_RESPONSE=$(curl -s -i -w "\n%{http_code}" -X POST \
             -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
             -H "X-ClientID: ${{ secrets.EDGE_CLIENT_ID }}" \
@@ -95,7 +95,7 @@ jobs:
             exit 1
           fi
           
-          # Location ヘッダーから OPERATION_ID を抽出（改行コードを削除）
+          # Location ヘッダーから OPERATION_ID を抽出（改行コード除去）
           OPERATION_ID=$(echo "$UPLOAD_RESPONSE" | grep -i "Location:" | awk '{print $2}' | tr -d '\r')
           
           if [ -z "$OPERATION_ID" ]; then
@@ -122,7 +122,8 @@ jobs:
             STATUS_HTTP_CODE=$(echo "$STATUS_RESPONSE" | tail -n1)
             STATUS_BODY=$(echo "$STATUS_RESPONSE" | sed '$d')
             
-            if [ "$STATUS_HTTP_CODE" != "200" ]; then
+            # HTTP 200 または 202 を正常なレスポンスとして扱う
+            if [ "$STATUS_HTTP_CODE" != "200" ] && [ "$STATUS_HTTP_CODE" != "202" ]; then
               echo "Failed to get status. HTTP Code: $STATUS_HTTP_CODE"
               echo "Response omitted for security reasons."
               exit 1
