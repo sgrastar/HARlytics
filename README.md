@@ -36,7 +36,7 @@ HARlytics is a powerful HAR file analyzer that transforms complex HTTP Archive f
 
 Access the web version directly:
 
-[https://harlytics.sgrastar.com/](https://harlytics.sgrastar.com/)
+[https://cloud.harlytics.com/](https://cloud.harlytics.com/)
 
 (Note: This site use [Cloudflare Web Analytics](https://www.cloudflare.com/web-analytics/))
 
