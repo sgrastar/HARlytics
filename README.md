@@ -13,6 +13,7 @@ Making HTTP tell its story
 [![Edge Add-ons Download](https://img.shields.io/badge/Edge%20Add--ons-Download-blue)](https://microsoftedge.microsoft.com/addons/detail/harlytics/dhhndkibkdekohnpmhaeeegkcpmpjben)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsgrastar%2Fhar-analyzer.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsgrastar%2Fhar-analyzer?ref=badge_shield&issueType=license)
 
+[Website](https://harlytics.com/)
 
 HARlytics is a powerful HAR file analyzer that transforms complex HTTP Archive files into actionable insights. Perfect for developers, QA engineers, and security professionals who need to analyze web application behavior and performance.
 
