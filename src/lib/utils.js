@@ -1,13 +1,24 @@
-export function formatTimestamp(date) {
+/**
+ * Formats a Date object into a UTC timestamp string
+ * 
+ * @param {Date} date - The date object to format
+ * @param {boolean} [excludeMilliseconds=false] - If true, milliseconds will be excluded from the output
+ * @returns {string} Formatted timestamp string (e.g., "2025-03-11 12:34:56.789" or "2025-03-11 12:34:56")
+ */
+export function formatTimestamp(date, excludeMilliseconds = false) {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
   const day = String(date.getUTCDate()).padStart(2, "0");
   const hours = String(date.getUTCHours()).padStart(2, "0");
   const minutes = String(date.getUTCMinutes()).padStart(2, "0");
   const seconds = String(date.getUTCSeconds()).padStart(2, "0");
-  const milliseconds = String(date.getUTCMilliseconds()).padStart(3, "0");
-
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+  
+  if (excludeMilliseconds) {
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  } else {
+    const milliseconds = String(date.getUTCMilliseconds()).padStart(3, "0");
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}.${milliseconds}`;
+  }
 }
 
 export function truncateText(text, maxLength) {
@@ -82,29 +93,29 @@ export function httpStatusCSSClass(statusNo) {
 
 export function formatTime(time) {
   if (time < 1000) {
-    return `${Math.floor(time)} ms`;
+    return `${Math.floor(time)}ms`;
   } else if (time < 60000) {
     // 秒単位での表示（60秒未満）
     const seconds = time / 1000;
     // 59.99秒のような境界値を適切に処理
-    return `${Math.min(seconds, 59.99).toFixed(2)} s`;
+    return `${Math.min(seconds, 59.99).toFixed(2)}s`;
   } else if (time < 3600000) {
     // 分と秒での表示（60分未満）
     const minutes = Math.floor(time / 60000);
     const seconds = Math.floor((time % 60000) / 1000);
     // 秒が60になるのを防ぐ
     if (seconds === 60) {
-      return `${minutes + 1} min 00 s`;
+      return `${minutes + 1}min 00s`;
     }
-    return `${minutes} min ${String(seconds).padStart(2, "0")} s`;
+    return `${minutes}min ${String(seconds).padStart(2, "0")}s`;
   } else {
     // 時、分、秒での表示
     const hours = Math.floor(time / 3600000);
     const minutes = Math.floor((time % 3600000) / 60000);
     const seconds = Math.floor((time % 60000) / 1000);
-    return `${hours} h ${String(minutes).padStart(2, "0")} min ${String(
+    return `${hours}h ${String(minutes).padStart(2, "0")}min ${String(
       seconds
-    ).padStart(2, "0")} s`;
+    ).padStart(2, "0")}s`;
   }
 }
 
@@ -201,6 +212,305 @@ export function isResponseCached(ageInSeconds, parsedCacheControl) {
   return false;
 }
 
+/**
+ * リソースのキャッシュ鮮度（Browser & CDN）を計算するための関数
+ * @param {Object} entry - HARファイルのエントリー
+ * @returns {Object} ブラウザとCDNのキャッシュ状態
+ */
+export function calculateFreshness(entry) {
+  // 必要なヘッダー情報を取得
+  const headers = entry.response.headers || [];
+  const cacheControlHeader = headers.find(h => h.name.toLowerCase() === 'cache-control')?.value || '';
+  const expiresHeader = headers.find(h => h.name.toLowerCase() === 'expires')?.value || '';
+  const dateHeader = headers.find(h => h.name.toLowerCase() === 'date')?.value || '';
+  const xCacheHeader = headers.find(h => h.name.toLowerCase() === 'x-cache')?.value || '';
+  const cfCacheStatusHeader = headers.find(h => h.name.toLowerCase() === 'cf-cache-status')?.value || '';
+  
+  // レスポンス時刻を取得 (ミリ秒単位)
+  let responseTime;
+  if (dateHeader) {
+    responseTime = new Date(dateHeader).getTime();
+  } else if (entry.startedDateTime) {
+    responseTime = new Date(entry.startedDateTime).getTime();
+  } else {
+    responseTime = Date.now() - 100000;
+  }
+  
+  const currentTime = Date.now();
+  
+  // Cache-Control から max-age と s-maxage を抽出
+  let maxAge = null;
+  let sMaxAge = null;
+  
+  const maxAgeMatch = cacheControlHeader.match(/max-age=(\d+)/i);
+  if (maxAgeMatch && maxAgeMatch[1]) {
+    maxAge = parseInt(maxAgeMatch[1], 10);
+  }
+  
+  const sMaxAgeMatch = cacheControlHeader.match(/s-maxage=(\d+)/i);
+  if (sMaxAgeMatch && sMaxAgeMatch[1]) {
+    sMaxAge = parseInt(sMaxAgeMatch[1], 10);
+  }
+  
+  // Expires ヘッダーから有効期限を計算
+  let expiresTime = null;
+  if (expiresHeader) {
+    expiresTime = new Date(expiresHeader).getTime();
+  }
+  
+  // ブラウザキャッシュの状態を計算
+  let browserStatus = 'Unknown';
+  let browserExpiryTime = null;
+  
+  if (cacheControlHeader.includes('no-store') || cacheControlHeader.includes('no-cache')) {
+    browserStatus = 'Not Cacheable';
+  } else if (maxAge !== null) {
+    browserExpiryTime = responseTime + (maxAge * 1000);
+    browserStatus = currentTime < browserExpiryTime ? 'Fresh' : 'Stale';
+  } else if (expiresTime) {
+    browserExpiryTime = expiresTime;
+    browserStatus = currentTime < browserExpiryTime ? 'Fresh' : 'Stale';
+  }
+  
+  // CDN キャッシュの状態を計算
+  let cdnStatus = 'Unknown';
+  let cdnExpiryTime = null;
+  let cdnProvider = null;
+  
+  // CDNプロバイダーを特定
+  if (cfCacheStatusHeader) {
+    cdnProvider = 'Cloudflare';
+  } else if (xCacheHeader && xCacheHeader.includes('cloudfront')) {
+    cdnProvider = 'CloudFront';
+  } else if (xCacheHeader) {
+    cdnProvider = 'Fastly/Other';
+  }
+  
+  // Cloudflareの場合
+  if (cdnProvider === 'Cloudflare') {
+    switch (cfCacheStatusHeader.toUpperCase()) {
+      case 'HIT':
+        // リソースがCloudflareのキャッシュで見つかった
+        cdnStatus = 'Fresh';
+        break;
+      case 'MISS':
+        // キャッシュされていないが、オリジンから新しく取得されたのでFresh
+        cdnStatus = 'Fresh';
+        break;
+      case 'EXPIRED':
+        // キャッシュ内で見つかったが期限切れ、オリジンから再取得
+        cdnStatus = 'Fresh'; // オリジンから再取得したので結果的にFresh
+        break;
+      case 'STALE':
+        // 期限切れだがオリジンに接続できないためキャッシュから提供
+        cdnStatus = 'Stale';
+        break;
+      case 'BYPASS':
+        // キャッシュがバイパスされた（no-cache, private, max-age=0など）
+        cdnStatus = 'Not Cacheable';
+        break;
+      case 'REVALIDATED':
+        // 有効期限の再検証が行われた
+        cdnStatus = 'Fresh';
+        break;
+      case 'UPDATING':
+        // 期限切れだが人気のあるリソースなので更新中
+        cdnStatus = 'Fresh';
+        break;
+      case 'DYNAMIC':
+        // キャッシュ対象外と判断されたリソース
+        cdnStatus = 'Not Cacheable';
+        break;
+      case 'NONE':
+      case 'UNKNOWN':
+        // キャッシュ対象外（Workerレスポンス、リダイレクト、WAFブロックなど）
+        cdnStatus = 'Not Cacheable';
+        break;
+      default:
+        cdnStatus = 'Unknown';
+    }
+  }
+  // CloudFrontの場合（既存のロジック）
+  else if (cdnProvider === 'CloudFront') {
+    if (xCacheHeader.includes('Miss from cloudfront')) {
+      cdnStatus = 'Fresh';
+    } else if (xCacheHeader.includes('Hit from cloudfront')) {
+      cdnStatus = 'Fresh';
+    } else if (xCacheHeader.includes('RefreshHit from cloudfront')) {
+      cdnStatus = 'Fresh';
+    } else if (xCacheHeader.includes('Error from cloudfront')) {
+      cdnStatus = 'Unknown';
+    }
+  }
+  // Fastlyまたはその他のCDN
+  else if (cdnProvider === 'Fastly/Other') {
+    if (xCacheHeader.includes('Hit')) {
+      cdnStatus = 'Fresh';
+    } else if (xCacheHeader.includes('Miss')) {
+      cdnStatus = 'Fresh';
+    }
+  }
+  // x-cacheヘッダーもcf-cache-statusもない場合は通常のキャッシュ計算
+  else {
+    if (cacheControlHeader.includes('no-store')) {
+      cdnStatus = 'Not Cacheable';
+    } else if (sMaxAge !== null) {
+      cdnExpiryTime = responseTime + (sMaxAge * 1000);
+      cdnStatus = currentTime < cdnExpiryTime ? 'Fresh' : 'Stale';
+    } else if (maxAge !== null) {
+      // s-maxage がない場合は max-age を CDN も使用
+      cdnExpiryTime = responseTime + (maxAge * 1000);
+      cdnStatus = currentTime < cdnExpiryTime ? 'Fresh' : 'Stale';
+    } else if (expiresTime) {
+      cdnExpiryTime = expiresTime;
+      cdnStatus = currentTime < cdnExpiryTime ? 'Fresh' : 'Stale';
+    }
+  }
+  
+  // 結果をオブジェクトとして返す
+  return {
+    browser: {
+      status: browserStatus,
+      expiryTime: browserExpiryTime,
+      ttl: browserExpiryTime ? Math.floor((browserExpiryTime - currentTime) / 1000) : null
+    },
+    cdn: {
+      status: cdnStatus,
+      provider: cdnProvider,
+      expiryTime: cdnExpiryTime,
+      ttl: cdnExpiryTime ? Math.floor((cdnExpiryTime - currentTime) / 1000) : null,
+      xCache: xCacheHeader,
+      cfCacheStatus: cfCacheStatusHeader
+    },
+  };
+}
+
+/**
+ * Function that returns a description for an HTTP status code
+ * 
+ * @param {number|null} statusCode - The HTTP status code
+ * @returns {string} A string combining the status code and its description (e.g. "401 Unauthorized")
+ * @throws {Error} If an invalid status code is provided
+ */
+export function getHttpStatusDescription(statusCode) {
+  // Array of HTTP status codes and their descriptions
+  const httpStatusDescriptions = [
+    // 1xx Informational
+    { code: 100, description: "Continue" },
+    { code: 101, description: "Switching Protocols" },
+    { code: 102, description: "Processing" },
+    { code: 103, description: "Early Hints" },
+    
+    // 2xx Success
+    { code: 200, description: "OK" },
+    { code: 201, description: "Created" },
+    { code: 202, description: "Accepted" },
+    { code: 203, description: "Non-Authoritative Information" },
+    { code: 204, description: "No Content" },
+    { code: 205, description: "Reset Content" },
+    { code: 206, description: "Partial Content" },
+    { code: 207, description: "Multi-Status" },
+    { code: 208, description: "Already Reported" },
+    { code: 226, description: "IM Used" },
+    
+    // 3xx Redirection
+    { code: 300, description: "Multiple Choices" },
+    { code: 301, description: "Moved Permanently" },
+    { code: 302, description: "Found" },
+    { code: 303, description: "See Other" },
+    { code: 304, description: "Not Modified" },
+    { code: 305, description: "Use Proxy" },
+    { code: 307, description: "Temporary Redirect" },
+    { code: 308, description: "Permanent Redirect" },
+    
+    // 4xx Client Error
+    { code: 400, description: "Bad Request" },
+    { code: 401, description: "Unauthorized" },
+    { code: 402, description: "Payment Required" },
+    { code: 403, description: "Forbidden" },
+    { code: 404, description: "Not Found" },
+    { code: 405, description: "Method Not Allowed" },
+    { code: 406, description: "Not Acceptable" },
+    { code: 407, description: "Proxy Authentication Required" },
+    { code: 408, description: "Request Timeout" },
+    { code: 409, description: "Conflict" },
+    { code: 410, description: "Gone" },
+    { code: 411, description: "Length Required" },
+    { code: 412, description: "Precondition Failed" },
+    { code: 413, description: "Payload Too Large" },
+    { code: 414, description: "URI Too Long" },
+    { code: 415, description: "Unsupported Media Type" },
+    { code: 416, description: "Range Not Satisfiable" },
+    { code: 417, description: "Expectation Failed" },
+    { code: 418, description: "I'm a teapot" },
+    { code: 421, description: "Misdirected Request" },
+    { code: 422, description: "Unprocessable Entity" },
+    { code: 423, description: "Locked" },
+    { code: 424, description: "Failed Dependency" },
+    { code: 425, description: "Too Early" },
+    { code: 426, description: "Upgrade Required" },
+    { code: 428, description: "Precondition Required" },
+    { code: 429, description: "Too Many Requests" },
+    { code: 431, description: "Request Header Fields Too Large" },
+    { code: 451, description: "Unavailable For Legal Reasons" },
+    
+    // 5xx Server Error
+    { code: 500, description: "Internal Server Error" },
+    { code: 501, description: "Not Implemented" },
+    { code: 502, description: "Bad Gateway" },
+    { code: 503, description: "Service Unavailable" },
+    { code: 504, description: "Gateway Timeout" },
+    { code: 505, description: "HTTP Version Not Supported" },
+    { code: 506, description: "Variant Also Negotiates" },
+    { code: 507, description: "Insufficient Storage" },
+    { code: 508, description: "Loop Detected" },
+    { code: 510, description: "Not Extended" },
+    { code: 511, description: "Network Authentication Required" }
+  ];
+
+  // Handle null, undefined, or empty status code
+  if (statusCode === null || statusCode === undefined || statusCode === '') {
+    return "0 No Status Code Provided";
+  }
+  
+  // Convert status code to number type
+  const code = Number(statusCode);
+  
+  // Handle 0 status code case
+  if (code === 0) {
+    return "0 No Response";
+  }
+  
+  // Check for other invalid status codes
+  if (isNaN(code) || code < 100 || code >= 600) {
+    throw new Error(`Invalid HTTP status code: ${statusCode}`);
+  }
+  
+  // Find the description that matches the status code
+  const statusInfo = httpStatusDescriptions.find(status => status.code === code);
+  
+  // If no specific description is found, generate a generic category description
+  if (!statusInfo) {
+    let categoryDescription = "";
+    if (code >= 100 && code < 200) {
+      categoryDescription = "Informational";
+    } else if (code >= 200 && code < 300) {
+      categoryDescription = "Success";
+    } else if (code >= 300 && code < 400) {
+      categoryDescription = "Redirection";
+    } else if (code >= 400 && code < 500) {
+      categoryDescription = "Client Error";
+    } else if (code >= 500 && code < 600) {
+      categoryDescription = "Server Error";
+    }
+    
+    return `${code} ${categoryDescription}`;
+  }
+  
+  // Combine the status code and description and return
+  return `${statusInfo.code} ${statusInfo.description}`;
+}
+
 export function getCommunicationType(entry) {
   //console.log(entry);
   if (entry._webSocketMessages) {
@@ -218,18 +528,6 @@ export function getCommunicationType(entry) {
   if (!contentType) {
     return "Other";
   }
-
-  // if (
-  //   contentType.includes("application/xml") ||
-  //   contentType.includes("text/xml") ||
-  //   contentType.includes("application/soap+xml") ||
-  //   contentType.includes("application/xhtml+xml") ||
-  //   contentType.includes("application/atom+xml") ||
-  //   contentType.includes("application/rss+xml") ||
-  //   contentType.includes("application/vnd.google-earth.kml+xml")
-  // ) {
-  //   return "Fetch/XHR";
-  // }
 
   if (
     contentType.includes("image/svg+xml") ||

@@ -17,9 +17,11 @@
     copyTextarea,
     formatGMTtoUTC,
     formatToLocalTime,
+    calculateFreshness,
   } from "$lib/utils";
 
   import { getStatusCodeData, getMimeTypeData } from "$lib/chartUtils";
+  import { analyzeCDN, detectCDN }  from '$lib/cdnAnalyzer.js';
   import {
     statusRanges,
     communicationTypes,
@@ -28,6 +30,7 @@
   } from "$lib/constants";
 
   import EntryDetailTable from "$lib/components/EntryDetailTable.svelte";
+  import EntryCacheTable from "$lib/components/EntryCacheTable.svelte";
 
   import {
     truncateAndEscapeMarmaid,
@@ -385,19 +388,176 @@
           const age = entry.response.headers.find(
             (header) => header.name.toLowerCase() === "age",
           )?.value;
+          let httpVersion = '';
+          if (entry.response.httpVersion == "h2"){
+            httpVersion = 'HTTP/2';
+          }else if(entry.response.httpVersion == "h3"){
+            httpVersion = 'HTTP/3';
+          }else{
+            httpVersion = entry.response.httpVersion.toUpperCase();
+          }
+          
           const ageInSeconds = age ? parseInt(age, 10) : null;
           const cacheControl =
             entry.response.headers.find(
               (header) => header.name.toLowerCase() === "cache-control",
             )?.value || "";
           const parsedCacheControl = parseCacheControl(cacheControl);
+          //content-encoding
+          const contentEncoding = entry.response.headers.find(
+            (header) => header.name.toLowerCase() === "content-encoding",
+          )?.value;
+          //last-modified
+          const lastModified = entry.response.headers.find(
+            (header) => header.name.toLowerCase() === "last-modified",
+          )?.value;
           const isCached = isResponseCached(ageInSeconds, parsedCacheControl);
+          const etag = entry.response.headers.find(
+            (header) => header.name.toLowerCase() === "etag",
+          )?.value;
+
+          
+          const cdnInfo = analyzeCDN(entry);
+          const cdnDataSource = cdnInfo.isFromCDN ? "CDN" : cdnInfo.isFromOrigin ? "Origin" : 'Disc Cache';
+          const cdnEdgeLocation = cdnInfo.details.edgeLocation || '';
+          //console.log(`CDN Provider: ${cdnInfo.provider}`);
+          //console.log(`Cache Status: ${cdnInfo.cacheStatus}`);
+          //console.log(`From Origin: ${cdnInfo.isFromOrigin ? 'Yes' : 'No'}`);
+          //console.log(`Edge Location: ${cdnInfo.details.edgeLocation || 'N/A'}`);
+          //           {
+          //     "provider": "CloudFront",
+          //     "cacheStatus": "RefreshHit from cloudfront",
+          //     "isFromCDN": true,
+          //     "isFromDiskCache": false,
+          //     "isFromOrigin": false,
+          //     "details": {
+          //         "edgeLocation": "NRT57-P4",
+          //         "requestId": "uabJUnRP6qUyZeob6EqoZzyjXaLCEpds150D3nOVeebtAnjx_fGOEg==",
+          //         "cacheStatus": "RefreshHit from cloudfront",
+          //         "allCdnHeaders": {
+          //             "via": "1.1 bcfb7019cb107c82ee911cac73b0dfbc.cloudfront.net (CloudFront)",
+          //             "x-amz-cf-id": "uabJUnRP6qUyZeob6EqoZzyjXaLCEpds150D3nOVeebtAnjx_fGOEg==",
+          //             "x-amz-cf-pop": "NRT57-P4",
+          //             "x-cache": "RefreshHit from cloudfront"
+          //         }
+          //     }
+          // }
+          //console.log(`CDN: ${cdnInfo.provider}` +  `/ Cache Status: ${cdnInfo.cacheStatus}` + ` / isFromCDN: ${cdnInfo.isFromCDN}`+` /  isFromDiskCache: ${cdnInfo.isFromDiskCache}`);
+          //console.log(cdnInfo);
+
+          const parseCacheControlHeaders = (entry) => {
+            // キャッシュコントロールヘッダーを取得
+            const cacheControl = entry.response.headers.find(
+              (header) => header.name.toLowerCase() === "cache-control"
+            )?.value || "";
+            
+            // Expiresヘッダーを取得
+            const expires = entry.response.headers.find(
+              (header) => header.name.toLowerCase() === "expires"
+            )?.value || "";
+            
+            // Cache-Controlをディレクティブに分割
+            const directives = cacheControl.split(',')
+              .map(directive => directive.trim().toLowerCase())
+              .filter(directive => directive !== "");
+            
+            // Storage (キャッシュ可否)
+            //let storage = "Default";
+            let storage = "";
+            if (directives.includes("public")) {
+              storage = "Public";
+            } else if (directives.includes("private")) {
+              storage = "Private";
+            } else if (directives.includes("no-store")) {
+              storage = "No-Store";
+            }
+            
+            // TTL (有効期間)
+            // let ttl = "Not specified";
+            let ttl = "";
+            
+            // max-ageの抽出
+            const maxAgeMatch = cacheControl.match(/max-age=(\d+)/i);
+            if (maxAgeMatch && maxAgeMatch[1]) {
+              const maxAge = parseInt(maxAgeMatch[1], 10);
+              ttl = formatTTL(maxAge);
+            }
+            
+            // s-maxageの抽出
+            const sMaxAgeMatch = cacheControl.match(/s-maxage=(\d+)/i);
+            if (sMaxAgeMatch && sMaxAgeMatch[1]) {
+              const sMaxAge = parseInt(sMaxAgeMatch[1], 10);
+              ttl = `${ttl}, s-maxage: ${formatTTL(sMaxAge)}`;
+            }
+            
+            // max-ageがなくExpiresがある場合
+            if (!maxAgeMatch && !sMaxAgeMatch && expires) {
+              const expiresDate = new Date(expires);
+              const now = new Date();
+              
+              if (!isNaN(expiresDate.getTime())) {
+                const diffInSeconds = Math.floor((expiresDate - now) / 1000);
+                if (diffInSeconds > 0) {
+                  ttl = `Expires: ${formatTTL(diffInSeconds)}`;
+                } else {
+                  ttl = "Expired";
+                }
+              }
+            }
+            
+            // Policy (その他のディレクティブ)
+            const policyDirectives = directives.filter(dir => {
+              return !dir.includes("public") && 
+                    !dir.includes("private") && 
+                    !dir.includes("no-store") && 
+                    !dir.includes("max-age") && 
+                    !dir.includes("s-maxage");
+            });
+            
+            const policy = policyDirectives.length > 0 ? policyDirectives.join(', ') : "None";
+            
+            return {
+              storage,
+              ttl,
+              policy
+            };
+          };
+
+          // TTLを読みやすい形式にフォーマットする補助関数
+          const formatTTL = (seconds) => {
+            if (seconds === 0) return "0s (No caching)";
+            
+            if (seconds < 60) return `${seconds}s`;
+            
+            if (seconds < 3600) {
+              const minutes = Math.floor(seconds / 60);
+              return `${minutes}m`;
+            }
+            
+            if (seconds < 86400) {
+              const hours = Math.floor(seconds / 3600);
+              return `${hours}h`;
+            }
+            
+            // 1日以上
+            const days = Math.floor(seconds / 86400);
+            return `${days}d`;
+          };
+          const cacheInfo = parseCacheControlHeaders(entry);
+          //console.log(`Storage: ${cacheInfo.storage}` + ` / TTL: ${cacheInfo.ttl}` + ` / Policy: ${cacheInfo.policy}`);
+
+          const vary = entry.response.headers.find(
+            (header) => header.name.toLowerCase() === "vary",
+          )?.value;
+
+          const  dataFreshness = calculateFreshness(entry);
 
           return {
             pages: pages,
             pageref: pageref,
             url: entry.request.url,
             method: entry.request.method,
+            httpVersion: httpVersion,
             domain: domain,
             path: path,
             referer: referer,
@@ -432,6 +592,24 @@
             age: ageInSeconds,
             cacheControl: parsedCacheControl,
             isCached: isCached,
+            cacheStorage: cacheInfo.storage,
+            cacheTTL: cacheInfo.ttl,
+            cachePolicy: cacheInfo.policy,
+            cdnFreshness: dataFreshness.cdn.status,
+            browserFreshness: dataFreshness.browser.status,
+            // lastModified: lastModified,
+            lastModified: lastModified ? formatTimestamp(new Date(lastModified),true) :'',
+            etag: etag,
+            contentEncoding: contentEncoding,
+            vary: vary,
+            cdnProvider: cdnInfo.provider,
+            isFromCDN: cdnInfo.isFromCDN,
+            isFromOrigin: cdnInfo.isFromOrigin,
+            isFromDiskCache: cdnInfo.isFromDiskCache,
+            cdnDataSource: cdnDataSource,
+            cdnEdgeLocation: cdnEdgeLocation,
+            cdnCacheStatus: cdnInfo.cacheStatus,
+            cdnDetails: cdnInfo.details,
             status: entry.response.status,
             values: entry.request.cookies,
             requestQueryString: entry.request.queryString,
@@ -1558,10 +1736,25 @@ function handleMouseLeave(type) {
     <Tabs tabStyle="underline" class="mt-0">
       <TabItem open class="p-0">
         <div slot="title" class="flex items-center gap-2">
-          <BarsFromLeftOutline size="sm" />Detail
+          <BarsFromLeftOutline size="sm" />Overview
         </div>
         <div id="analyzeDetailDisplay">
           <EntryDetailTable
+            entries={filteredEntries}
+            {pages}
+            {logFilename}
+            bind:isPathTruncated
+            bind:isDomainTruncated
+          />
+        </div>
+      </TabItem>
+
+      <TabItem class="p-0">
+        <div slot="title" class="flex items-center gap-2">
+          <BarsFromLeftOutline size="sm" />Cache/CDN
+        </div>
+        <div id="analyzeCacheDisplay">
+          <EntryCacheTable
             entries={filteredEntries}
             {pages}
             {logFilename}
@@ -1778,6 +1971,7 @@ function handleMouseLeave(type) {
           </div>
         </div>
       </TabItem>
+
       <TabItem>
         <div slot="title" class="flex items-center gap-2">
           <WindowOutline size="sm" />Cookie

@@ -1,8 +1,5 @@
 <script>
-  import WaterfallBar from "$lib/components/WaterfallBar.svelte";
-
   export let entry;
-  export let entries = [];
   export let isIndented = false;
   export let hasPageInfo = false;
   export let selectedEntryIndexes;
@@ -16,13 +13,15 @@
   export let normalizePostData;
   export let httpStatusCSSClass;
   export let formatTime;
-  export let getHttpStatusDescription;
   export let formatBytes;
   export let truncateText;
   export let formatGMTtoUTC;
   export let formatToLocalTime;
   export let calculateBarWidth;
   export let calculateBarLeft;
+  export let getHttpStatusDescription;
+  export let displayMode = "cacheStatus";
+
 
   // エントリーのユニークIDを取得する関数
   const getEntryId = (entry) => {
@@ -71,33 +70,7 @@
   <div class="status cell {httpStatusCSSClass(entry.status)}" title="{getHttpStatusDescription(entry.status)}">
     {entry.status}
   </div>
-  <div class="type cell">{entry.type}</div>
-  <div class="mimetype cell">{entry.responseMimeType}</div>
-  <div class="sign cell">
-    <table>
-      <tr>
-        <td class="auth"
-          >{#if entry.hasHeaderAuthData}<span title="Authorization Header"
-              >A</span
-            >{/if}</td
-        >
-        <td class="postData"
-          >{#if entry.requestPostData}<span title="Post Data">P</span>{/if}</td
-        >
-        <td class="queryParameter"
-          >{#if entry.requestQueryString.length > 0}<span
-              title="Query Parameter">Q</span
-            >{/if}</td
-        >
-        <td class="cookies"
-          >{#if entry.responseCookies.length > 0}<span title="Set-Cookie"
-              >C</span
-            >{/if}</td
-        >
-      </tr>
-    </table>
-  </div>
-  <div class="timestamp cell">{entry.timestamp}</div>
+  
   {#if entry.time < 1000}
     <div class="time cell" title="{entry.time.toFixed(0)} ms">
       {formatTime(entry.time)}
@@ -112,29 +85,62 @@
   {/if}
   <!-- {console.log(entry.responseContentLength + ' / ' + formatBytes(entry.responseContentLength))} -->
 
+
   <div class="size cell">
     {formatBytes(entry.responseContentLength)}
-    <!-- {typeof entry.responseContentLength !== "undefined"
-      ? formatBytes(entry.responseContentLength)
-      : ""} -->
   </div>
-  <div class="cached cell">{entry.isCached ? entry.isCached : ""}</div>
-  <!-- <div class="age cell">{entry.age !== null ? entry.age : ''}</div> -->
-
-  <!-- <div class="dns cell">{entry.timings.dns >= 0 ? formatTime(entry.timings.dns) : ''}</div>
-  <div class="connect cell">{entry.timings.connect >= 0 ? formatTime(entry.timings.connect) : ''}</div>
-  <div class="ssl cell">{entry.timings.ssl >= 0 ? formatTime(entry.timings.ssl) : ''}</div>
-  <div class="send cell">{formatTime(entry.timings.send)}</div>
-  <div class="wait cell">{formatTime(entry.timings.wait)}</div>
-  <div class="receive cell">{formatTime(entry.timings.receive)}</div> -->
-  <div class="waterfall cell">
-    <WaterfallBar
-      {entry}
-      {entries}
-      {hasPageInfo}
-      formatTime={(time) => `${time.toFixed(1)} ms`}
-    />
-  </div>
+  <div class="cdnProvider cell" title="{entry.cdnCacheStatus}">{entry.cdnProvider != 'None' ? entry.cdnProvider : ''}</div>
+  {#if displayMode == "cacheStatus" || displayMode == "CDNDeliveryStatus" ||displayMode == "resourceValidation"}
+  <div class="cdnDataSource cell" title="{entry.cdnDataSource}">{entry.cdnDataSource}</div>
+  {/if}
+  <!-- {#if displayMode == "CDNDeliveryStatus"}
+  <div class="cdnFromCDN cell {entry.isFromCDN ? "true" : "false"}">{entry.isFromCDN}</div>
+  <div class="cdnFromOrigin cell {entry.isFromOrigin ? "true" : "false"}">{entry.isFromOrigin}</div>
+  <div class="cdnFromDiskCache cell {entry.isFromDiskCache ? "true" : "false"}">{entry.isFromDiskCache}</div>
+  {/if} -->
+  {#if displayMode == "CDNDeliveryStatus"}
+    <div class="httpVersion cell">{entry.httpVersion}</div>
+    <div class="cdnEdgelocation cell" title="{entry.cdnEdgeLocation}">{entry.cdnEdgeLocation}</div>
+    <div class="cdnCacheStatus cell {entry.cdnCacheStatus == "Unknown" ? "unknown": ""}" title="{entry.cdnCacheStatus}">{entry.cdnCacheStatus != "Unknown" ? entry.cdnCacheStatus : ""}</div>
+  {/if}
+  {#if displayMode == "cacheStatus"}
+  <div class="cdnFreshness cell {entry.cdnFreshness == "Fresh" ? "fresh" : entry.cdnFreshness == "Not Cacheable" ? "notCacheable" : entry.cdnFreshness == "Stale" ? "stale" :  "other"}">{entry.cdnFreshness}</div>
+  <div class="browserFreshness cell  {entry.browserFreshness == "Fresh" ? "fresh" : entry.browserFreshness == "Not Cacheable" ? "notCacheable" : entry.browserFreshness == "Stale" ? "stale" :  "other"}">{entry.browserFreshness}</div>
+  {/if}
+  <div class="cacheStorage cell">{entry.cacheStorage}</div>
+  {#if displayMode != "resourceValidation"}
+  <div class="cacheTTL cell">{entry.cacheTTL}</div>
+  {/if}
+  <div class="cachePolicy cell {entry.cachePolicy == "None" ? "none": ""}" title="{entry.cachePolicy}">{entry.cachePolicy != "None" ? entry.cachePolicy : ""}</div>
+  {#if displayMode == "resourceValidation"}
+    <div class="etag cell" title="{entry.etag}">{entry.etag ? entry.etag : ''}</div>
+    <div class="lastModified cell">{entry.lastModified}</div>
+  {/if}
+  {#if displayMode == "resourceValidation" || displayMode == "cacheStatus"}
+    {#if entry.age != null}
+      {#if entry.age < 1000}
+        <div class="age cell" title="{entry.age.toFixed(0)} ms">
+          {formatTime(entry.age)}
+        </div>
+      {:else}
+        <div
+          class="age cell"
+          title="{entry.age.toFixed(0)} ms / {formatTime(entry.age)}"
+        >
+          {formatTime(entry.age)}
+        </div>
+      {/if}
+    {:else}
+    <div class="age cell"></div>
+    {/if}
+    <!-- <div class="age cell">{entry.age !== null ? entry.age : ''}</div> -->
+  {/if}
+  {#if displayMode == "cacheStatus"}
+  <div class="vary cell" title="{entry.vary}">{entry.vary ? entry.vary : ''}</div>
+  {/if}
+  {#if displayMode == "CDNDeliveryStatus"}
+    <div class="contentEncoding cell" title="{entry.contentEncoding}">{entry.contentEncoding ? entry.contentEncoding : ''}</div>
+  {/if}  
 </div>
 
 {#if selectedEntryIndexes.has(getEntryId(entry))}
@@ -681,11 +687,11 @@
   }
 
   .path {
-    width: 20%;
+    width: 310px;
     min-width: 150px;
   }
   .domain {
-    width: 10%;
+    width: 150px;
     min-width: 150px;
   }
   /* .path { width: 250px; }
@@ -698,7 +704,7 @@
     width: 150px;
   }
   .status {
-    width: 60px;
+    width: 50px;
     text-align: center;
   }
   .method {
@@ -717,12 +723,105 @@
     width: 70px;
     text-align: right;
   }
+  .cdnProvider {
+    width: 140px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .cdnDataSource {
+    width: 70px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .cdnFromCDN {
+    width: 73px;
+    text-align: center;
+  }
+  .cdnFromOrigin {
+    width: 73px;
+    text-align: center;
+  }
+  .cdnFromDiskCache {
+    width: 65px;
+    text-align: center;
+  }
+  .httpVersion{
+    width:70px;
+  }
+  .cdnEdgelocation {
+    width: 70px;
+  }
+  .cdnFromCDN.true,
+  .cdnFromOrigin.true,
+  .cdnFromDiskCache.true {
+    background-color: rgb(49 196 141 / 0.6);
+  }
+  .cdnCacheStatus {
+    width: 220px;
+  }
+  .cdnCacheStatus.unknown {
+    font-style: italic;
+    font-weight: 100;
+  }
+  .cdnFreshness,
+  .browserFreshness{
+    width:92px;
+    text-align: center;
+  }
+  .cdnFreshness.fresh,
+  .browserFreshness.fresh{
+    background: #f5f5f5;
+    font-weight: bold;
+  }
+  .cdnFreshness.stale,
+  .browserFreshness.stale{
+    background: #e7e7e7;
+  }
+  .cdnFreshness.notCacheable,
+  .browserFreshness.notCacheable{
+    background: #d4d4d4;
+  }
+  
+  .cdnFreshness.other,
+  .browserFreshness.other{
+    background: #e7e7e7;
+    font-style: italic;
+    font-weight: 100;
+  }
+  .cacheStorage {
+    width: 70px;
+    text-align: center;
+  }
+  .cacheTTL {
+    width: 120px;
+    text-align: right;
+  }
+  .cachePolicy {
+    width: 230px;
+  }
+  .cachePolicy.none {
+    font-style: italic;
+    font-weight: 100;
+  }
   .cached {
     width: 60px;
     text-align: center;
-    display: none;
   }
-  /* .age { width: 60px; text-align: right; } */
+  .age { width: 70px; text-align: right; }
+  .etag{
+    width: 310px;
+  }
+  .lastModified {
+    width: 150px;
+  }
+  .vary { width: 220px; }
+  .contentEncoding{
+    width: 115px;
+    text-align: right;
+  }
+
   .dns {
     width: 60px;
     text-align: right;
@@ -748,18 +847,11 @@
     text-align: right;
   }
 
+
   :global(.sign table td) {
     font-size: 100%;
     font-weight: bold;
     width: 1.2em;
-  }
-  .sign table td.auth,
-  .sign table td.postData {
-    color: red;
-  }
-  .sign table td.queryParameter,
-  .sign table td.cookies {
-    color: green;
   }
 
   @media (max-width: 979px) {

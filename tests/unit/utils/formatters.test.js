@@ -97,38 +97,39 @@ describe("httpStatusCSSClass", () => {
 
 describe("formatTime", () => {
   it("formats milliseconds", () => {
-    expect(formatTime(500)).toBe("500 ms");
-    expect(formatTime(999)).toBe("999 ms");
+    expect(formatTime(500)).toBe("500ms");
+    expect(formatTime(999)).toBe("999ms");
   });
 
   it("formats seconds", () => {
-    expect(formatTime(1000)).toBe("1.00 s");
-    expect(formatTime(1500)).toBe("1.50 s");
+    expect(formatTime(1000)).toBe("1.00s");
+    expect(formatTime(1500)).toBe("1.50s");
     // 59.99秒でテスト
-    expect(formatTime(59990)).toBe("59.99 s");
+    expect(formatTime(59990)).toBe("59.99s");
   });
 
   it("handles boundary between seconds and minutes", () => {
-    expect(formatTime(59999)).toBe("59.99 s");
-    expect(formatTime(60000)).toBe("1 min 00 s");
+    expect(formatTime(59999)).toBe("59.99s");
+    expect(formatTime(60000)).toBe("1min 00s");
   });
 
   it("formats minutes", () => {
-    expect(formatTime(60000)).toBe("1 min 00 s");
-    expect(formatTime(90000)).toBe("1 min 30 s");
+    expect(formatTime(60000)).toBe("1min 00s");
+    expect(formatTime(90000)).toBe("1min 30s");
     // 59分59秒でテスト
-    expect(formatTime(3599000)).toBe("59 min 59 s");
+    expect(formatTime(3599000)).toBe("59min 59s");
   });
 
   it("handles boundary between minutes and hours", () => {
-    expect(formatTime(3599999)).toBe("59 min 59 s");
-    expect(formatTime(3600000)).toBe("1 h 00 min 00 s");
+    expect(formatTime(3599999)).toBe("59min 59s");
+    expect(formatTime(3600000)).toBe("1h 00min 00s");
   });
 
+
   it("formats hours", () => {
-    expect(formatTime(3600000)).toBe("1 h 00 min 00 s");
-    expect(formatTime(7200000)).toBe("2 h 00 min 00 s");
-    expect(formatTime(3661000)).toBe("1 h 01 min 01 s");
+    expect(formatTime(3600000)).toBe("1h 00min 00s");
+    expect(formatTime(7200000)).toBe("2h 00min 00s");
+    expect(formatTime(3661000)).toBe("1h 01min 01s");
   });
 });
 

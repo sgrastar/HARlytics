@@ -11,7 +11,7 @@ Making HTTP tell its story
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/hecpjmmgpbecpeigmoilgcljdkidlbgm)](https://chrome.google.com/webstore/detail/hecpjmmgpbecpeigmoilgcljdkidlbgm)
 [![Edge Add-ons Download](https://img.shields.io/badge/Edge%20Add--ons-Download-blue)](https://microsoftedge.microsoft.com/addons/detail/harlytics/dhhndkibkdekohnpmhaeeegkcpmpjben)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsgrastar%2Fhar-analyzer.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsgrastar%2Fhar-analyzer?ref=badge_shield&issueType=license)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fsgrastar%2FHARlytics.svg?type=shield&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fsgrastar%2FHARlytics?ref=badge_shield&issueType=license)
 
 [Website](https://harlytics.com/)
 

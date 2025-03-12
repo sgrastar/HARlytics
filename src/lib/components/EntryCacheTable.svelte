@@ -4,24 +4,25 @@
     truncateText,
     httpStatusCSSClass,
     formatTime,
+    getHttpStatusDescription,
     formatBytes,
     formatGMTtoUTC,
     formatToLocalTime,
     formatPostDataValue,
     normalizePostData,
-    getHttpStatusDescription,
     exportToCSV,
   } from "$lib/utils";
   import { Button, Radio, Tooltip } from "flowbite-svelte";
   import { FileCsvOutline, QuestionCircleSolid } from "flowbite-svelte-icons";
 
-  import EntryRow from "$lib/components/EntryRowGeneral.svelte";
+  import EntryRowCache from "$lib/components/EntryRowCache.svelte";
 
   export let entries = [];
   export let pages = [];
   export let logFilename;
   export let isPathTruncated = true;
   export let isDomainTruncated = true;
+  export let displayMode= "cacheStatus";
 
   let viewMode = "entry";
   let showByPage = false;
@@ -72,6 +73,7 @@
   $: if (!hasPagesInfo && viewMode === "page") {
     viewMode = "entry";
   }
+  $: displayMode = displayMode;
 
   function handleDetailExportCSV() {
     const csvHeaderData = entries.map((entry) => [
@@ -275,7 +277,15 @@
         <Radio bind:group={viewMode} value="second" disabled>Page View</Radio>
       {/if}
     </div>
-    <div class="col-span-9">
+    <div class="col-span-6 flex">
+        <div class="flex items-center gap-4">
+          <span class="text-gray-600 dark:text-gray-400">Display Mode:</span>
+          <Radio bind:group={displayMode} value="cacheStatus" on:click={() => (displayMode = 'cacheStatus')}>Cache Status</Radio>
+          <Radio bind:group={displayMode} value="CDNDeliveryStatus" on:click={() => (displayMode = 'CDNDeliveryStatus')}>CDN Delivery Status</Radio>
+          <Radio bind:group={displayMode} value="resourceValidation" on:click={() => (displayMode = 'resourceValidation')}>Resource Validation</Radio>
+        </div>
+    </div>
+    <div class="col-span-3">
       {#if entries.length > 0}
         <div class="flex flex-row-reverse">
           <Button size="xs" on:click={handleDetailExportCSV}
@@ -318,46 +328,52 @@
             <div class="domain header-cell">Domain</div>
             <div class="method header-cell">Method</div>
             <div class="status header-cell">Status</div>
-            <div class="type header-cell">Type</div>
-            {#if window.innerWidth >= 980}
-              <div class="mimetype header-cell">mimeType</div>
-            {/if}
-            <div class="sign">
-              <table>
-                <tr>
-                  <td class="auth"
-                    ><span title="Authorization Header">A</span></td
-                  >
-                  <td class="postData"><span title="Post Data">P</span></td>
-                  <td class="queryParameter"
-                    ><span title="Query Parameter">Q</span></td
-                  >
-                  <td class="cookies"><span title="Set-Cookie">C</span></td>
-                </tr>
-              </table>
-            </div>
-            {#if window.innerWidth >= 980}
-              <div class="timestamp header-cell">Timestamp</div>
-            {/if}
             <div class="time header-cell">Time</div>
             <div class="size header-cell">Size</div>
-            {#if window.innerWidth >= 980}
-              <div class="cached header-cell">isCached</div>
+            <div class="cdnProvider header-cell">CDN</div>
+            {#if displayMode == "cacheStatus" || displayMode == "CDNDeliveryStatus" || displayMode == "resourceValidation"}
+            <div class="cdnDataSource header-cell">Source</div>
             {/if}
-            <!-- <div class="age header-cell">age</div> -->
-            <div class="waterfall header-cell">Waterfall</div>
-            <!-- <div class="dns header-cell">dns</div>
-              <div class="connect header-cell">connect</div>
-              <div class="ssl header-cell">ssl</div>
-              <div class="send header-cell">send</div>
-              <div class="wait header-cell">wait</div>
-              <div class="receive header-cell">receive</div> -->
+            <!-- {#if displayMode == "CDNDeliveryStatus"}
+            <div class="cdnFromCDN header-cell">FromCDN</div>
+            <div class="cdnFromOrigin header-cell">FromOrigin</div>
+            <div class="cdnFromDiskCache header-cell">FromDisk</div>
+            {/if} -->
+            {#if displayMode == "CDNDeliveryStatus"}
+            <div class="httpVersion header-cell">Protocol</div>
+            <div class="cdnEdgelocation header-cell">Location</div>
+            <div class="cdnCacheStatus header-cell">CDNCacheStatus</div>
+            {/if}
+            {#if displayMode == "cacheStatus"}
+            <div class="cdnFreshness header-cell" title="Status of resource in CDN cache based on s-maxage or max-age directive.">CDNFresh</div>
+            <!-- Shows the resource freshness status in CDN cache based on s-maxage directive or max-age. This influences content delivery from edge servers to the client. -->
+            <div class="browserFreshness header-cell" title="Status of resource in browser cache based on max-age or Expires header.">BrowserFresh</div>
+            <!-- Indicates if the resource is still fresh in browser cache or has become stale based on max-age directive or Expires header. This affects client-side caching behavior. -->
+            {/if}
+            <div class="cacheStorage header-cell">Storage</div>
+            {#if displayMode != "resourceValidation"}
+            <div class="cacheTTL header-cell">TTL</div>
+            {/if}
+            <div class="cachePolicy header-cell">Policy</div>
+            {#if displayMode == "resourceValidation"}
+            <div class="etag header-cell">ETag</div>
+            <div class="lastModified header-cell">Last-Modified</div>
+            {/if}
+            {#if displayMode == "resourceValidation" || displayMode == "cacheStatus"}
+            <div class="age header-cell">Age</div>
+            {/if}
+            {#if displayMode == "cacheStatus"}
+            <div class="vary header-cell">Vary</div>
+            {/if}
+            {#if displayMode == "CDNDeliveryStatus"}
+            <div class="contentEncoding header-cell" title="Content-Encoding">CE</div>
+            {/if}
           </div>
 
           {#each entries.filter((entry) => entry.pageref === page.id) as entry}
-            <EntryRow
+            <EntryRowCache
               {entry}
-              {entries}
+              {displayMode}
               isIndented={false}
               hasPageInfo={true}
               selectedEntryIndexes={selectedEntryIds}
@@ -384,48 +400,56 @@
       {:else}
         <div class="table-header">
           <div class="path header-cell">Path</div>
-          <div class="domain header-cell">Domain</div>
-          <div class="method header-cell">Method</div>
-          <div class="status header-cell">Status</div>
-          <div class="type header-cell">Type</div>
-          {#if window.innerWidth >= 980}
-            <div class="mimetype header-cell">mimeType</div>
-          {/if}
-          <div class="sign">
-            <table>
-              <tr>
-                <td class="auth"><span title="Authorization Header">A</span></td
-                >
-                <td class="postData"><span title="Post Data">P</span></td>
-                <td class="queryParameter"
-                  ><span title="Query Parameter">Q</span></td
-                >
-                <td class="cookies"><span title="Set-Cookie">C</span></td>
-              </tr>
-            </table>
-          </div>
-          {#if window.innerWidth >= 980}
-            <div class="timestamp header-cell">Timestamp</div>
-          {/if}
-          <div class="time header-cell">Time</div>
-          <div class="size header-cell">Size</div>
-          {#if window.innerWidth >= 980}
-            <div class="cached header-cell">isCached</div>
-          {/if}
-          <!-- <div class="age header-cell">age</div> -->
-          <div class="waterfall header-cell">Waterfall</div>
-          <!-- <div class="dns header-cell">dns</div>
-            <div class="connect header-cell">connect</div>
-            <div class="ssl header-cell">ssl</div>
-            <div class="send header-cell">send</div>
-            <div class="wait header-cell">wait</div>
-            <div class="receive header-cell">receive</div> -->
+            <div class="domain header-cell">Domain</div>
+            <div class="method header-cell">Method</div>
+            <div class="status header-cell">Status</div>
+            <div class="time header-cell">Time</div>
+            <div class="size header-cell">Size</div>
+            <div class="cdnProvider header-cell">CDN</div>
+            {#if displayMode == "cacheStatus" || displayMode == "CDNDeliveryStatus" || displayMode == "resourceValidation"}
+            <div class="cdnDataSource header-cell">Source</div>
+            {/if}
+            <!-- {#if displayMode == "CDNDeliveryStatus"}
+            <div class="cdnFromCDN header-cell">FromCDN</div>
+            <div class="cdnFromOrigin header-cell">FromOrigin</div>
+            <div class="cdnFromDiskCache header-cell">FromDisk</div>
+            {/if} -->
+            {#if displayMode == "CDNDeliveryStatus"}
+            <div class="httpVersion header-cell">Protocol</div>
+            <div class="cdnEdgelocation header-cell">Location</div>
+            <div class="cdnCacheStatus header-cell">CDNCacheStatus</div>
+            {/if}
+            {#if displayMode == "cacheStatus"}
+            <div class="cdnFreshness header-cell" title="Status of resource in CDN cache based on s-maxage or max-age directive.">CDNFresh</div>
+            <!-- Shows the resource freshness status in CDN cache based on s-maxage directive or max-age. This influences content delivery from edge servers to the client. -->
+            <div class="browserFreshness header-cell" title="Status of resource in browser cache based on max-age or Expires header.">BrowserFresh</div>
+            <!-- Indicates if the resource is still fresh in browser cache or has become stale based on max-age directive or Expires header. This affects client-side caching behavior. -->
+            {/if}
+            <div class="cacheStorage header-cell">Storage</div>
+            {#if displayMode != "resourceValidation"}
+            <div class="cacheTTL header-cell">TTL</div>
+            {/if}
+            <div class="cachePolicy header-cell">Policy</div>
+            {#if displayMode == "resourceValidation"}
+            <div class="etag header-cell">ETag</div>
+            <div class="lastModified header-cell">Last-Modified</div>
+            {/if}
+            {#if displayMode == "resourceValidation" || displayMode == "cacheStatus"}
+            <div class="age header-cell">Age</div>
+            {/if}
+            {#if displayMode == "cacheStatus"}
+            <div class="vary header-cell">Vary</div>
+            {/if}
+            {#if displayMode == "CDNDeliveryStatus"}
+            <div class="contentEncoding header-cell" title="Content-Encoding">Content-Encoding</div>
+            {/if}
+            
         </div>
 
         {#each entries as entry}
-          <EntryRow
+          <EntryRowCache
             {entry}
-            {entries}
+            {displayMode}
             isIndented={false}
             hasPageInfo={false}
             selectedEntryIndexes={selectedEntryIds}
@@ -491,31 +515,23 @@
   }
 
   .path {
-    width: 20%;
+    width: 310px;
     min-width: 150px;
   }
   .domain {
-    width: 10%;
+    width: 150px;
     min-width: 150px;
   }
-  .type {
-    width: 80px;
-    text-align: center;
-  }
-  .mimetype {
-    width: 150px;
-  }
+  
   .status {
-    width: 60px;
+    width: 50px;
     text-align: center;
   }
   .method {
     width: 70px;
     text-align: center;
   }
-  .timestamp {
-    width: 150px;
-  }
+  
   /* .cookies { width: 60px; text-align: right; } */
   .time {
     width: 70px;
@@ -525,32 +541,78 @@
     width: 70px;
     text-align: right;
   }
-  .cached {
+  .cdnProvider {
+    width: 140px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .cdnDataSource {
+    width: 70px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  /* .cdnFromCDN {
+    width: 73px;
+    text-align: center;
+  }
+  .cdnFromOrigin {
+    width: 73px;
+    text-align: center;
+  }
+  .cdnFromDiskCache {
+    width: 65px;
+    text-align: center;
+  } */
+  .httpVersion{
+    width:70px;
+   }
+  .cdnEdgelocation {
+    width: 70px;
+  }
+  .cdnCacheStatus {
+    width: 220px;
+  }
+  .cdnFreshness,
+  .browserFreshness{
+    width:92px;
+    text-align: center;
+  }
+  .cacheStorage {
+    width: 70px;
+    text-align: center;
+  }
+  .cacheTTL {
+    width: 120px;
+    text-align: right;
+  }
+  .cachePolicy {
+    width: 230px;
+  }
+  .age { width: 70px; text-align: right; }
+  .etag{
+    width: 310px;
+  }
+  .lastModified {
+    width: 150px;
+  }
+  .vary { width: 220px; }
+  .contentEncoding{
+    width: 115px;
+    text-align: right;
+  }
+  /* .cached {
     width: 60px;
     text-align: center;
-    display: none;
-  }
-  .sign table td {
-    font-size: 100%;
-    font-weight: bold;
-    width: 1.2em;
-  }
-  .sign table td.auth,
-  .sign table td.postData {
-    color: red;
-  }
-  .sign table td.queryParameter,
-  .sign table td.cookies {
-    color: green;
-  }
+  } */
+  
 
-  @media (max-width: 979px) {
-    .mimetype,
-    .timestamp,
+  /* @media (max-width: 979px) {
     .cached {
       display: none;
     }
-  }
+  } */
 
   :global(.cookies-table th.cookieName) {
     width: 14em;

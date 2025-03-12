@@ -86,7 +86,7 @@
         class="md:ml-auto flex flex-wrap items-center space-x-2 text-base justify-center"
       >
       <!-- <DarkMode {btnClass} /> -->
-      <div id="buildTimestamp" class="text-xs" title="Build: 2025-02-07 14:00:08 UTC">v0.2.0</div>
+      <div id="buildTimestamp" class="text-xs" title="Build: 2025-03-12 09:47:49 UTC">v0.3.0</div>
         {#if isLive}
           <Badge large color="indigo" class="ml-4" data-testid="cloud-edition-badge">Cloud Edition</Badge>
         {/if}

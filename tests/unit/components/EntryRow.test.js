@@ -50,6 +50,7 @@ const createMockProps = () => ({
     status >= 200 && status < 300 ? "success" : "error"
   ),
   formatTime: vi.fn((time) => `${time} ms`),
+  getHttpStatusDescription: vi.fn((status) => "200 OK"),
   formatBytes: vi.fn((bytes) => `${bytes} B`),
   truncateText: vi.fn((text, length) =>
     text.length > length ? text.substring(0, length) + "..." : text
