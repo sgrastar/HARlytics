@@ -91,7 +91,6 @@
       typeof entry.responseContentLength !== "undefined"
         ? formatBytes(entry.responseContentLength)
         : "",
-      entry.isCached ? entry.isCached : "",
       entry.age !== null ? entry.age : "",
       entry.age !== null ? formatTime(entry.age) : "",
       entry.timings.dns >= 0 ? entry.timings.dns.toFixed(2) : "",
@@ -117,13 +116,12 @@
         "Method",
         "Status",
         "Type",
-        "mimetype",
+        "MIMEType",
         "Timestamp",
         "Time",
         "Time-formatted",
         "Size",
         "Size-formatted",
-        "IsCached",
         "Age",
         "Age-formatted",
         "DNS",
@@ -140,7 +138,7 @@
         "Receive-formatted",
       ],
       logFilename,
-      "_detail",
+      "_overview",
     );
   }
 

@@ -3,7 +3,8 @@
   import { onMount } from "svelte";
   import { Badge, Button, Modal, DarkMode  } from "flowbite-svelte";
   import {
-    GithubSolid
+    GithubSolid,
+    HomeSolid
   } from "flowbite-svelte-icons";
 
   let isLive = false;
@@ -86,7 +87,7 @@
         class="md:ml-auto flex flex-wrap items-center space-x-2 text-base justify-center"
       >
       <!-- <DarkMode {btnClass} /> -->
-      <div id="buildTimestamp" class="text-xs" title="Build: 2025-03-12 09:47:49 UTC">v0.3.0</div>
+      <div id="buildTimestamp" class="text-xs" title="Build: 2025-03-12 14:48:22 UTC">v0.3.1</div>
         {#if isLive}
           <Badge large color="indigo" class="ml-4" data-testid="cloud-edition-badge">Cloud Edition</Badge>
         {/if}
@@ -97,7 +98,10 @@
           on:click={() => (scrollingModal = true)}
           autoclose>License</Button
         >
-        <a href="https://github.com/sgrastar/HARlytics" target="_blank">
+        <a href="https://harlytics.com/" target="_blank" title="HARlytics.com">
+          <HomeSolid />
+        </a>
+        <a href="https://github.com/sgrastar/HARlytics" target="_blank" title="GitHub">
           <GithubSolid />
         </a>
       </nav>
