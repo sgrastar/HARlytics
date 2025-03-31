@@ -34,7 +34,7 @@
   },
   "type": "module",
   "dependencies": {
-    "pnpm": "^9.15.9"
+    "pnpm": "^10.7.0"
   },
   "pnpm": {
     "overrides": {

@@ -14,8 +14,8 @@ importers:
   .:
     dependencies:
       pnpm:
-        specifier: ^9.15.9
-        version: 9.15.9
+        specifier: ^10.7.0
+        version: 10.7.0
     devDependencies:
       '@sveltejs/adapter-auto':
         specifier: ^3.3.1
@@ -1628,8 +1628,8 @@ packages:
     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
     engines: {node: '>= 6'}
 
-  pnpm@9.15.9:
-    resolution: {integrity: sha512-aARhQYk8ZvrQHAeSMRKOmvuJ74fiaR1p5NQO7iKJiClf1GghgbrlW1hBjDolO95lpQXsfF+UA+zlzDzTfc8lMQ==}
+  pnpm@10.7.0:
+    resolution: {integrity: sha512-a4Za1LYqHZhCth1nSjk5A7hx2SRJVPZSuIQsK1U8chdrJ49kxGPlLUD/+KujhcI1yMns9cx95P14uLttSWM6tg==}
     engines: {node: '>=18.12'}
     hasBin: true
 
@@ -3744,7 +3744,7 @@ snapshots:
 
   pirates@4.0.7: {}
 
-  pnpm@9.15.9: {}
+  pnpm@10.7.0: {}
 
   postcss-import@15.1.0(postcss@8.5.3):
     dependencies:
