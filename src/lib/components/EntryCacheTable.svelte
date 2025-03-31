@@ -12,7 +12,7 @@
     normalizePostData,
     exportToCSV,
   } from "$lib/utils";
-  import { Button, Radio, Tooltip } from "flowbite-svelte";
+  import { Button, Card, Radio, Tooltip } from "flowbite-svelte";
   import { FileCsvOutline, QuestionCircleSolid } from "flowbite-svelte-icons";
 
   import EntryRowCache from "$lib/components/EntryRowCache.svelte";
@@ -260,48 +260,53 @@
   }
 </script>
 
-<div class="p-2">
-  <div class="grid grid-cols-12">
-    <div class="col-span-3 flex gap-4" style="align-items: center;">
-      <Radio
-        bind:group={viewMode}
-        value="entry"
-        on:click={() => (showByPage = false)}>Entry View</Radio
-      >
-      {#if hasPagesInfo}
+
+  
+<Card size="none" padding="none" class="mb-4">
+  <div class="p-2">
+    <div class="grid grid-cols-12">    
+      <div class="col-span-3 flex gap-4" style="align-items: center;">
         <Radio
           bind:group={viewMode}
-          value="page"
-          on:click={() => (showByPage = true)}>Page View</Radio
+          value="entry"
+          on:click={() => (showByPage = false)}>Entry View</Radio
         >
-
-        <QuestionCircleSolid id="placement-4" size="sm" />
-        <Tooltip triggeredBy="#placement-4" placement="right">
-          Page View will not display entries without page information.
-        </Tooltip>
-      {:else}
-        <Radio bind:group={viewMode} value="second" disabled>Page View</Radio>
-      {/if}
-    </div>
-    <div class="col-span-6 flex">
-        <div class="flex items-center gap-4">
-          <span class="text-gray-600 dark:text-gray-400">Display Mode:</span>
-          <Radio bind:group={displayMode} value="cacheStatus" on:click={() => (displayMode = 'cacheStatus')}>Cache Status</Radio>
-          <Radio bind:group={displayMode} value="CDNDeliveryStatus" on:click={() => (displayMode = 'CDNDeliveryStatus')}>CDN Delivery Status</Radio>
-          <Radio bind:group={displayMode} value="resourceValidation" on:click={() => (displayMode = 'resourceValidation')}>Resource Validation</Radio>
-        </div>
-    </div>
-    <div class="col-span-3">
-      {#if entries.length > 0}
-        <div class="flex flex-row-reverse">
-          <Button size="xs" on:click={handleDetailExportCSV}
-            ><FileCsvOutline class="w-4 h-4 me-2" />Export Data to CSV</Button
+        {#if hasPagesInfo}
+          <Radio
+            bind:group={viewMode}
+            value="page"
+            on:click={() => (showByPage = true)}>Page View</Radio
           >
-        </div>
-      {/if}
+
+          <QuestionCircleSolid id="placement-4" size="sm" />
+          <Tooltip triggeredBy="#placement-4" placement="right">
+            Page View will not display entries without page information.
+          </Tooltip>
+        {:else}
+          <Radio bind:group={viewMode} value="second" disabled>Page View</Radio>
+        {/if}
+      </div>
+      <div class="col-span-6 flex">
+          <div class="flex items-center gap-4">
+            <span class="text-gray-600 dark:text-gray-400">Display Mode:</span>
+            <Radio bind:group={displayMode} value="cacheStatus" on:click={() => (displayMode = 'cacheStatus')}>Cache Status</Radio>
+            <Radio bind:group={displayMode} value="CDNDeliveryStatus" on:click={() => (displayMode = 'CDNDeliveryStatus')}>CDN Delivery Status</Radio>
+            <Radio bind:group={displayMode} value="resourceValidation" on:click={() => (displayMode = 'resourceValidation')}>Resource Validation</Radio>
+          </div>
+      </div>
+      <div class="col-span-3">
+        {#if entries.length > 0}
+          <div class="flex flex-row-reverse">
+            <Button size="xs" on:click={handleDetailExportCSV}
+              ><FileCsvOutline class="w-4 h-4 me-2" />Export Data to CSV</Button
+            >
+          </div>
+        {/if}
+      </div>
     </div>
   </div>
-</div>
+</Card>
+  
 
 <div class="request-detail-table">
   {#if entries.length === 0}
