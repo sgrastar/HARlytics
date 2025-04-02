@@ -59,6 +59,7 @@
   import {
     Alert,
     Fileupload,
+    Card,
     Input,
     Range,
     Label,
@@ -109,6 +110,7 @@
   let hasContentData = false;
   let hasHeaderAuthData = false;
 
+  let entryIdCounter = 0;
   let pages = [];
   let entries = [];
   let urlFilter = "";
@@ -208,6 +210,7 @@
     showFileErrorAlert = false;
 
     // リセット
+    entryIdCounter = 0;
     pages = [];
     entries = [];
     urlFilter = "";
@@ -251,6 +254,7 @@
           : (hasInitiatorInfo = false);
 
         entries = entries.map((entry) => {
+          const uniqueId = `${entryIdCounter++}`;
           const pageref =
             hasPagesInfo && entry.pageref ? entry.pageref : "NoPageRef";
           const url = new URL(entry.request.url);
@@ -553,6 +557,7 @@
           const  dataFreshness = calculateFreshness(entry);
 
           return {
+            uniqueEntryId: uniqueId, 
             pages: pages,
             pageref: pageref,
             url: entry.request.url,
@@ -1769,7 +1774,8 @@ function handleMouseLeave(type) {
           <DrawSquareOutline size="sm" />Sequence
         </div>
         <div id="analyzeSequenceDisplay" class="grid grid-cols-12">
-          <div class="col-span-2 bg-gray-100 p-4 rounded">
+          <div class="col-span-2">
+            <Card>
             <h3 class="text-lg font-semibold mb-4">
               Sequence Diagram Settings
             </h3>
@@ -1906,6 +1912,7 @@ function handleMouseLeave(type) {
                 {/if}
               {/if}
             </div>
+          </Card>
           </div>
           <div class="col-span-8 p-4">
             <div class="flex items-center gap-2">
@@ -1922,7 +1929,8 @@ function handleMouseLeave(type) {
             </Tooltip>
             <div id="graph" bind:this={marmaidDivElem}></div>
           </div>
-          <div class="col-span-2 bg-gray-100 p-4 rounded">
+          <div class="col-span-2 rounded">
+            <Card>
             <h3 class="text-lg font-semibold mb-4">Export...</h3>
 
             <div class="mb-2">
@@ -1968,6 +1976,7 @@ function handleMouseLeave(type) {
                 on:change={textFieldUpdated}
               ></Textarea>
             </div>
+          </Card>
           </div>
         </div>
       </TabItem>
