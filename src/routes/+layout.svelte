@@ -87,7 +87,8 @@
         class="md:ml-auto flex flex-wrap items-center space-x-2 text-base justify-center"
       >
       <!-- <DarkMode {btnClass} /> -->
-      <div id="buildTimestamp" class="text-xs" title="Build: 2025-03-31 17:24:31 UTC">v0.3.1</div>
+      <div id="buildTimestamp" class="text-xs" title="Build: 2025-04-06 07:49:28 UTC">v0.3.2</div>
+      <div class="text-xs"><a href="https://github.com/sgrastar/HARlytics/releases" target="_blank">Release Note</a></div>
         {#if isLive}
           <Badge large color="indigo" class="ml-4" data-testid="cloud-edition-badge">Cloud Edition</Badge>
         {/if}
