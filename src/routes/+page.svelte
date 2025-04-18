@@ -177,6 +177,19 @@
 
   onMount(() => {
     // initialize
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      const initTheme = () => {
+        if (localStorage.getItem('color-theme') === 'dark' || 
+            (!('color-theme' in localStorage) && 
+             window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      };
+      
+      initTheme();
+    }
 
     //console.log("the component has mounted");
     mermaid.initialize({
@@ -1302,6 +1315,17 @@ function handleMouseLeave(type) {
   const drawDiagram = async function () {
     //console.log("run drawDiagram");
     //console.log(marmaidDivElem);
+    const isDark = document.documentElement.classList.contains('dark');
+  
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: isDark ? 'dark' : 'base',
+      sequence: {
+        noteAlign: "left",
+      },
+      maxTextSize: 100000,
+    });
+
     if (marmaidDivElem) {
       const { svg } = await mermaid.render("sequenceArea", mermaidCode);
       marmaidDivElem.innerHTML = svg;
@@ -1738,7 +1762,7 @@ function handleMouseLeave(type) {
   </div>
 
   <div id="display">
-    <Tabs tabStyle="underline" class="mt-0">
+    <Tabs tabStyle="underline" class="mt-0"contentClass=" p-4 bg-white dark:bg-gray-900 rounded-lg mt-4">
       <TabItem open class="p-0">
         <div slot="title" class="flex items-center gap-2">
           <BarsFromLeftOutline size="sm" />Overview
@@ -1915,8 +1939,8 @@ function handleMouseLeave(type) {
           </Card>
           </div>
           <div class="col-span-8 p-4">
-            <div class="flex items-center gap-2">
-              <h3 class="text-lg font-semibold">Sequence Preview (Mermaid)</h3>
+            <div class="flex items-center gap-2 dark:bg-gray-900 text-gray-500 dark:text-gray-400 ">
+              <h3 class="text-lg font-semibold ">Sequence Preview (Mermaid)</h3>
               <QuestionCircleSolid id="placement-4" size="sm" />
             </div>
             <Tooltip triggeredBy="#placement-4" placement="right">
@@ -1927,7 +1951,7 @@ function handleMouseLeave(type) {
                 <li>- URL encoded values</li>
               </ul>
             </Tooltip>
-            <div id="graph" bind:this={marmaidDivElem}></div>
+            <div id="graph" class="dark:bg-gray-900 text-gray-500 dark:text-gray-400" bind:this={marmaidDivElem}></div>
           </div>
           <div class="col-span-2 rounded">
             <Card>
@@ -2225,6 +2249,8 @@ function handleMouseLeave(type) {
 </main>
 
 <style>
+
+
   :global(body) {
     font-size: 100%;
   }

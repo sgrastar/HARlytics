@@ -318,12 +318,12 @@
     <div class="table-body">
       {#if showByPage && hasPagesInfo}
         {#each pages as page}
-          <div class="page-header">
-            <div class="flex items-center px-2 py-1 bg-gray-100">
+          <div class="page-header bg-white dark:bg-gray-600 dark:text-gray-200">
+            <div class="flex items-center px-2 py-1">
               <div class="flex-grow font-medium" title={page.title}>
                 {truncateText(page.title, 100) || `Page ${page.id}`}
                 <span
-                  class="text-sm text-gray-600"
+                  class="text-sm"
                   style="display: inline-block; float:right;"
                 >
                   (Load: {page.pageTimings.onLoad !== null
@@ -334,7 +334,7 @@
             </div>
           </div>
 
-          <div class="table-header indent">
+          <div class="table-header indent bg-white dark:bg-gray-700 dark:text-gray-300">
             <div class="path header-cell">Path</div>
             <div class="domain header-cell">Domain</div>
             <div class="method header-cell">Method</div>
@@ -409,7 +409,7 @@
           {/each}
         {/each}
       {:else}
-        <div class="table-header">
+        <div class="table-header bg-white dark:bg-gray-700 dark:text-gray-300">
           <div class="path header-cell">Path</div>
             <div class="domain header-cell">Domain</div>
             <div class="method header-cell">Method</div>
@@ -499,7 +499,7 @@
     display: flex;
     position: sticky;
     top: 0;
-    background: #f2f2f2;
+    /* background: #f2f2f2; */
     border-bottom: 1px solid #ccc;
     z-index: 1;
     padding: 0 0.5rem;

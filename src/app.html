@@ -12,4 +12,23 @@
   <body data-sveltekit-preload-data="hover" class="bg-white dark:bg-gray-900">
     <div style="display: contents">%sveltekit.body%</div>
   </body>
+  <!-- <style>
+    /* グローバルスタイルとして以下を追加 */
+    body{
+      transition: background-color 0.5s ease, color 0.5s ease;
+    }
+    *{
+      transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+    }
+    
+    /* ホバー効果など即時反応させたい要素のクラスを指定 */
+    .entry-row {
+      transition: none !important;
+    }
+    
+    /* あるいは、ホバー状態のみを除外する場合 */
+    .entry-row:hover {
+      transition: none !important;
+    }
+  </style> -->
 </html>

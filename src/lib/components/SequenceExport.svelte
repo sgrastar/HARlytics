@@ -13,7 +13,7 @@
   let imageFormat = "png";
   let sizeMode = "auto";
   let customSize = 1080;
-  let isTransparent = true;
+  let backgroundColor = "transparent"; // Changed from isTransparent to backgroundColor
   let filename = `Sequence_${logFilename || "diagram"}.png`;
 
   // For copy status feedback
@@ -59,8 +59,16 @@
         canvas.height = height;
 
         const ctx = canvas.getContext("2d");
-        if (!isTransparent) {
-          ctx.fillStyle = "white";
+        
+        // Apply the selected background color
+        if (backgroundColor !== "transparent") {
+          if (backgroundColor === "white") {
+            ctx.fillStyle = "#fff";
+          } else if (backgroundColor === "dark") {
+            ctx.fillStyle = "rgb(17,24,39)";
+          } else if (backgroundColor === "black") {
+            ctx.fillStyle = "#000";
+          }
           ctx.fillRect(0, 0, width, height);
         }
 
@@ -194,9 +202,11 @@
       {#if imageFormat === "png"}
         <div class="mb-3">
           <Label class="mb-2">Background</Label>
-          <div class="flex gap-4">
-            <Radio bind:group={isTransparent} value={true}>Transparent</Radio>
-            <Radio bind:group={isTransparent} value={false}>White</Radio>
+          <div class="flex gap-4 flex-wrap">
+            <Radio bind:group={backgroundColor} value="transparent">Transparent</Radio>
+            <Radio bind:group={backgroundColor} value="white">White</Radio>
+            <Radio bind:group={backgroundColor} value="dark">Dark</Radio>
+            <Radio bind:group={backgroundColor} value="black">Black</Radio>
           </div>
         </div>
       {/if}
@@ -231,7 +241,7 @@
 
   <div
     class="mb-5 flex gap-2"
-    style="display: flex; flex-direction: column; align-content: flex-end; flex-wrap: wrap;"
+    style="display: flex; flex-direction: column; align-content: center; flex-wrap: wrap;"
   >
     <Button size="xs" color="light" on:click={copyToClipboard}>
       <FileCopySolid class="w-4 h-4 me-2" />{copyStatus || "Copy to Clipboard"}
@@ -242,7 +252,7 @@
     </Button>
 
     <Button size="sm" on:click={exportDiagram}>
-      <DownloadSolid class="w-4 h-4 me-2" />Export Sequence to {imageFormat ==
+      <DownloadSolid class="w-4 h-4 me-2" />Export to {imageFormat ==
       "png"
         ? "PNG"
         : "SVG"} file
