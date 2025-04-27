@@ -144,9 +144,9 @@
 </div>
 
 {#if selectedEntryIndexes.has(getEntryId(entry))}
-  <div class="detail-row {hasPageInfo ? 'indent' : ''} text-gray-900 bg-white dark:text-gray-100 dark:bg-gray-700">
+  <div class="detail-row {hasPageInfo ? 'indent' : ''} text-gray-900 bg-white dark:text-gray-100 dark:bg-gray-900">
     <div class="custom-tabs">
-      <div class="tab-list text-gray-900 bg-white dark:text-gray-100 dark:bg-gray-700">
+      <div class="tab-list text-gray-900 bg-white dark:text-gray-100 dark:bg-gray-900">
         <button
           class="tab-button"
           class:active={selectedTabs.get(getEntryId(entry)) === "Headers"}
@@ -192,7 +192,7 @@
           Cookies [{entry.responseCookies.length}]
         </button>
       </div>
-      <div class="tab-content text-gray-900 bg-white dark:text-gray-100 dark:bg-gray-700">
+      <div class="tab-content text-gray-900 bg-white dark:text-gray-100 dark:bg-gray-900">
         {#if selectedTabs.get(getEntryId(entry)) === "Headers"}
           <!-- Headers content -->
           <div class="headers-container">
@@ -323,7 +323,7 @@
           <!-- Initiator content -->
         {:else if selectedTabs.get(getEntryId(entry)) === "Timing"}
           <!-- Timing content -->
-          <div class="timing-container p-4 bg-white rounded-lg dark:text-gray-100 dark:bg-gray-700">
+          <div class="timing-container p-4 bg-white rounded-lg dark:text-gray-100 dark:bg-gray-800">
             <!-- <div class="mb-4 text-gray-700">
                   {entry.timings}
                   <div class="text-sm">Queued at {formatTimestamp(new Date(entry.startedDateTime))}</div>
@@ -338,7 +338,7 @@
                 </div>
                 <div class="flex justify-between items-center mb-1">
                   <div class="text-sm w-32">Queueing</div>
-                  <div class="timing-bar-container bg-gray-200 dark:bg-gray-800">
+                  <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                     {#if entry.timings.blocked >= 0}
                       <div
                         class="absolute bg-gray-400"
@@ -364,7 +364,7 @@
                   <!-- DNS Lookup -->
                   <div class="flex justify-between items-center">
                     <div class="text-sm w-32">DNS Lookup</div>
-                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-800">
+                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                       {#if entry.timings.dns >= 0}
                         <div
                           class="absolute bg-blue-400"
@@ -391,7 +391,7 @@
                   <!-- Initial connection -->
                   <div class="flex justify-between items-center">
                     <div class="text-sm w-32">Initial connection</div>
-                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-800">
+                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                       {#if entry.timings.connect >= 0}
                         <div
                           class="absolute bg-orange-400"
@@ -418,7 +418,7 @@
                   <!-- SSL -->
                   <div class="flex justify-between items-center">
                     <div class="text-sm w-32">SSL</div>
-                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-800">
+                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                       {#if entry.timings.ssl >= 0}
                         <div
                           class="absolute bg-purple-400"
@@ -451,7 +451,7 @@
                   <!-- Request sent -->
                   <div class="flex justify-between items-center">
                     <div class="text-sm w-32">Request sent</div>
-                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-800">
+                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                       {#if entry.timings.send >= 0}
                         <div
                           class="absolute bg-cyan-500"
@@ -476,7 +476,7 @@
                   <!-- Waiting (TTFB) -->
                   <div class="flex justify-between items-center">
                     <div class="text-sm w-32">Waiting (TTFB)</div>
-                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-800">
+                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                       {#if entry.timings.wait >= 0}
                         <div
                           class="absolute bg-green-500"
@@ -501,7 +501,7 @@
                   <!-- Content Download -->
                   <div class="flex justify-between items-center">
                     <div class="text-sm w-32">Content Download</div>
-                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-800">
+                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                       {#if entry.timings.receive >= 0}
                         <div
                           class="absolute bg-blue-500"

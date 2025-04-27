@@ -67,7 +67,7 @@
     ? 'opacity-100'
     : 'opacity-0'}"
 >
-  <header class="text-white body-font bg-gray-600">
+  <header class="text-white body-font bg-gray-800">
     <div
       class=" mx-auto flex flex-wrap px-4 py-1 flex-col md:flex-row items-center"
     >

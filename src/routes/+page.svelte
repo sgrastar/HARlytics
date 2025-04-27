@@ -1505,7 +1505,7 @@ function handleMouseLeave(type) {
         </div>
       </div>
 
-      <div class="col-span-9 p-2 rounded bg-gray-0 dark:bg-gray-700">
+      <div class="col-span-9 p-2 rounded bg-gray-0 dark:bg-gray-800">
         <div class="grid grid-cols-12 mb-2 flex items-center">
           <div class="col-span-10" id="domainFilterDiv">
             <Label for="domainFilter">Filter by Domain:</Label>
@@ -2023,9 +2023,9 @@ function handleMouseLeave(type) {
               <p>No data to display.</p>
             {:else if filteredEntries.length > 0}
               <table>
-                <thead>
+                <thead class="text-gray-900 dark:text-gray-200 border-b border-solid border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800">
                   <tr>
-                    <th class="path" rowspan="2">
+                    <th class="path bg-white dark:bg-gray-700" rowspan="2">
                       Path
                       {#if filteredEntries.some((entry) => entry.path.length > 30)}
                         <button
@@ -2118,10 +2118,10 @@ function handleMouseLeave(type) {
                     {/each}
                   </tr>
                 </thead>
-                <tbody>
+                <tbody class="text-gray-900 dark:text-gray-300 border-b border-solid border-gray-300 dark:border-gray-700">
                   {#each filteredEntries as entry}
                     <tr style="border-bottom:1px solid #ccc">
-                      <th class="path">
+                      <th class="path bg-white dark:bg-gray-700">
                         {#if entry.path.length > 30}
                           <span title={entry.url}
                             >{isPathTruncated
@@ -2222,6 +2222,7 @@ function handleMouseLeave(type) {
             <div
               id="chart"
               style="display: flex; flex-direction: row; align-items: center;"
+              class=" bg-white text-grey-200 dark:text-gray-300 dark:bg-gray-900"
             >
               <div>
                 <h2 class="text-lg font-semibold mb-4">
@@ -2323,17 +2324,17 @@ function handleMouseLeave(type) {
     z-index: 2;
   }
   thead th {
-    background-color: #f2f2f2;
+    /* background-color: #f2f2f2; */
   }
 
   thead th.path {
     width: 8em;
     z-index: 10;
-    background-color: #f2f2f2;
+    /* background-color: #f2f2f2; */
   }
   thead th.domain {
     width: 8em;
-    background-color: #f2f2f2;
+    /* background-color: #f2f2f2; */
   }
   thead th.timestamp {
     width: 14em;
@@ -2368,28 +2369,28 @@ function handleMouseLeave(type) {
   }
 
   tbody th.path {
-    background-color: #f9fafb;
+    /* background-color: #f9fafb; */
   }
   tbody th.domain {
-    background-color: #f9fafb;
+    /* background-color: #f9fafb; */
   }
   tbody th.timestamp {
-    background: #efefef;
+    /* background: #efefef; */
     text-align: center;
     font-size: 100%;
-    color: #333;
+    /* color: #333; */
   }
   tbody th.method {
-    background: #efefef;
+    /* background: #efefef; */
     text-align: center;
     font-size: 100%;
-    color: #333;
+    /* color: #333; */
   }
   tbody th.type {
-    background: #efefef;
+    /* background: #efefef; */
     text-align: center;
     font-size: 100%;
-    color: #333;
+    /* color: #333; */
   }
   tbody th.status {
     text-align: center;
