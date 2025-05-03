@@ -75,19 +75,37 @@ export function truncateAndEscape(str, length) {
   return escapeForMermaid(truncateText(str, length));
 }
 
-export function httpStatusCSSClass(statusNo) {
-  if (100 <= statusNo && statusNo <= 199) {
-    return "info"; // Information responses
-  } else if (200 <= statusNo && statusNo <= 299) {
-    return "success"; // Successful responses
-  } else if (300 <= statusNo && statusNo <= 399) {
-    return "redirect"; // Redirection responses
-  } else if (400 <= statusNo && statusNo <= 499) {
-    return "cliError"; // Client-side error responses
-  } else if (500 <= statusNo && statusNo <= 599) {
-    return "srvError"; // Server-side error responses
+// export function httpStatusCSSClass(statusNo) {
+//   if (100 <= statusNo && statusNo <= 199) {
+//     return "info"; // Information responses
+//   } else if (200 <= statusNo && statusNo <= 299) {
+//     return "success"; // Successful responses
+//   } else if (300 <= statusNo && statusNo <= 399) {
+//     return "redirect"; // Redirection responses
+//   } else if (400 <= statusNo && statusNo <= 499) {
+//     return "cliError"; // Client-side error responses
+//   } else if (500 <= statusNo && statusNo <= 599) {
+//     return "srvError"; // Server-side error responses
+//   } else {
+//     return "other";
+//   }
+// }
+
+export function httpStatusCSSClass(status) {
+  if (!status) return "other";
+  
+  if (status >= 100 && status < 200) {
+    return "info text-blue-800 dark:text-blue-300 bg-blue-100 dark:bg-blue-900";
+  } else if (status >= 200 && status < 300) {
+    return "success text-green-800 dark:text-green-300 bg-green-100 dark:bg-green-900";
+  } else if (status >= 300 && status < 400) {
+    return "redirect text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900";
+  } else if (status >= 400 && status < 500) {
+    return "cliError text-red-800 dark:text-red-300 bg-red-100 dark:bg-red-900";
+  } else if (status >= 500 && status < 600) {
+    return "srvError text-white dark:text-white bg-red-600 dark:bg-red-700";
   } else {
-    return "other";
+    return "other text-gray-800 dark:text-gray-300 bg-gray-200 dark:bg-gray-700";
   }
 }
 

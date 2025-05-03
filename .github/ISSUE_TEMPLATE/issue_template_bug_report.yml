@@ -48,7 +48,7 @@ body:
        - Edge Add-on
        - Cloud Edition
        - Local Environment
-       - Other
+       - Other or All Environments
    validations:
      required: true
 
@@ -69,6 +69,6 @@ body:
    attributes:
      label: Version
      description: Version number can be found in the top right corner starting with 'v'
-     placeholder: 0.5.1
+     placeholder: v0.5.1
    validations:
      required: true

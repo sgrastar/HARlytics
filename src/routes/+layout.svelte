@@ -2,6 +2,7 @@
   import "../app.css";
   import { onMount } from "svelte";
   import { Badge, Button, Modal, DarkMode  } from "flowbite-svelte";
+  import CustomDarkMode from "../lib/components/CustomDarkMode.svelte";
   import {
     GithubSolid,
     HomeSolid
@@ -66,7 +67,7 @@
     ? 'opacity-100'
     : 'opacity-0'}"
 >
-  <header class="text-white body-font bg-gray-600">
+  <header class="text-white body-font bg-gray-800">
     <div
       class=" mx-auto flex flex-wrap px-4 py-1 flex-col md:flex-row items-center"
     >
@@ -87,7 +88,8 @@
         class="md:ml-auto flex flex-wrap items-center space-x-2 text-base justify-center"
       >
       <!-- <DarkMode {btnClass} /> -->
-      <div id="buildTimestamp" class="text-xs" title="Build: 2025-04-06 07:49:28 UTC">v0.3.2</div>
+      <CustomDarkMode {btnClass} />
+      <div id="buildTimestamp" class="text-xs" title="Build: 2025-05-03 21:50:39 UTC">v0.4.0</div>
       <div class="text-xs"><a href="https://github.com/sgrastar/HARlytics/releases" target="_blank">Release Note</a></div>
         {#if isLive}
           <Badge large color="indigo" class="ml-4" data-testid="cloud-edition-badge">Cloud Edition</Badge>
@@ -151,3 +153,24 @@
 
   <slot />
 </div>
+
+<style>
+  /* グローバルスタイルとして以下を追加 */
+  :global(body) {
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+  :global(*) {
+    transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+  }
+  
+  /* ホバー効果など即時反応させたい要素のクラスを指定 */
+  :global(.entry-row) {
+    transition: none !important;
+  }
+  
+  /* あるいは、ホバー状態のみを除外する場合 */
+  :global(.entry-row:hover) {
+    transition: none !important;
+  }
+</style>
+

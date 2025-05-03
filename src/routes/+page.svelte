@@ -177,6 +177,19 @@
 
   onMount(() => {
     // initialize
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      const initTheme = () => {
+        if (localStorage.getItem('color-theme') === 'dark' || 
+            (!('color-theme' in localStorage) && 
+             window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      };
+      
+      initTheme();
+    }
 
     //console.log("the component has mounted");
     mermaid.initialize({
@@ -1302,6 +1315,17 @@ function handleMouseLeave(type) {
   const drawDiagram = async function () {
     //console.log("run drawDiagram");
     //console.log(marmaidDivElem);
+    const isDark = document.documentElement.classList.contains('dark');
+  
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: isDark ? 'dark' : 'base',
+      sequence: {
+        noteAlign: "left",
+      },
+      maxTextSize: 100000,
+    });
+
     if (marmaidDivElem) {
       const { svg } = await mermaid.render("sequenceArea", mermaidCode);
       marmaidDivElem.innerHTML = svg;
@@ -1481,7 +1505,7 @@ function handleMouseLeave(type) {
         </div>
       </div>
 
-      <div class="col-span-9 p-2 rounded bg-gray-0 dark:bg-gray-700">
+      <div class="col-span-9 p-2 rounded bg-gray-0 dark:bg-gray-800">
         <div class="grid grid-cols-12 mb-2 flex items-center">
           <div class="col-span-10" id="domainFilterDiv">
             <Label for="domainFilter">Filter by Domain:</Label>
@@ -1738,7 +1762,7 @@ function handleMouseLeave(type) {
   </div>
 
   <div id="display">
-    <Tabs tabStyle="underline" class="mt-0">
+    <Tabs tabStyle="underline" class="mt-0"contentClass=" p-4 bg-white dark:bg-gray-900 rounded-lg mt-4">
       <TabItem open class="p-0">
         <div slot="title" class="flex items-center gap-2">
           <BarsFromLeftOutline size="sm" />Overview
@@ -1915,8 +1939,8 @@ function handleMouseLeave(type) {
           </Card>
           </div>
           <div class="col-span-8 p-4">
-            <div class="flex items-center gap-2">
-              <h3 class="text-lg font-semibold">Sequence Preview (Mermaid)</h3>
+            <div class="flex items-center gap-2 dark:bg-gray-900 text-gray-500 dark:text-gray-400 ">
+              <h3 class="text-lg font-semibold ">Sequence Preview (Mermaid)</h3>
               <QuestionCircleSolid id="placement-4" size="sm" />
             </div>
             <Tooltip triggeredBy="#placement-4" placement="right">
@@ -1927,7 +1951,7 @@ function handleMouseLeave(type) {
                 <li>- URL encoded values</li>
               </ul>
             </Tooltip>
-            <div id="graph" bind:this={marmaidDivElem}></div>
+            <div id="graph" class="dark:bg-gray-900 text-gray-500 dark:text-gray-400" bind:this={marmaidDivElem}></div>
           </div>
           <div class="col-span-2 rounded">
             <Card>
@@ -1999,9 +2023,9 @@ function handleMouseLeave(type) {
               <p>No data to display.</p>
             {:else if filteredEntries.length > 0}
               <table>
-                <thead>
+                <thead class="text-gray-900 dark:text-gray-200 border-b border-solid border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800">
                   <tr>
-                    <th class="path" rowspan="2">
+                    <th class="path bg-white dark:bg-gray-700" rowspan="2">
                       Path
                       {#if filteredEntries.some((entry) => entry.path.length > 30)}
                         <button
@@ -2094,10 +2118,10 @@ function handleMouseLeave(type) {
                     {/each}
                   </tr>
                 </thead>
-                <tbody>
+                <tbody class="text-gray-900 dark:text-gray-300 border-b border-solid border-gray-300 dark:border-gray-700">
                   {#each filteredEntries as entry}
                     <tr style="border-bottom:1px solid #ccc">
-                      <th class="path">
+                      <th class="path bg-white dark:bg-gray-700">
                         {#if entry.path.length > 30}
                           <span title={entry.url}
                             >{isPathTruncated
@@ -2198,6 +2222,7 @@ function handleMouseLeave(type) {
             <div
               id="chart"
               style="display: flex; flex-direction: row; align-items: center;"
+              class=" bg-white text-grey-200 dark:text-gray-300 dark:bg-gray-900"
             >
               <div>
                 <h2 class="text-lg font-semibold mb-4">
@@ -2225,6 +2250,8 @@ function handleMouseLeave(type) {
 </main>
 
 <style>
+
+
   :global(body) {
     font-size: 100%;
   }
@@ -2297,17 +2324,17 @@ function handleMouseLeave(type) {
     z-index: 2;
   }
   thead th {
-    background-color: #f2f2f2;
+    /* background-color: #f2f2f2; */
   }
 
   thead th.path {
     width: 8em;
     z-index: 10;
-    background-color: #f2f2f2;
+    /* background-color: #f2f2f2; */
   }
   thead th.domain {
     width: 8em;
-    background-color: #f2f2f2;
+    /* background-color: #f2f2f2; */
   }
   thead th.timestamp {
     width: 14em;
@@ -2342,33 +2369,33 @@ function handleMouseLeave(type) {
   }
 
   tbody th.path {
-    background-color: #f9fafb;
+    /* background-color: #f9fafb; */
   }
   tbody th.domain {
-    background-color: #f9fafb;
+    /* background-color: #f9fafb; */
   }
   tbody th.timestamp {
-    background: #efefef;
+    /* background: #efefef; */
     text-align: center;
     font-size: 100%;
-    color: #333;
+    /* color: #333; */
   }
   tbody th.method {
-    background: #efefef;
+    /* background: #efefef; */
     text-align: center;
     font-size: 100%;
-    color: #333;
+    /* color: #333; */
   }
   tbody th.type {
-    background: #efefef;
+    /* background: #efefef; */
     text-align: center;
     font-size: 100%;
-    color: #333;
+    /* color: #333; */
   }
   tbody th.status {
     text-align: center;
   }
-  tbody th.status.info,
+  /* tbody th.status.info,
   tbody th.status.success {
     background: #99ffa2;
   }
@@ -2398,7 +2425,7 @@ function handleMouseLeave(type) {
   :global(tbody th.status.srvError) {
     background: #ff4554;
     color: #fff;
-  }
+  } */
   /* tbody td.setCookies,
   tbody td.time,
   tbody td.size,

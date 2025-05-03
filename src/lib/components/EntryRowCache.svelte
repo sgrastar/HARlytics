@@ -38,7 +38,7 @@
 <div
   class="table-row {hasPageInfo ? 'indent' : ''} entry-row {isIndented
     ? 'page-entry'
-    : ''}  text-gray-900 dark:text-gray-300 border-b border-solid border-gray-300 dark:border-gray-700"
+    : ''}  text-gray-900 dark:text-gray-300 border-b border-solid border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600"
   on:click={() => toggleEntryDetails(entry)}
   on:keydown={(e) => handleKeyDown(e, entry)}
   role="button"
@@ -104,8 +104,8 @@
     <div class="cdnCacheStatus cell {entry.cdnCacheStatus == "Unknown" ? "unknown": ""}" title="{entry.cdnCacheStatus}">{entry.cdnCacheStatus != "Unknown" ? entry.cdnCacheStatus : ""}</div>
   {/if}
   {#if displayMode == "cacheStatus"}
-  <div class="cdnFreshness cell {entry.cdnFreshness == "Fresh" ? "fresh" : entry.cdnFreshness == "Not Cacheable" ? "notCacheable" : entry.cdnFreshness == "Stale" ? "stale" :  "other"}">{entry.cdnFreshness}</div>
-  <div class="browserFreshness cell  {entry.browserFreshness == "Fresh" ? "fresh" : entry.browserFreshness == "Not Cacheable" ? "notCacheable" : entry.browserFreshness == "Stale" ? "stale" :  "other"}">{entry.browserFreshness}</div>
+  <div class="cdnFreshness cell {entry.cdnFreshness == 'Fresh' ? 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 font-semibold' : entry.cdnFreshness == 'Not Cacheable' ? 'text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600' : entry.cdnFreshness == 'Stale' ? 'text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-600' : 'text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 italic font-light'}">{entry.cdnFreshness}</div>
+  <div class="browserFreshness cell {entry.browserFreshness == 'Fresh' ? 'text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-700 font-semibold' : entry.browserFreshness == 'Not Cacheable' ? 'text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-600' : entry.browserFreshness == 'Stale' ? 'text-gray-700 dark:text-gray-300 bg-gray-300 dark:bg-gray-600' : 'text-gray-500 dark:text-gray-400 bg-gray-200 dark:bg-gray-600 italic font-light'}">{entry.browserFreshness}</div>
   {/if}
   <div class="cacheStorage cell">{entry.cacheStorage}</div>
   {#if displayMode != "resourceValidation"}
@@ -144,9 +144,9 @@
 </div>
 
 {#if selectedEntryIndexes.has(getEntryId(entry))}
-  <div class="detail-row {hasPageInfo ? 'indent' : ''}">
+  <div class="detail-row {hasPageInfo ? 'indent' : ''} text-gray-900 bg-white dark:text-gray-100 dark:bg-gray-900">
     <div class="custom-tabs">
-      <div class="tab-list">
+      <div class="tab-list text-gray-900 bg-white dark:text-gray-100 dark:bg-gray-900">
         <button
           class="tab-button"
           class:active={selectedTabs.get(getEntryId(entry)) === "Headers"}
@@ -192,7 +192,7 @@
           Cookies [{entry.responseCookies.length}]
         </button>
       </div>
-      <div class="tab-content">
+      <div class="tab-content text-gray-900 bg-white dark:text-gray-100 dark:bg-gray-900">
         {#if selectedTabs.get(getEntryId(entry)) === "Headers"}
           <!-- Headers content -->
           <div class="headers-container">
@@ -323,7 +323,7 @@
           <!-- Initiator content -->
         {:else if selectedTabs.get(getEntryId(entry)) === "Timing"}
           <!-- Timing content -->
-          <div class="timing-container p-4 bg-white rounded-lg">
+          <div class="timing-container p-4 bg-white rounded-lg dark:text-gray-100 dark:bg-gray-800">
             <!-- <div class="mb-4 text-gray-700">
                   {entry.timings}
                   <div class="text-sm">Queued at {formatTimestamp(new Date(entry.startedDateTime))}</div>
@@ -333,12 +333,12 @@
             <div class="space-y-6">
               <!-- Resource Scheduling -->
               <div>
-                <div class="text-sm text-gray-600 mb-2">
+                <div class="text-sm text-gray-600 dark:text-gray-300 mb-2">
                   Resource Scheduling
                 </div>
                 <div class="flex justify-between items-center mb-1">
                   <div class="text-sm w-32">Queueing</div>
-                  <div class="timing-bar-container">
+                  <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                     {#if entry.timings.blocked >= 0}
                       <div
                         class="absolute bg-gray-400"
@@ -359,12 +359,12 @@
 
               <!-- Connection Start -->
               <div>
-                <div class="text-sm text-gray-600 mb-2">Connection Start</div>
+                <div class="text-sm text-gray-600 dark:text-gray-300 mb-2">Connection Start</div>
                 <div class="space-y-1">
                   <!-- DNS Lookup -->
                   <div class="flex justify-between items-center">
                     <div class="text-sm w-32">DNS Lookup</div>
-                    <div class="timing-bar-container">
+                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                       {#if entry.timings.dns >= 0}
                         <div
                           class="absolute bg-blue-400"
@@ -391,7 +391,7 @@
                   <!-- Initial connection -->
                   <div class="flex justify-between items-center">
                     <div class="text-sm w-32">Initial connection</div>
-                    <div class="timing-bar-container">
+                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                       {#if entry.timings.connect >= 0}
                         <div
                           class="absolute bg-orange-400"
@@ -418,7 +418,7 @@
                   <!-- SSL -->
                   <div class="flex justify-between items-center">
                     <div class="text-sm w-32">SSL</div>
-                    <div class="timing-bar-container">
+                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                       {#if entry.timings.ssl >= 0}
                         <div
                           class="absolute bg-purple-400"
@@ -446,12 +446,12 @@
 
               <!-- Request/Response -->
               <div>
-                <div class="text-sm text-gray-600 mb-2">Request/Response</div>
+                <div class="text-sm text-gray-600 dark:text-gray-300 mb-2">Request/Response</div>
                 <div class="space-y-1">
                   <!-- Request sent -->
                   <div class="flex justify-between items-center">
                     <div class="text-sm w-32">Request sent</div>
-                    <div class="timing-bar-container">
+                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                       {#if entry.timings.send >= 0}
                         <div
                           class="absolute bg-cyan-500"
@@ -476,7 +476,7 @@
                   <!-- Waiting (TTFB) -->
                   <div class="flex justify-between items-center">
                     <div class="text-sm w-32">Waiting (TTFB)</div>
-                    <div class="timing-bar-container">
+                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                       {#if entry.timings.wait >= 0}
                         <div
                           class="absolute bg-green-500"
@@ -501,7 +501,7 @@
                   <!-- Content Download -->
                   <div class="flex justify-between items-center">
                     <div class="text-sm w-32">Content Download</div>
-                    <div class="timing-bar-container">
+                    <div class="timing-bar-container bg-gray-200 dark:bg-gray-700">
                       {#if entry.timings.receive >= 0}
                         <div
                           class="absolute bg-blue-500"
@@ -645,7 +645,7 @@
     display: flex;
     position: sticky;
     top: 0;
-    background: #f2f2f2;
+    /* background: #f2f2f2; */
     border-bottom: 1px solid #ccc;
     z-index: 1;
     padding: 0 0.5rem;
@@ -869,9 +869,8 @@
     } */
   }
 
-  .status.info,
+  /* .status.info,
   .status.success {
-    /* background: #99ffa2; */
     background: rgb(49 196 141 / 0.6);
   }
 
@@ -890,7 +889,7 @@
 
   .status.other {
     background: #eee;
-  }
+  } */
 
   .detail-row {
     border-bottom: 1px solid #eee;
@@ -900,13 +899,18 @@
     border-bottom-right-radius: 10px;
   }
 
+  :global(.dark .detail-row) {
+    border-bottom: none !important;
+    box-shadow: 0px 0px 2px 0px inset #fff !important;
+  }
+
   .detail-row.indent {
     margin: 0 0 10px 30px;
   }
 
-  .table-row:hover {
+  /* .table-row:hover {
     background-color: rgba(0, 0, 0, 0.02);
-  }
+  } */
 
   /* .table-row.selected {
     background-color: rgba(0, 0, 0, 0.05);
@@ -914,6 +918,10 @@
   .table-row.selected {
     /* box-shadow: 2px 2px 4px -2px #666 */
     box-shadow: 4px 1px 10px -3px #666;
+  }
+  :global(.dark .table-row.selected) {
+    /* box-shadow: 2px 2px 4px -2px #666 */
+    box-shadow: 4px 1px 10px -3px #fff !important;
   }
 
   .table-row:focus {
@@ -942,8 +950,8 @@
 
   .tab-list {
     display: flex;
-    border-bottom: 1px solid #dee2e6;
-    background-color: #f8f9fa;
+    /* border-bottom: 1px solid #dee2e6;
+    background-color: #f8f9fa; */
     height: 24px;
     overflow-x: auto;
     overflow-y: hidden;
@@ -954,19 +962,19 @@
     background: none;
     border: none;
     font-size: 0.75rem;
-    color: #6c757d;
+    /* color: #6c757d; */
     cursor: pointer;
     border-bottom: 2px solid transparent;
     white-space: nowrap;
   }
 
   .tab-button:hover {
-    color: #495057;
+    /* color: #495057; */
   }
 
   .tab-button.active {
-    color: #0d6efd;
-    border-bottom-color: #0d6efd;
+    /* color: #0d6efd; */
+    border-bottom-color: #ee572e;
   }
 
   .tab-content {
@@ -1037,7 +1045,7 @@
   .payload-title,
   .cookies-title {
     font-weight: 600;
-    color: #1a1a1a;
+    /* color: #1a1a1a; */
     padding: 2px 0;
   }
 
@@ -1045,13 +1053,13 @@
   .cookies-table {
     width: 100%;
     /* border: 1px solid #e5e7eb; */
-    border-radius: 4px;
+    /* border-radius: 4px; */
     overflow: hidden;
   }
 
   .header-table .table-header {
     display: flex;
-    background-color: #f3f4f6;
+    /* background-color: #f3f4f6; */
     font-weight: 600;
     border-bottom: 1px solid #e5e7eb;
   }
@@ -1087,17 +1095,17 @@
 
   .queryParameter th.name-col,
   .queryParameter th.value-col {
-    background-color: #f3f4f6;
+    /* background-color: #f3f4f6; */
   }
 
   .table-header .name-col,
   .table-header .value-col {
-    background-color: #f3f4f6;
+    /* background-color: #f3f4f6; */
   }
 
   .cookies-table tr th {
     padding: 2px;
-    background-color: #f3f4f6;
+    /* background-color: #f3f4f6; */
     border: 1px solid #ccc;
     font-weight: bold;
   }
@@ -1140,14 +1148,14 @@
     flex-grow: 1;
     height: 16px;
     margin: 0 12px;
-    background-color: #f3f4f6;
+    /* background-color: #f3f4f6; */
     border-radius: 4px;
     overflow: hidden;
   }
 
   /* タイミングバーのホバー効果 */
   .timing-bar-container:hover {
-    background-color: #e5e7eb;
+    /* background-color: #e5e7eb; */
   }
 
   .page-header {
@@ -1175,9 +1183,9 @@
   }
 
   /* ホバー効果の調整 */
-  .table-row:hover {
+  /* .table-row:hover {
     background-color: rgba(243, 244, 246, 0.8);
-  }
+  } */
 
   .page-header:hover {
     background-color: rgba(243, 244, 246, 0.5);

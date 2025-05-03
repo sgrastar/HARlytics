@@ -65,33 +65,33 @@ describe("escapeForMermaid", () => {
 
 describe("httpStatusCSSClass", () => {
   it("returns info class for 1xx status codes", () => {
-    expect(httpStatusCSSClass(100)).toBe("info");
-    expect(httpStatusCSSClass(199)).toBe("info");
+    expect(httpStatusCSSClass(100)).toBe("info text-blue-800 dark:text-blue-300 bg-blue-100 dark:bg-blue-900");
+    expect(httpStatusCSSClass(199)).toBe("info text-blue-800 dark:text-blue-300 bg-blue-100 dark:bg-blue-900");
   });
 
   it("returns success class for 2xx status codes", () => {
-    expect(httpStatusCSSClass(200)).toBe("success");
-    expect(httpStatusCSSClass(299)).toBe("success");
+    expect(httpStatusCSSClass(200)).toBe("success text-green-800 dark:text-green-300 bg-green-100 dark:bg-green-900");
+    expect(httpStatusCSSClass(299)).toBe("success text-green-800 dark:text-green-300 bg-green-100 dark:bg-green-900");
   });
 
   it("returns redirect class for 3xx status codes", () => {
-    expect(httpStatusCSSClass(300)).toBe("redirect");
-    expect(httpStatusCSSClass(399)).toBe("redirect");
+    expect(httpStatusCSSClass(300)).toBe("redirect text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900");
+    expect(httpStatusCSSClass(399)).toBe("redirect text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900");
   });
 
   it("returns cliError class for 4xx status codes", () => {
-    expect(httpStatusCSSClass(400)).toBe("cliError");
-    expect(httpStatusCSSClass(499)).toBe("cliError");
+    expect(httpStatusCSSClass(400)).toBe("cliError text-red-800 dark:text-red-300 bg-red-100 dark:bg-red-900");
+    expect(httpStatusCSSClass(499)).toBe("cliError text-red-800 dark:text-red-300 bg-red-100 dark:bg-red-900");
   });
 
   it("returns srvError class for 5xx status codes", () => {
-    expect(httpStatusCSSClass(500)).toBe("srvError");
-    expect(httpStatusCSSClass(599)).toBe("srvError");
+    expect(httpStatusCSSClass(500)).toBe("srvError text-white dark:text-white bg-red-600 dark:bg-red-700");
+    expect(httpStatusCSSClass(599)).toBe("srvError text-white dark:text-white bg-red-600 dark:bg-red-700");
   });
 
   it("returns other for invalid status codes", () => {
-    expect(httpStatusCSSClass(600)).toBe("other");
-    expect(httpStatusCSSClass(99)).toBe("other");
+    expect(httpStatusCSSClass(600)).toBe("other text-gray-800 dark:text-gray-300 bg-gray-200 dark:bg-gray-700");
+    expect(httpStatusCSSClass(99)).toBe("other text-gray-800 dark:text-gray-300 bg-gray-200 dark:bg-gray-700");
   });
 });
 
