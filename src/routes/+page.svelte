@@ -2395,7 +2395,7 @@ function handleMouseLeave(type) {
   tbody th.status {
     text-align: center;
   }
-  tbody th.status.info,
+  /* tbody th.status.info,
   tbody th.status.success {
     background: #99ffa2;
   }
@@ -2425,7 +2425,7 @@ function handleMouseLeave(type) {
   :global(tbody th.status.srvError) {
     background: #ff4554;
     color: #fff;
-  }
+  } */
   /* tbody td.setCookies,
   tbody td.time,
   tbody td.size,
