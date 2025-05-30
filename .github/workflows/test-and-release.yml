@@ -4,10 +4,15 @@ on:
   push:
     branches: [ master, main ]
   pull_request:
+    types: [closed]
     branches: [ master, main ]
 
 jobs:
   test:
+    permissions:
+      contents: read
+      pull-requests: write
+
     runs-on: ubuntu-latest
 
     steps:
@@ -22,6 +27,13 @@ jobs:
         uses: pnpm/action-setup@v3
         with:
           version: 8
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
 
       - name: Install dependencies
         run: pnpm install
@@ -36,8 +48,13 @@ jobs:
 
   build-and-release:
     needs: test
+    permissions:
+      contents: write
+
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    if: |
+      (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip-release]')) || 
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true && !contains(github.event.pull_request.title, '[skip-release]'))
 
     steps:
       - uses: actions/checkout@v4
@@ -52,19 +69,32 @@ jobs:
         with:
           version: 8
 
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
       - name: Install dependencies
         run: pnpm install
 
       - name: Build extension
         run: pnpm run build
-        
+
       - name: Create extension archive
         run: |
           node chromePackage.js
+          if [ ! -f extension.zip ]; then
+            echo "Failed to create extension.zip"
+            exit 1
+          fi
 
       # Chrome Web Store deployment
       - name: Submit to Chrome Web Store
-        if: ${{ !contains(github.event.head_commit.message, '[skip-release]') && !contains(github.event.head_commit.message, '[skip-release-chrome]') }}
+        if: |
+          (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip-release]') && !contains(github.event.head_commit.message, '[skip-release-chrome]')) || 
+          (github.event_name == 'pull_request' && github.event.pull_request.merged == true && !contains(github.event.pull_request.title, '[skip-release]') && !contains(github.event.pull_request.title, '[skip-release-chrome]'))
         run: |
           npx chrome-webstore-upload-cli@2 upload --source extension.zip --auto-publish
         env:
@@ -73,9 +103,11 @@ jobs:
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
 
-      # Microsoft Edge Add-on deployment
+      # Microsoft Edge Add-ons deployment
       - name: Submit to Microsoft Edge Add-ons
-        if: ${{ !contains(github.event.head_commit.message, '[skip-release]') && !contains(github.event.head_commit.message, '[skip-release-edge]') }}
+        if: |
+          (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip-release]') && !contains(github.event.head_commit.message, '[skip-release-edge]')) || 
+          (github.event_name == 'pull_request' && github.event.pull_request.merged == true && !contains(github.event.pull_request.title, '[skip-release]') && !contains(github.event.pull_request.title, '[skip-release-edge]'))
         run: |
           echo "Uploading package to Edge Add-ons..."
           UPLOAD_RESPONSE=$(curl -s -i -w "\n%{http_code}" -X POST \
@@ -97,7 +129,6 @@ jobs:
           
           if [ -z "$OPERATION_ID" ]; then
             echo "Failed to get operation ID from response"
-            echo "Response omitted for security reasons."
             exit 1
           fi
           
@@ -117,10 +148,8 @@ jobs:
             STATUS_HTTP_CODE=$(echo "$STATUS_RESPONSE" | tail -n1)
             STATUS_BODY=$(echo "$STATUS_RESPONSE" | sed '$d')
             
-            # HTTP 200 または 202 を正常なレスポンスとして扱う
             if [ "$STATUS_HTTP_CODE" != "200" ] && [ "$STATUS_HTTP_CODE" != "202" ]; then
               echo "Failed to get status. HTTP Code: $STATUS_HTTP_CODE"
-              echo "Response omitted for security reasons."
               exit 1
             fi
             
@@ -131,7 +160,6 @@ jobs:
               break
             elif [ "$STATUS" = "Failed" ]; then
               echo "Upload failed"
-              echo "Response omitted for security reasons."
               exit 1
             fi
             
@@ -144,7 +172,6 @@ jobs:
             sleep 10
           done
           
-          # サブミッションの公開
           echo "Publishing submission..."
           PUBLISH_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
             -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
@@ -154,11 +181,8 @@ jobs:
             https://api.addons.microsoftedge.microsoft.com/v1/products/${{ secrets.EDGE_PRODUCT_ID }}/submissions)
             
           PUBLISH_HTTP_CODE=$(echo "$PUBLISH_RESPONSE" | tail -n1)
-          PUBLISH_BODY=$(echo "$PUBLISH_RESPONSE" | sed '$d')
-          
           if [ "$PUBLISH_HTTP_CODE" != "202" ]; then
             echo "Failed to publish submission. HTTP Code: $PUBLISH_HTTP_CODE"
-            echo "Response omitted for security reasons."
             exit 1
           fi
           
