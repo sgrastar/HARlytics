@@ -3,6 +3,7 @@
     formatTimestamp,
     truncateText,
     httpStatusCSSClass,
+    priorityCSSClass,
     formatTime,
     formatBytes,
     formatGMTtoUTC,
@@ -20,6 +21,7 @@
   export let entries = [];
   export let pages = [];
   export let logFilename;
+  export let hasPriority;
   export let isPathTruncated = true;
   export let isDomainTruncated = true;
 
@@ -345,6 +347,9 @@
               <div class="cached header-cell">isCached</div>
             {/if}
             <!-- <div class="age header-cell">age</div> -->
+             {#if hasPriority}
+               <div class="priority header-cell">Priority</div>
+             {/if}
             <div class="waterfall header-cell">Waterfall</div>
             <!-- <div class="dns header-cell">dns</div>
               <div class="connect header-cell">connect</div>
@@ -360,6 +365,7 @@
               {entries}
               isIndented={false}
               hasPageInfo={true}
+              {hasPriority}
               selectedEntryIndexes={selectedEntryIds}
               {isPathTruncated}
               {isDomainTruncated}
@@ -370,6 +376,7 @@
               {normalizeHeaders}
               {normalizePostData}
               {httpStatusCSSClass}
+              {priorityCSSClass}
               {formatTime}
               {getHttpStatusDescription}
               {formatBytes}
@@ -413,6 +420,9 @@
             <div class="cached header-cell">isCached</div>
           {/if}
           <!-- <div class="age header-cell">age</div> -->
+           {#if hasPriority}
+               <div class="priority header-cell">Priority</div>
+             {/if}
           <div class="waterfall header-cell">Waterfall</div>
           <!-- <div class="dns header-cell">dns</div>
             <div class="connect header-cell">connect</div>
@@ -428,6 +438,7 @@
             {entries}
             isIndented={false}
             hasPageInfo={false}
+            {hasPriority}
             selectedEntryIndexes={selectedEntryIds}
             {isPathTruncated}
             {isDomainTruncated}
@@ -438,6 +449,7 @@
             {normalizeHeaders}
             {normalizePostData}
             {httpStatusCSSClass}
+            {priorityCSSClass}
             {formatTime}
             {getHttpStatusDescription}
             {formatBytes}
@@ -524,6 +536,11 @@
   .size {
     width: 70px;
     text-align: right;
+    padding-right: .5em;
+  }
+  .priority{
+    width: 70px;
+    text-align:center;
   }
   .cached {
     width: 60px;

@@ -26,32 +26,71 @@ export function generateMermaidHeaderAndTitle(
 
 export function generateMermaidRequest(
   entry,
-  addLifeline
+  addLifeline,
+  reqShowMethod,
+  reqShowPath,
+  reqShowScheme,
+  reqShowSecFetchMode
 ) {
-  let line;
-  const truncatedPath = truncateText(entry.path, 70);
-  const processedPath = truncatedPath.split(/([#;])/).map((part, index, array) => {
-    if (part === '#') {
-      return '#35;';
-    }
-    if (part === ';') {
-      const nextPart = array[index + 1] || '';
-      if (nextPart.includes('=')) {
+  let requestParts = [];
+  
+  // Add method if selected
+  if (reqShowMethod) {
+    requestParts.push(`[${entry.method}]`);
+  }
+  
+  // Add path if selected
+  if (reqShowPath) {
+    const truncatedPath = truncateText(entry.path, 70);
+    const processedPath = truncatedPath.split(/([#;])/).map((part, index, array) => {
+      if (part === '#') {
+        return '#35;';
+      }
+      if (part === ';') {
+        const nextPart = array[index + 1] || '';
+        if (nextPart.includes('=')) {
+          return '#59;';
+        }
         return '#59;';
       }
-      return '#59;';
+      return part;
+    }).join('');
+    requestParts.push(processedPath);
+  }
+  
+  // Add scheme if selected
+  if (reqShowScheme) {
+    let scheme = 'unknown'; // デフォルト値
+    try {
+      const urlObj = new URL(entry.url);
+      scheme = urlObj.protocol.replace(/:$/, ''); // "https:" -> "https"
+    } catch (e) {
+      console.warn(`Could not parse URL to extract scheme: ${entry.url}`, e);
+      const schemeMatch = entry.url.match(/^([a-zA-Z0-9.+-]+):/);
+      if (schemeMatch && schemeMatch[1]) {
+        scheme = schemeMatch[1];
+      }
     }
-    return part;
-  }).join('');
+    requestParts.push(`scheme:${scheme}`);
+  }
+  
+  // Add Sec-Fetch-Mode if selected
+  if (reqShowSecFetchMode) {
+    // Find the Sec-Fetch-Mode header
+    const secFetchMode = entry.requestHeaderAll.find(
+      header => header.name.toLowerCase() === 'sec-fetch-mode'
+    )?.value || 'n/a';
+    requestParts.push(`fetch-mode:${secFetchMode}`);
+  }
+  
+  // Join all parts with spaces
+  const requestArrow = requestParts.join(' ');
 
-  const requestArrow = `[${entry.method}] ${processedPath}`;
-
-  line = `Browser->>${entry.domain}: ${requestArrow}\n`;
+  let line = `Browser->>${entry.domain}: ${requestArrow}\n`;
   if (addLifeline) {
     line += `  activate ${entry.domain}\n`;
   }
   return line;
-  
 }
 
 export function generateMermaidQueryString(
@@ -302,10 +341,61 @@ export function generateMermaidRequestCookies(
   return "";
 }
 
-export function generateMermaidResponse(entry, addLifeline) {
-  let responseCode = "";
-  const responseArrow = `${entry.status} - ${entry.responseMimeType.replace(/;/g, "#59;")}`;
+export function generateMermaidResponse(
+  entry, 
+  addLifeline,
+  resShowStatus,
+  resShowMimeType,
+  resShowPriority,
+  resShowTimeFormatted,
+  resShowTimeMs,
+  resShowSizeFormatted,
+  resShowSizeBytes,
+  formatTime,
+  formatBytes
+) {
+  let responseParts = [];
+  
+  // Add status if selected
+  if (resShowStatus) {
+    responseParts.push(`${entry.status}`);
+  }
+  
+  // Add MIME type if selected
+  if (resShowMimeType) {
+    responseParts.push(`${entry.responseMimeType.replace(/;/g, "#59;")}`);
+  }
 
+  // Add priority if selected
+  if (resShowPriority) {
+    responseParts.push(`${entry.priority}`);
+  }
+  
+  // Add time (formatted) if selected
+  if (resShowTimeFormatted) {
+    responseParts.push(`${formatTime(entry.time)}`);
+  }
+  
+  // Add time (ms) if selected
+  if (resShowTimeMs) {
+    responseParts.push(`${Math.round(entry.time)}ms`);
+  }
+  
+  // Add size (formatted) if selected
+  if (resShowSizeFormatted) {
+    responseParts.push(`${formatBytes(entry.responseContentLength)}`);
+  }
+  
+  // Add size (bytes) if selected
+  if (resShowSizeBytes) {
+    responseParts.push(`${entry.responseContentLength}bytes`);
+  }
+  
+  // Join all parts with spaces
+  const responseArrow = responseParts.join(' - ');
+
+  let responseCode = "";
+  
   if (entry.status >= 300 && entry.status <= 399) {
     responseCode += `${entry.domain} -->> Browser: ${responseArrow}\n`;
   } else if (entry.status >= 400 && entry.status <= 599) {
@@ -378,13 +468,55 @@ export function generatePlantUMLHeaderAndTitle(
 
 export function generatePlantUMLRequest(
   entry,
-  addLifeline
+  addLifeline,
+  reqShowMethod,
+  reqShowPath,
+  reqShowScheme,
+  reqShowSecFetchMode
 ) {
-  let line;
-  const truncatedPath = truncateText(entry.path, 70);
-  const requestArrow = `[${entry.method}] ${truncatedPath}`;
+  let requestParts = [];
+  
+  // Add method if selected
+  if (reqShowMethod) {
+    requestParts.push(`[${entry.method}]`);
+  }
+  
+  // Add path if selected
+  if (reqShowPath) {
+    const truncatedPath = truncateText(entry.path, 70);
+    requestParts.push(truncatedPath);
+  }
+  
+  // Add scheme if selected
+  if (reqShowScheme) {
+    let scheme = 'unknown'; // デフォルト値
+    try {
+      const urlObj = new URL(entry.url);
+      scheme = urlObj.protocol.replace(/:$/, ''); // "https:" -> "https"
+    } catch (e) {
+      console.warn(`Could not parse URL to extract scheme: ${entry.url}`, e);
+      const schemeMatch = entry.url.match(/^([a-zA-Z0-9.+-]+):/);
+      if (schemeMatch && schemeMatch[1]) {
+        scheme = schemeMatch[1];
+      }
+    }
+    requestParts.push(`scheme:${scheme}`);
+  }
+  
+  // Add Sec-Fetch-Mode if selected
+  if (reqShowSecFetchMode) {
+    // Find the Sec-Fetch-Mode header
+    const secFetchMode = entry.requestHeaderAll.find(
+      header => header.name.toLowerCase() === 'sec-fetch-mode'
+    )?.value || 'n/a';
+    
+    requestParts.push(`fetch-mode:${secFetchMode}`);
+  }
+  
+  // Join all parts with spaces
+  const requestArrow = requestParts.join(' ');
 
-  line = `Browser -> "${entry.domain}": ${requestArrow}\n`;
+  let line = `Browser -> "${entry.domain}": ${requestArrow}\n`;
   if (addLifeline) {
     line += `activate "${entry.domain}"\n`;
   }
@@ -509,10 +641,61 @@ export function generatePlantUMLRequestCookies(
   return "";
 }
 
-export function generatePlantUMLResponse(entry, addLifeline) {
-  let responseCode = "";
-  const responseArrow = `${entry.status} - ${entry.responseMimeType}`;
+export function generatePlantUMLResponse(
+  entry, 
+  addLifeline,
+  resShowStatus,
+  resShowMimeType,
+  resShowPriority,
+  resShowTimeFormatted,
+  resShowTimeMs,
+  resShowSizeFormatted,
+  resShowSizeBytes,
+  formatTime,
+  formatBytes
+) {
+  let responseParts = [];
+  
+  // Add status if selected
+  if (resShowStatus) {
+    responseParts.push(`${entry.status}`);
+  }
+  
+  // Add MIME type if selected
+  if (resShowMimeType) {
+    responseParts.push(`${entry.responseMimeType}`);
+  }
+  
+  // Add priority if selected
+  if (resShowPriority && entry.priority) {
+    responseParts.push(`P:${entry.priority}`);
+  }
 
+  // Add time (formatted) if selected
+  if (resShowTimeFormatted) {
+    responseParts.push(`${formatTime(entry.time)}`);
+  }
+  
+  // Add time (ms) if selected
+  if (resShowTimeMs) {
+    responseParts.push(`${Math.round(entry.time)}ms`);
+  }
+  
+  // Add size (formatted) if selected
+  if (resShowSizeFormatted) {
+    responseParts.push(`${formatBytes(entry.responseContentLength)}`);
+  }
+  
+  // Add size (bytes) if selected
+  if (resShowSizeBytes) {
+    responseParts.push(`${entry.responseContentLength}bytes`);
+  }
+  
+  // Join all parts with spaces
+  const responseArrow = responseParts.join(' - ');
+
+  let responseCode = "";
+  
   if (entry.status >= 300 && entry.status <= 399) {
     responseCode += `"${entry.domain}" --> Browser: ${responseArrow}\n`;
   } else if (entry.status >= 400 && entry.status <= 599) {

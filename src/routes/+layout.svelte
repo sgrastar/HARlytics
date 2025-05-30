@@ -89,7 +89,7 @@
       >
       <!-- <DarkMode {btnClass} /> -->
       <CustomDarkMode {btnClass} />
-      <div id="buildTimestamp" class="text-xs" title="Build: 2025-05-03 21:50:39 UTC">v0.4.0</div>
+      <div id="buildTimestamp" class="text-xs" title="Build: 2025-05-30 02:59:16 UTC">v0.5.0</div>
       <div class="text-xs"><a href="https://github.com/sgrastar/HARlytics/releases" target="_blank">Release Note</a></div>
         {#if isLive}
           <Badge large color="indigo" class="ml-4" data-testid="cloud-edition-badge">Cloud Edition</Badge>

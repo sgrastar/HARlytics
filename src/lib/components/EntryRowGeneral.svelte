@@ -5,6 +5,7 @@
   export let entries = [];
   export let isIndented = false;
   export let hasPageInfo = false;
+  export let hasPriority;
   export let selectedEntryIndexes;
   export let isPathTruncated;
   export let isDomainTruncated;
@@ -15,6 +16,7 @@
   export let normalizeHeaders;
   export let normalizePostData;
   export let httpStatusCSSClass;
+  export let priorityCSSClass;
   export let formatTime;
   export let getHttpStatusDescription;
   export let formatBytes;
@@ -127,6 +129,11 @@
   <div class="send cell">{formatTime(entry.timings.send)}</div>
   <div class="wait cell">{formatTime(entry.timings.wait)}</div>
   <div class="receive cell">{formatTime(entry.timings.receive)}</div> -->
+  {#if hasPriority}
+  <div class="priority cell {priorityCSSClass(entry.priority)}">
+    {entry.priority}
+  </div>
+  {/if}
   <div class="waterfall cell">
     <WaterfallBar
       {entry}
@@ -716,6 +723,11 @@
   .size {
     width: 70px;
     text-align: right;
+    padding-right: .5em;
+  }
+  .priority{
+    width: 70px;
+    text-align:center;
   }
   .cached {
     width: 60px;

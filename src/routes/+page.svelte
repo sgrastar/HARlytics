@@ -21,7 +21,8 @@
   } from "$lib/utils";
 
   import { getStatusCodeData, getMimeTypeData } from "$lib/chartUtils";
-  import { analyzeCDN, detectCDN }  from '$lib/cdnAnalyzer.js';
+  import { analyzeCDN }  from '$lib/cdnAnalyzer.js';
+  import { validateHar } from '$lib/harValidator.js';
   import {
     statusRanges,
     communicationTypes,
@@ -54,6 +55,7 @@
   } from "$lib/sequenceDiagramGenerator";
 
   import { estimateConnectionSpeed } from "$lib/estimateConnectionSpeed.js";
+  //import RangeSlider from '$lib/components/RangeSlider.svelte';
   import SequenceExport from "$lib/components/SequenceExport.svelte";
   import PieChart from "$lib/components/PieChart.svelte";
   import {
@@ -99,11 +101,14 @@
 
   let showEmptyFileAlert = false;
   let showFileErrorAlert = false;
+  let validationErrors = []; // ★ バリデーションエラーの詳細を格納
   let logFilename = "";
   let logVersion = "";
   let logCreator = "";
   let logComment = "";
   let hasPagesInfo = false;
+  let hasPriority = false;
+  let hasResourceType = false;
   let hasInitiatorInfo = false;
   let hasCookieData = false;
   let hasPostData = false;
@@ -162,6 +167,19 @@
   let addTitle = true;
   let sequenceTitle = "";
 
+  let reqShowMethod = true;
+  let reqShowPath = true;
+  let reqShowScheme = false;
+  let reqShowSecFetchMode = false;
+
+  let resShowStatus = true;
+  let resShowMimeType = true;
+  let resShowPriority = false;
+  let resShowTimeFormatted = false;
+  let resShowTimeMs = false;
+  let resShowSizeFormatted = false;
+  let resShowSizeBytes = false;
+
   let selectedStatusRanges = [...statusRanges];
   let allStatusSelected = true;
 
@@ -169,6 +187,9 @@
 
   let selectedMessageElements = [...messageElements];
   let allMessageElementsSelected = true;
+
+  // let priorityRange = ['Low', 'High'];
+  // const priorityLevels = ['VeryLow', 'Low', 'Medium', 'High', 'VeryHigh'];
 
   //For Display Cookie
   let selectedValues = new Set();
@@ -214,6 +235,8 @@
     logCreator = "";
     logComment = "";
     hasPagesInfo = false;
+    hasPriority = false;
+    hasResourceType = false;
     hasInitiatorInfo = false;
     hasCookieData = false;
     hasPostData = false;
@@ -221,6 +244,7 @@
     hasHeaderAuthData = false;
     showEmptyFileAlert = false;
     showFileErrorAlert = false;
+    validationErrors = []; // ★ エラーメッセージをリセット
 
     // リセット
     entryIdCounter = 0;
@@ -234,42 +258,84 @@
     selectedDomains = [];
     selectedValues = new Set();
 
+
+
     const reader = new FileReader();
 
     reader.onload = function (e) {
       try {
-        const harContent = JSON.parse(e.target.result);
+        const fileContent = e.target.result;
+        const validationResult = validateHar(fileContent);
 
-        // HARファイルの基本的な構造チェック
-        if (!harContent.log || !Array.isArray(harContent.log.entries)) {
+        let harContent = validationResult.parsedHar; // バリデーターがパースしたオブジェクトを使用
+
+        if (!validationResult.isValid) {
           showFileErrorAlert = true;
+          validationErrors = validationResult.errors;
+          // 致命的なエラーでharContentがnullなら、ここで処理を中断
+          if (!harContent) {
+            console.error("HAR validation failed and no data could be parsed.", validationResult.errors);
+            return;
+          }
+          // エラーがあっても、部分的にパースされたデータで処理を試みる (以降の処理はharContentを使用)
+          console.warn("HAR validation issues found, but attempting to process partial data:", validationResult.errors);
+        }
+
+        // バリデーション後、harContentの基本的な存在チェック
+        if (!harContent || !harContent.log || !harContent.log.entries) {
+          showFileErrorAlert = true;
+          if (validationErrors.length === 0) { // validateHarで補足されなかった場合
+            validationErrors.push({ path: "log", message: "The 'log' object or 'entries' array is missing or invalid in the HAR file." });
+          }
           return;
         }
 
-        // 空のHARファイルチェック
         if (harContent.log.entries.length === 0) {
           showEmptyFileAlert = true;
+          // 空でもメタ情報は表示できる可能性があるので、returnの前に設定
+          if (harContent.log.version) logVersion = harContent.log.version;
+          if (harContent.log.creator) logCreator = `${harContent.log.creator.name}${harContent.log.creator.version ? ' (' + harContent.log.creator.version + ')' : ''}`;
+          if (harContent.log.comment) logComment = harContent.log.comment;
           return;
         }
 
+        // 以降の処理はharContentを使用
         pages = harContent.log.pages || [];
-        entries = harContent.log.entries;
+        entries = harContent.log.entries; // ここで entries が設定される
         logVersion = harContent.log.version;
-        logCreator =
-          harContent.log.creator.name +
-          "(" +
-          harContent.log.creator.version +
-          ")";
+        if (harContent.log.creator && harContent.log.creator.name) {
+            logCreator = harContent.log.creator.name;
+            if (harContent.log.creator.version) {
+                logCreator += ` (${harContent.log.creator.version})`;
+            }
+        } else {
+            logCreator = "Unknown"; // creator情報がない場合
+        }
         logComment = harContent.log.comment || "";
-        hasPagesInfo = pages.length > 0;
-        harContent.log.entries[0]._initiator
-          ? (hasInitiatorInfo = true)
-          : (hasInitiatorInfo = false);
 
+        hasPagesInfo = pages.length > 0;
+
+        // _initiator のチェックは entries が設定された後に行う
+        if (entries.length > 0 && entries[0] && entries[0]._initiator) {
+            hasInitiatorInfo = true;
+        } else {
+            hasInitiatorInfo = false;
+        }
+        
+        // entries の map処理 (既存のロジック)
+        // この時点で entries は harContent.log.entries で初期化されている
         entries = entries.map((entry) => {
           const uniqueId = `${entryIdCounter++}`;
           const pageref =
             hasPagesInfo && entry.pageref ? entry.pageref : "NoPageRef";
+          const priority = entry._priority ? entry._priority : "";
+          const resourceType = entry._resourceType ? entry._resourceType : "";
+          if (entry._priority){
+            hasPriority = true
+          }
+          if (entry._resourceType){
+            hasResourceType = true
+          }
           const url = new URL(entry.request.url);
           const domain = url.hostname;
           const path = url.pathname;
@@ -583,6 +649,7 @@
             time: entry.time,
             timings: entry.timings,
             initiator: entry._initiator,
+            priority: priority,
             requestHeaderAll: entry.request.headers,
             requestPostData: requestPostData,
             requestBodySize: entry.request.bodySize,
@@ -707,11 +774,14 @@
       } catch (error) {
         console.error("Error parsing HAR file:", error);
         showFileErrorAlert = true;
+        validationErrors.push({ path: '', message: `An error occurred while processing the HAR file: ${error.message}` });
       }
     };
 
     reader.onerror = function () {
       showFileErrorAlert = true;
+      validationErrors = [{ path: '', message: 'Failed to read the file.' }];
+      console.error("FileReader error:", reader.error);
     };
 
     reader.readAsText(file);
@@ -1005,6 +1075,7 @@
 
   $: {
     if (
+      // Original settings
       addRequestCookies ||
       addResponseCookies ||
       addAutoNumber ||
@@ -1020,7 +1091,20 @@
       truncateReqCookie ||
       truncateReqCookieLength ||
       truncateResCookie ||
-      truncateResCookieLength
+      truncateResCookieLength ||
+      // New request display settings
+      reqShowMethod ||
+      reqShowPath ||
+      reqShowScheme ||
+      reqShowSecFetchMode ||
+      // New response display settings
+      resShowStatus ||
+      resShowMimeType ||
+      resShowPriority ||
+      resShowTimeFormatted ||
+      resShowTimeMs ||
+      resShowSizeFormatted ||
+      resShowSizeBytes
     ) {
       //console.log("checkbox");
       if (filteredEntries && filteredEntries.length !== 0) {
@@ -1333,115 +1417,139 @@ function handleMouseLeave(type) {
   };
 
   function generateMermaidSequence() {
-    if (!filteredEntries || filteredEntries.length === 0) {
-      return "";
-    }
+  if (!filteredEntries || filteredEntries.length === 0) {
+    return "";
+  }
 
-    let mermaidCode = generateMermaidHeaderAndTitle(
-      addTitle,
-      sequenceTitle,
-      addAutoNumber,
+  let mermaidCode = generateMermaidHeaderAndTitle(
+    addTitle,
+    sequenceTitle,
+    addAutoNumber,
+  );
+
+  filteredEntries.forEach((entry) => {
+    mermaidCode += generateMermaidRequest(
+      entry,
+      addLifeline,
+      reqShowMethod,
+      reqShowPath,
+      reqShowScheme,
+      reqShowSecFetchMode
     );
 
-    filteredEntries.forEach((entry) => {
-      // //const truncatedPath = truncateAndEscapeMarmaid(entry.path, 70);
-      // const truncatedPath = truncateText(entry.path, 70).replace(/#/g, "#35;").replace(/;/g, "#59;");
-      // //console.log(truncatedPath);
-      // const requestArrow = `[${entry.method}] ${truncatedPath}`;
-      // const responseArrow = `${entry.status} - ${entry.responseMimeType}`;
+    mermaidCode += generateMermaidQueryString(
+      entry,
+      addRequestQueryString,
+      truncateQueryStrings,
+      truncateQueryStringsLength,
+    );
+    
+    mermaidCode += generateMermaidPostData(
+      entry,
+      addRequestPostData,
+      truncatePostData,
+      truncatePostDataLength,
+    );
+    
+    mermaidCode += generateMermaidRequestCookies(
+      entry,
+      addRequestCookies,
+      truncateReqCookie,
+      truncateReqCookieLength,
+    );
+    
+    mermaidCode += generateMermaidResponse(
+      entry, 
+      addLifeline,
+      resShowStatus,
+      resShowMimeType,
+      resShowPriority,
+      resShowTimeFormatted,
+      resShowTimeMs,
+      resShowSizeFormatted,
+      resShowSizeBytes,
+      formatTime,
+      formatBytes
+    );
+    
+    mermaidCode += generateMermaidResponseCookies(
+      entry,
+      addResponseCookies,
+      truncateResCookie,
+      truncateResCookieLength,
+    );
+  });
 
-      // mermaidCode += `  Browser->>${entry.domain}: ${requestArrow}\n`;
-      // if (addLifeline) {
-      //   mermaidCode += `  activate ${entry.domain}\n`;
-      // }
-
-      mermaidCode += generateMermaidRequest(
-        entry,
-        addLifeline
-      );
-
-      mermaidCode += generateMermaidQueryString(
-        entry,
-        addRequestQueryString,
-        truncateQueryStrings,
-        truncateQueryStringsLength,
-      );
-      mermaidCode += generateMermaidPostData(
-        entry,
-        addRequestPostData,
-        truncatePostData,
-        truncatePostDataLength,
-      );
-      mermaidCode += generateMermaidRequestCookies(
-        entry,
-        addRequestCookies,
-        truncateReqCookie,
-        truncateReqCookieLength,
-      );
-      mermaidCode += generateMermaidResponse(entry, addLifeline);
-      mermaidCode += generateMermaidResponseCookies(
-        entry,
-        addResponseCookies,
-        truncateResCookie,
-        truncateResCookieLength,
-      );
-    });
-
-    return mermaidCode;
-  }
+  return mermaidCode;
+}
 
   function generatePlantUMLSequence() {
-    if (!filteredEntries || filteredEntries.length === 0) {
-      return "";
-    }
+  if (!filteredEntries || filteredEntries.length === 0) {
+    return "";
+  }
 
-    let plantUMLCode = generatePlantUMLHeaderAndTitle(
-      addTitle,
-      sequenceTitle,
-      addAutoNumber,
+  let plantUMLCode = generatePlantUMLHeaderAndTitle(
+    addTitle,
+    sequenceTitle,
+    addAutoNumber,
+  );
+
+  filteredEntries.forEach((entry) => {
+    plantUMLCode += generatePlantUMLRequest(
+      entry, 
+      addLifeline,
+      reqShowMethod,
+      reqShowPath,
+      reqShowScheme,
+      reqShowSecFetchMode
     );
 
-    filteredEntries.forEach((entry) => {
-      // const truncatedPath = truncateText(entry.path, 70);
-      // const requestArrow = `[${entry.method}] ${truncatedPath}`;
+    plantUMLCode += generatePlantUMLQueryString(
+      entry,
+      addRequestQueryString,
+      truncateQueryStrings,
+      truncateQueryStringsLength,
+    );
+    
+    plantUMLCode += generatePlantUMLPostData(
+      entry,
+      addRequestPostData,
+      truncatePostData,
+      truncatePostDataLength,
+    );
+    
+    plantUMLCode += generatePlantUMLRequestCookies(
+      entry,
+      addRequestCookies,
+      truncateReqCookie,
+      truncateReqCookieLength,
+    );
+    
+    plantUMLCode += generatePlantUMLResponse(
+      entry, 
+      addLifeline,
+      resShowStatus,
+      resShowMimeType,
+      resShowPriority,
+      resShowTimeFormatted,
+      resShowTimeMs,
+      resShowSizeFormatted,
+      resShowSizeBytes,
+      formatTime,
+      formatBytes
+    );
+    
+    plantUMLCode += generatePlantUMLResponseCookies(
+      entry,
+      addResponseCookies,
+      truncateResCookie,
+      truncateResCookieLength,
+    );
+  });
 
-      // plantUMLCode += `Browser -> "${entry.domain}": ${requestArrow}\n`;
-      // if (addLifeline) {
-      //   plantUMLCode += `activate "${entry.domain}"\n`;
-      // }
-
-      plantUMLCode += generatePlantUMLRequest(entry, addLifeline);
-
-      plantUMLCode += generatePlantUMLQueryString(
-        entry,
-        addRequestQueryString,
-        truncateQueryStrings,
-        truncateQueryStringsLength,
-      );
-      plantUMLCode += generatePlantUMLPostData(
-        entry,
-        addRequestPostData,
-        truncatePostData,
-        truncatePostDataLength,
-      );
-      plantUMLCode += generatePlantUMLRequestCookies(
-        entry,
-        addRequestCookies,
-        truncateReqCookie,
-        truncateReqCookieLength,
-      );
-      plantUMLCode += generatePlantUMLResponse(entry, addLifeline);
-      plantUMLCode += generatePlantUMLResponseCookies(
-        entry,
-        addResponseCookies,
-        truncateResCookie,
-        truncateResCookieLength,
-      );
-    });
-
-    plantUMLCode += "@enduml";
-    return plantUMLCode;
-  }
+  plantUMLCode += "@enduml";
+  return plantUMLCode;
+}
 </script>
 
 <main class="p-4">
@@ -1459,7 +1567,7 @@ function handleMouseLeave(type) {
         </div>
 
         {#if showEmptyFileAlert}
-          <Alert color="yellow" dismissable>
+          <Alert color="yellow" dismissable on:close={() => showEmptyFileAlert = false}>
             <span class="font-medium">Caution!</span>
             The selected HAR file ({logFilename}) contains no entries.
             <br />
@@ -1468,38 +1576,55 @@ function handleMouseLeave(type) {
         {/if}
 
         {#if showFileErrorAlert}
-          <Alert color="red" dismissable>
+          <Alert color="red" dismissable on:close={() => { showFileErrorAlert = false; validationErrors = []; }}>
             <span class="font-medium">Error!</span>
-            An error occurred while loading the HAR file.
-            <br />
-            Please verify that the file is in the correct HAR format.
+            {#if validationErrors.length > 0}
+              The HAR file has the following issues:
+              <ul class="mt-1.5 ml-4 list-disc list-inside text-sm">
+                {#each validationErrors as error}
+                  <li>
+                    {#if error.path}<strong>Path:</strong> {error.path || 'Root'} - {/if}
+                    {error.message}
+                  </li>
+                {/each}
+              </ul>
+            {:else}
+              An error occurred while loading or processing the HAR file.
+              <br />
+              Please verify that the file is in the correct HAR format.
+            {/if}
           </Alert>
         {/if}
 
         <!-- TODO オンラインバージョンでサンプルharファイルの用意&読み込み機能         -->
         <div class="mb-2 text-gray-900 dark:text-gray-300">
-          <span>Log version : {logVersion} / {logCreator}</span>
+          {#if logCreator}
+          <span>{logCreator}</span><br>
+          {/if}
+          {#if logVersion}
+          <span>HAR format version : {logVersion}</span><br>
+          {/if}
           <p>{logComment}</p>
         </div>
         <div class="mb-2">
-          {#if hasPagesInfo == true}
+          {#if hasPagesInfo}
             <Badge rounded color="indigo">Pages</Badge>
           {/if}
-          {#if hasInitiatorInfo == true}
+          {#if hasInitiatorInfo}
             <Badge rounded color="indigo">_initiator</Badge>
           {/if}
         </div>
         <div>
-          {#if hasHeaderAuthData == true}
+          {#if hasHeaderAuthData}
             <Badge rounded color="red">Header Auth</Badge>
           {/if}
-          {#if hasCookieData == true}
+          {#if hasCookieData}
             <Badge rounded color="red">Cookie</Badge>
           {/if}
-          {#if hasPostData == true}
+          {#if hasPostData}
             <Badge rounded color="red">POST Data</Badge>
           {/if}
-          {#if hasContentData == true}
+          {#if hasContentData}
             <Badge rounded color="red">Content</Badge>
           {/if}
         </div>
@@ -1524,7 +1649,7 @@ function handleMouseLeave(type) {
           </div>
         </div>
 
-        <div class="grid grid-cols-12 flex items-end">
+        <div class="grid grid-cols-12 mb-2 flex items-end">
           <div class="col-span-4">
             <Label for="urlFilter">URL Filters (any match):</Label>
             <Search
@@ -1755,8 +1880,13 @@ function handleMouseLeave(type) {
           {/if}
           </div>
 
+          
+
+
+
           <!-- </div> -->
         </div>
+      
       </div>
     </div>
   </div>
@@ -1772,6 +1902,7 @@ function handleMouseLeave(type) {
             entries={filteredEntries}
             {pages}
             {logFilename}
+            {hasPriority}
             bind:isPathTruncated
             bind:isDomainTruncated
           />
@@ -1804,10 +1935,11 @@ function handleMouseLeave(type) {
               Sequence Diagram Settings
             </h3>
             <h4 class="text-base mb-2">General Settings</h4>
-            <div class="mb-4">
+            <div class="ml-2">
+            <div class="mb-2">
               <Checkbox bind:checked={addAutoNumber}>Add Auto-number</Checkbox>
             </div>
-            <div class="mb-4">
+            <div class="mb-2">
               <div>
                 <Checkbox bind:checked={addTitle} class="mb-2"
                   >Add Title</Checkbox
@@ -1820,15 +1952,52 @@ function handleMouseLeave(type) {
                 />
               </div>
             </div>
-            <div class="mb-4">
+            <div class="mb-2">
               <Checkbox bind:checked={addLifeline} class="mb-2"
                 >Add Lifeline Activation and Destruction</Checkbox
               >
             </div>
+          </div>
+
+            <h4 class="text-base mb-2">Display Settings</h4>
+            <div class="mb-4">
+              <div class="mb-2">
+                <h5 class="text-sm font-medium mb-2">Request Arrow</h5>
+                <div class="ml-2">
+                  <Checkbox bind:checked={reqShowMethod} class="mb-1">Method (GET, POST, etc.)</Checkbox>
+                  <Checkbox bind:checked={reqShowPath} class="mb-1">Path</Checkbox>
+                  <Checkbox bind:checked={reqShowScheme} class="mb-1">Scheme (https, wss, etc.)</Checkbox>
+                  <Checkbox bind:checked={reqShowSecFetchMode} class="mb-1">Sec-Fetch-Mode</Checkbox>
+                </div>
+              </div>
+              
+              <div class="mb-2">
+                <h5 class="text-sm font-medium mb-2">Response Arrow</h5>
+                <div class="ml-2">
+                  <Checkbox bind:checked={resShowStatus} class="mb-1">Status (200, 404, etc.)</Checkbox>
+                  <Checkbox bind:checked={resShowMimeType} class="mb-1">MIME Type</Checkbox>
+                  <div class="relative inline-block">
+                    <span id="priority-checkbox-wrapper" class:opacity-50={!hasPriority}>
+                      <Checkbox bind:checked={resShowPriority} class="mb-1" disabled={!hasPriority}>Priority</Checkbox>
+                    </span>
+                    {#if !hasPriority}
+                      <Tooltip triggeredBy="#priority-checkbox-wrapper" placement="top">
+                        This HAR file does not contain priority information.
+                      </Tooltip>
+                    {/if}
+                  </div>
+                  <Checkbox bind:checked={resShowTimeFormatted} class="mb-1">Time (formatted)</Checkbox>
+                  <Checkbox bind:checked={resShowTimeMs} class="mb-1">Time (ms)</Checkbox>
+                  <Checkbox bind:checked={resShowSizeFormatted} class="mb-1">Size (formatted)</Checkbox>
+                  <Checkbox bind:checked={resShowSizeBytes} class="mb-1">Size (bytes)</Checkbox>
+                </div>
+              </div>
+            </div>
 
             <h4 class="text-base mb-2">Notes Settings</h4>
 
-            <div class="mb-4">
+            <div class="ml-2">
+            <div class="mb-2">
               <Checkbox bind:checked={addRequestQueryString}
                 >Show QueryString</Checkbox
               >
@@ -1855,7 +2024,7 @@ function handleMouseLeave(type) {
                 {/if}
               {/if}
             </div>
-            <div class="mb-4">
+            <div class="mb-2">
               <Checkbox bind:checked={addRequestPostData}
                 >Show postData</Checkbox
               >
@@ -1882,7 +2051,7 @@ function handleMouseLeave(type) {
                 {/if}
               {/if}
             </div>
-            <div class="mb-4">
+            <div class="mb-2">
               <Checkbox bind:checked={addRequestCookies}
                 >Show Request Cookies</Checkbox
               >
@@ -1909,7 +2078,7 @@ function handleMouseLeave(type) {
                 {/if}
               {/if}
             </div>
-            <div class="mb-4">
+            <div class="mb-2">
               <Checkbox bind:checked={addResponseCookies}
                 >Show Response Cookies</Checkbox
               >
@@ -1936,6 +2105,7 @@ function handleMouseLeave(type) {
                 {/if}
               {/if}
             </div>
+            </div>
           </Card>
           </div>
           <div class="col-span-8 p-4">
@@ -1944,7 +2114,7 @@ function handleMouseLeave(type) {
               <QuestionCircleSolid id="placement-4" size="sm" />
             </div>
             <Tooltip triggeredBy="#placement-4" placement="right">
-              Due to limitations of Marmaid and PlantUML,<br>the following values ​​may be escaped or displayed in<br>a simplified form without displaying their contents.<br>
+              Due to limitations of Marmaid and PlantUML,<br/>the following values ​​may be escaped or displayed in<br/>a simplified form without displaying their contents.<br/>
               <ul>
                 <li>- postData values</li>
                 <li>- JSON values</li>
