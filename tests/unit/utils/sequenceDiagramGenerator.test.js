@@ -68,69 +68,78 @@ describe("Mermaid Sequence Diagram Generator", () => {
       domain: "example.com",
       path: "/path/to/page",
       method: "GET",
+      url: "https://example.com/path/to/page",
+      requestHeaderAll: []
     };
 
     const mockEntry2 = {
       domain: "example.com",
       path: "/path#heading",
       method: "GET",
+      url: "https://example.com/path#heading",
+      requestHeaderAll: []
     };
     
     const mockEntry3 = {
       domain: "example.com",
       path: "/path;jsessionid=ABC123",
       method: "GET",
+      url: "https://example.com/path;jsessionid=ABC123",
+      requestHeaderAll: []
     };
 
     const mockEntry4 = {
       domain: "example.com",
       path: "/path;version=1;format=json",
       method: "GET",
+      url: "https://example.com/path;version=1;format=json",
+      requestHeaderAll: []
     };
 
     const mockEntry5 = {
       domain: "example.com",
       path: "/path;param=value#section",
       method: "GET",
+      url: "https://example.com/path;param=value#section",
+      requestHeaderAll: []
     };
 
     it("should should handle request", () => {
-      const result = generateMermaidRequest(mockEntry1, false);
+      // reqShowMethod=true, reqShowPath=true, reqShowScheme=false, reqShowSecFetchMode=false
+      const result = generateMermaidRequest(mockEntry1, false, true, true, false, false);
       const expected = "Browser->>example.com: [GET] /path/to/page\n";
       expect(result).toBe(expected);
     });
 
     it("should should handle request with addLifeline", () => {
-      const result = generateMermaidRequest(mockEntry1, true);
+      const result = generateMermaidRequest(mockEntry1, true, true, true, false, false);
       const expected = "Browser->>example.com: [GET] /path/to/page\n  activate example.com\n";
       expect(result).toBe(expected);
     });
 
     it("should should handle request with fragment", () => {
-      const result = generateMermaidRequest(mockEntry2, false);
+      const result = generateMermaidRequest(mockEntry2, false, true, true, false, false);
       const expected = "Browser->>example.com: [GET] /path#35;heading\n";
       expect(result).toBe(expected);
     });
     
     it("should should handle request with jsessionid", () => {
-      const result = generateMermaidRequest(mockEntry3, false);
+      const result = generateMermaidRequest(mockEntry3, false, true, true, false, false);
       const expected = "Browser->>example.com: [GET] /path#59;jsessionid=ABC123\n";
       expect(result).toBe(expected);
     });
 
     it("should should handle request with multiple semicolons", () => {
-      const result = generateMermaidRequest(mockEntry4, false);
+      const result = generateMermaidRequest(mockEntry4, false, true, true, false, false);
       const expected = "Browser->>example.com: [GET] /path#59;version=1#59;format=json\n";
       expect(result).toBe(expected);
     });
 
     it("should should handle request with combined patterns", () => {
-      const result = generateMermaidRequest(mockEntry5, false);
+      const result = generateMermaidRequest(mockEntry5, false, true, true, false, false);
       const expected = "Browser->>example.com: [GET] /path#59;param=value#35;section\n";
       expect(result).toBe(expected);
     });
-
-    
   });
 
   describe("generateMermaidResponse", () => {
@@ -138,23 +147,30 @@ describe("Mermaid Sequence Diagram Generator", () => {
       domain: "example.com",
       status: 200,
       responseMimeType: "application/json",
+      priority: "high",
+      time: 123.45,
+      responseContentLength: 1024
     };
 
+    // Mock format functions
+    const formatTime = (time) => `${Math.round(time)}ms`;
+    const formatBytes = (bytes) => `${bytes}B`;
+
     it("should use Mermaid arrow syntax for success response", () => {
-      const result = generateMermaidResponse(mockEntry, false);
-      // Mermaidの場合、->>, -->>、--xを使用
+      // resShowStatus=true, resShowMimeType=true, others=false
+      const result = generateMermaidResponse(mockEntry, false, true, true, false, false, false, false, false, formatTime, formatBytes);
       expect(result).toBe("example.com ->> Browser: 200 - application/json\n");
     });
 
     it("should use Mermaid arrow syntax for redirect", () => {
       const redirectEntry = { ...mockEntry, status: 302 };
-      const result = generateMermaidResponse(redirectEntry, false);
+      const result = generateMermaidResponse(redirectEntry, false, true, true, false, false, false, false, false, formatTime, formatBytes);
       expect(result).toBe("example.com -->> Browser: 302 - application/json\n");
     });
 
     it("should use Mermaid arrow syntax for error", () => {
       const errorEntry = { ...mockEntry, status: 500 };
-      const result = generateMermaidResponse(errorEntry, false);
+      const result = generateMermaidResponse(errorEntry, false, true, true, false, false, false, false, false, formatTime, formatBytes);
       expect(result).toBe("example.com --x Browser: 500 - application/json\n");
     });
   });
@@ -337,6 +353,9 @@ describe("Mermaid Sequence Diagram Generator", () => {
   });
 
   describe("generateMermaidResponse", () => {
+    const formatTime = (time) => `${Math.round(time)}ms`;
+    const formatBytes = (bytes) => `${bytes}B`;
+
     it("should handle edge case status codes", () => {
       const testCases = [
         { status: 99, expected: "->> Browser" }, // Below 100
@@ -352,8 +371,11 @@ describe("Mermaid Sequence Diagram Generator", () => {
           domain: "example.com",
           status,
           responseMimeType: "text/plain",
+          priority: "high",
+          time: 123,
+          responseContentLength: 1024
         };
-        const result = generateMermaidResponse(mockEntry, false);
+        const result = generateMermaidResponse(mockEntry, false, true, true, false, false, false, false, false, formatTime, formatBytes);
         expect(result).toContain(expected);
       });
     });
@@ -496,14 +518,22 @@ describe("PlantUML Sequence Diagram Generator", () => {
   });
 
   describe("generatePlantUMLResponse", () => {
+    // Mock format functions
+    const formatTime = (time) => `${Math.round(time)}ms`;
+    const formatBytes = (bytes) => `${bytes}B`;
+
     it("should generate success response", () => {
       const mockEntry = {
         domain: "example.com",
         status: 200,
         responseMimeType: "application/json",
+        priority: "high",
+        time: 123.45,
+        responseContentLength: 1024
       };
       const expected = '"example.com" -> Browser: 200 - application/json\n';
-      expect(generatePlantUMLResponse(mockEntry, false)).toBe(expected);
+      const result = generatePlantUMLResponse(mockEntry, false, true, true, false, false, false, false, false, formatTime, formatBytes);
+      expect(result).toBe(expected);
     });
 
     it("should generate redirect response", () => {
@@ -511,9 +541,13 @@ describe("PlantUML Sequence Diagram Generator", () => {
         domain: "example.com",
         status: 302,
         responseMimeType: "text/plain",
+        priority: "high",
+        time: 123.45,
+        responseContentLength: 1024
       };
       const expected = '"example.com" --> Browser: 302 - text/plain\n';
-      expect(generatePlantUMLResponse(mockEntry, false)).toBe(expected);
+      const result = generatePlantUMLResponse(mockEntry, false, true, true, false, false, false, false, false, formatTime, formatBytes);
+      expect(result).toBe(expected);
     });
 
     it("should generate error response", () => {
@@ -521,9 +555,13 @@ describe("PlantUML Sequence Diagram Generator", () => {
         domain: "example.com",
         status: 500,
         responseMimeType: "text/html",
+        priority: "high",
+        time: 123.45,
+        responseContentLength: 1024
       };
       const expected = '"example.com" --> Browser !!: 500 - text/html\n';
-      expect(generatePlantUMLResponse(mockEntry, false)).toBe(expected);
+      const result = generatePlantUMLResponse(mockEntry, false, true, true, false, false, false, false, false, formatTime, formatBytes);
+      expect(result).toBe(expected);
     });
 
     it("should include deactivation when lifeline is enabled", () => {
@@ -531,10 +569,14 @@ describe("PlantUML Sequence Diagram Generator", () => {
         domain: "example.com",
         status: 200,
         responseMimeType: "application/json",
+        priority: "high",
+        time: 123.45,
+        responseContentLength: 1024
       };
       const expected =
         '"example.com" -> Browser: 200 - application/json\ndeactivate "example.com"\n';
-      expect(generatePlantUMLResponse(mockEntry, true)).toBe(expected);
+      const result = generatePlantUMLResponse(mockEntry, true, true, true, false, false, false, false, false, formatTime, formatBytes);
+      expect(result).toBe(expected);
     });
   });
 

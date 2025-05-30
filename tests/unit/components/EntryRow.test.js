@@ -15,6 +15,7 @@ const mockEntry = {
   startedDateTime: "2024-01-01T12:00:00Z",
   time: 1500,
   responseContentLength: 1024,
+  priority: "high", // 追加
   requestHeaderAll: [{ name: "Accept", value: "application/json" }],
   responseHeaderAll: [{ name: "Content-Type", value: "application/json" }],
   requestQueryString: [],
@@ -37,6 +38,7 @@ const createMockProps = () => ({
   entries: [mockEntry],
   isIndented: false,
   hasPageInfo: false,
+  hasPriority: true, // 追加
   selectedEntryIndexes: new Set(),
   isPathTruncated: true,
   isDomainTruncated: true,
@@ -48,6 +50,9 @@ const createMockProps = () => ({
   normalizePostData: vi.fn(),
   httpStatusCSSClass: vi.fn((status) =>
     status >= 200 && status < 300 ? "success" : "error"
+  ),
+  priorityCSSClass: vi.fn((priority) => 
+    priority === "high" ? "high-priority" : "normal-priority" // 追加
   ),
   formatTime: vi.fn((time) => `${time} ms`),
   getHttpStatusDescription: vi.fn((status) => "200 OK"),
@@ -176,6 +181,23 @@ describe("EntryRow", () => {
   it("displays waterfall timing visualization", () => {
     const { container } = render(EntryRow, { props: mockProps });
     expect(container.querySelector(".waterfall")).toBeTruthy();
+  });
+
+  it("displays priority when hasPriority is true", () => {
+    const { container } = render(EntryRow, { props: mockProps });
+    const priorityCell = container.querySelector(".priority");
+    expect(priorityCell).toBeTruthy();
+    expect(priorityCell.textContent.trim()).toBe("high");
+  });
+
+  it("does not display priority when hasPriority is false", () => {
+    const propsWithoutPriority = {
+      ...mockProps,
+      hasPriority: false,
+    };
+    const { container } = render(EntryRow, { props: propsWithoutPriority });
+    const priorityCell = container.querySelector(".priority");
+    expect(priorityCell).toBeFalsy();
   });
 });
 

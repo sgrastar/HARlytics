@@ -109,6 +109,25 @@ export function httpStatusCSSClass(status) {
   }
 }
 
+export function priorityCSSClass(priority){
+  if (priority === "VeryLow") {
+    return "verylow text-green-800 dark:text-green-300 bg-green-100 dark:bg-green-900 font-bold";
+  } else if (priority === "Low" || priority === "low") {
+    return "low text-green-800 dark:text-green-300 bg-green-100 dark:bg-green-900";
+  } else if (priority === "Medium" || priority === "medium") {
+    return "medium text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-900";
+  } else if (priority === "High" || priority === "high") {
+    return "high text-red-800 dark:text-red-300 bg-red-100 dark:bg-red-900";
+  } else if (priority === "VeryHigh" || priority === "veryhigh") {
+    return "veryhigh text-red-800 dark:text-red-300 bg-red-100 dark:bg-red-900 font-bold";
+    // } else if (priority === "VeryHigh") {
+    // return "srvError text-white dark:text-white bg-red-600 dark:bg-red-700";
+
+  } else {
+    return "other text-gray-800 dark:text-gray-300 bg-gray-200 dark:bg-gray-700";
+  }
+}
+
 export function formatTime(time) {
   if (time < 1000) {
     return `${Math.floor(time)}ms`;
