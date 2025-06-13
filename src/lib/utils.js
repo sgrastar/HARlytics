@@ -849,3 +849,151 @@ export function normalizePostData(postData) {
 
   return result;
 }
+
+
+export function parsePostData(postData) {
+    if (!postData) {
+      return null;
+    }
+
+    const mimeType = postData.mimeType
+      ? postData.mimeType.split(";")[0].trim()
+      : "";
+
+    // バイナリデータを検出する関数
+    const detectBinaryFormat = (data) => {
+      const signatures = {
+        // GZIP
+        gzip: data.startsWith("\x1F\x8B"),
+        // ZIP
+        zip: data.startsWith("PK\x03\x04"),
+        // PDF
+        pdf: data.startsWith("%PDF"),
+        // PNG
+        png: data.startsWith("\x89PNG"),
+        // JPEG
+        jpeg: data.startsWith("\xFF\xD8\xFF"),
+        // GIF
+        gif: data.startsWith("GIF87a") || data.startsWith("GIF89a"),
+        // Brotli
+        brotli: data.startsWith("\xCE\xB2\xCF\x81"),
+        // Zstandard
+        zstd: data.startsWith("\x28\xB5\x2F\xFD"),
+        // LZMA
+        lzma: data.startsWith("\x5D\x00\x00"),
+        // Protobuf
+        protobuf: /[\x00-\x1F]/.test(data) && !/[\x20-\x7E]/.test(data),
+      };
+
+      for (const [format, detect] of Object.entries(signatures)) {
+        if (detect) return format;
+      }
+      return null;
+    };
+
+    // バイナリMIMEタイプのリスト
+    const binaryMimeTypes = [
+      "application/octet-stream",
+      "application/x-protobuf",
+      "application/x-msgpack",
+      // "application/x-www-form-urlencoded",
+      "application/zip",
+      "application/x-gzip",
+      "application/pdf",
+      "image/",
+      "audio/",
+      "video/",
+      "application/x-binary",
+    ];
+
+    let requestPostData = null;
+    try {
+      // バイナリデータの検出
+      const isBinaryMimeType = binaryMimeTypes.some((type) =>
+        mimeType.startsWith(type),
+      );
+      const binaryFormat = postData.text
+        ? detectBinaryFormat(postData.text)
+        : null;
+
+      if (binaryFormat || isBinaryMimeType) {
+        return {
+          mimeType: mimeType,
+          text: binaryFormat
+            ? `[${binaryFormat.toUpperCase()} Data]`
+            : "[Binary Data]",
+          format: binaryFormat || "unknown",
+          isBinary: true,
+        };
+      }
+
+      if (mimeType === "application/x-www-form-urlencoded") {
+        try {
+          requestPostData = {
+            mimeType: mimeType,
+            text: decodeURIComponent(postData.text),
+            params: postData.params.map((param) => ({
+              name: decodeURIComponent(param.name),
+              value: escapeForMermaid(decodeURIComponent(param.value)), // escapeForMermaidを直接使用
+            })),
+          };
+        } catch (e) {
+          requestPostData = {
+            mimeType: mimeType,
+            text: postData.text,
+            params: postData.params,
+          };
+        }
+      } else if (mimeType === "text/plain") {
+        try {
+          requestPostData = {
+            mimeType: mimeType,
+            text: escapeForMermaid(decodeURIComponent(postData.text)), // escapeForMermaidを直接使用
+          };
+        } catch (e) {
+          requestPostData = {
+            mimeType: mimeType,
+            text: escapeForMermaid(postData.text), // escapeForMermaidを直接使用
+          };
+        }
+      } else if (mimeType === "application/json") {
+        try {
+          const decodedText = decodeURIComponent(postData.text);
+          const jsonData = JSON.parse(decodedText);
+          requestPostData = {
+            mimeType: mimeType,
+            text: decodedText,
+            params: Object.entries(jsonData).map(([name, value]) => ({
+              name: decodeURIComponent(name),
+              value: escapeForMermaid(String(value)), // escapeForMermaidを直接使用
+            })),
+          };
+        } catch (error) {
+          requestPostData = {
+            mimeType: mimeType,
+            text: postData.text,
+            error: true,
+          };
+        }
+      } else {
+        if (mimeType === "" || mimeType === null) {
+          requestPostData = null;
+        } else {
+          requestPostData = {
+            mimeType: mimeType,
+            text: "[Unsupported Data Type]",
+            isUnsupported: true,
+          };
+        }
+      }
+    } catch (e) {
+      console.error("Error in parsePostData:", e);
+      return {
+        mimeType: mimeType,
+        text: "[Parse Error]",
+        error: true,
+      };
+    }
+
+    return requestPostData;
+  }

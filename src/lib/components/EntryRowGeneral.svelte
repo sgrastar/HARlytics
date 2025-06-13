@@ -48,6 +48,7 @@
   tabindex="0"
   class:selected={selectedEntryIndexes.has(getEntryId(entry))}
 >
+  <div class="sequenceNumber cell">{entry.sequenceNumber}</div>
   <div class="path cell">
     {#if isIndented}
       <span class="entry-indent"></span>
@@ -687,6 +688,10 @@
     overflow: visible;
   }
 
+  .sequenceNumber {
+    width: 40px;
+    text-align: center;
+  }
   .path {
     width: 20%;
     min-width: 150px;

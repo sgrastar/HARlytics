@@ -77,6 +77,7 @@
 
   function handleDetailExportCSV() {
     const csvHeaderData = entries.map((entry) => [
+      entry.sequenceNumber, // 連番を追加
       typeof entry.pageref !== "undefined" ? entry.pageref : "",
       entry.path,
       entry.domain,
@@ -118,6 +119,7 @@
     exportToCSV(
       csvHeaderData,
       [
+        "#", // 連番のヘッダーを追加
         "pageref",
         "Path",
         "Domain",
@@ -335,6 +337,7 @@
           </div>
 
           <div class="table-header indent bg-white dark:bg-gray-700 dark:text-gray-300">
+            <div class="sequenceNumber header-cell">#</div>
             <div class="path header-cell">Path</div>
             <div class="domain header-cell">Domain</div>
             <div class="method header-cell">Method</div>
@@ -410,6 +413,7 @@
         {/each}
       {:else}
         <div class="table-header bg-white dark:bg-gray-700 dark:text-gray-300">
+          <div class="sequenceNumber header-cell">#</div>
           <div class="path header-cell">Path</div>
             <div class="domain header-cell">Domain</div>
             <div class="method header-cell">Method</div>
@@ -525,6 +529,10 @@
     font-weight: bold;
   }
 
+  .sequenceNumber {
+    width: 40px;
+    text-align: center;
+  }
   .path {
     width: 310px;
     min-width: 150px;

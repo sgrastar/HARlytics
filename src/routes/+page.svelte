@@ -18,6 +18,7 @@
     formatGMTtoUTC,
     formatToLocalTime,
     calculateFreshness,
+    parsePostData
   } from "$lib/utils";
 
   import { getStatusCodeData, getMimeTypeData } from "$lib/chartUtils";
@@ -324,8 +325,9 @@
         
         // entries の map処理 (既存のロジック)
         // この時点で entries は harContent.log.entries で初期化されている
-        entries = entries.map((entry) => {
+        entries = entries.map((entry, index) => {
           const uniqueId = `${entryIdCounter++}`;
+          const sequenceNumber = index + 1;
           const pageref =
             hasPagesInfo && entry.pageref ? entry.pageref : "NoPageRef";
           const priority = entry._priority ? entry._priority : "";
@@ -503,30 +505,6 @@
           const cdnInfo = analyzeCDN(entry);
           const cdnDataSource = cdnInfo.isFromCDN ? "CDN" : cdnInfo.isFromOrigin ? "Origin" : 'Disc Cache';
           const cdnEdgeLocation = cdnInfo.details.edgeLocation || '';
-          //console.log(`CDN Provider: ${cdnInfo.provider}`);
-          //console.log(`Cache Status: ${cdnInfo.cacheStatus}`);
-          //console.log(`From Origin: ${cdnInfo.isFromOrigin ? 'Yes' : 'No'}`);
-          //console.log(`Edge Location: ${cdnInfo.details.edgeLocation || 'N/A'}`);
-          //           {
-          //     "provider": "CloudFront",
-          //     "cacheStatus": "RefreshHit from cloudfront",
-          //     "isFromCDN": true,
-          //     "isFromDiskCache": false,
-          //     "isFromOrigin": false,
-          //     "details": {
-          //         "edgeLocation": "NRT57-P4",
-          //         "requestId": "uabJUnRP6qUyZeob6EqoZzyjXaLCEpds150D3nOVeebtAnjx_fGOEg==",
-          //         "cacheStatus": "RefreshHit from cloudfront",
-          //         "allCdnHeaders": {
-          //             "via": "1.1 bcfb7019cb107c82ee911cac73b0dfbc.cloudfront.net (CloudFront)",
-          //             "x-amz-cf-id": "uabJUnRP6qUyZeob6EqoZzyjXaLCEpds150D3nOVeebtAnjx_fGOEg==",
-          //             "x-amz-cf-pop": "NRT57-P4",
-          //             "x-cache": "RefreshHit from cloudfront"
-          //         }
-          //     }
-          // }
-          //console.log(`CDN: ${cdnInfo.provider}` +  `/ Cache Status: ${cdnInfo.cacheStatus}` + ` / isFromCDN: ${cdnInfo.isFromCDN}`+` /  isFromDiskCache: ${cdnInfo.isFromDiskCache}`);
-          //console.log(cdnInfo);
 
           const parseCacheControlHeaders = (entry) => {
             // キャッシュコントロールヘッダーを取得
@@ -636,6 +614,7 @@
           const  dataFreshness = calculateFreshness(entry);
 
           return {
+            sequenceNumber: sequenceNumber,
             uniqueEntryId: uniqueId, 
             pages: pages,
             pageref: pageref,
@@ -668,10 +647,7 @@
               const total = validHeaderSize + validBodySize;
               return total > 0 ? total : "undefined";
             })(),
-            // responseContentLength:
-            //   entry.response.headers.find(
-            //     (header) => header.name.toLowerCase() === "content-length",
-            //   )?.value || "undefined",
+
             responseContentLength: responseContentLength,
             timestamp: formatTimestamp(new Date(entry.startedDateTime)),
             age: ageInSeconds,
@@ -794,152 +770,7 @@
           entry.setCookieCount > 0;
   }
 
-  function parsePostData(postData) {
-    if (!postData) {
-      return null;
-    }
-
-    const mimeType = postData.mimeType
-      ? postData.mimeType.split(";")[0].trim()
-      : "";
-
-    // バイナリデータを検出する関数
-    const detectBinaryFormat = (data) => {
-      const signatures = {
-        // GZIP
-        gzip: data.startsWith("\x1F\x8B"),
-        // ZIP
-        zip: data.startsWith("PK\x03\x04"),
-        // PDF
-        pdf: data.startsWith("%PDF"),
-        // PNG
-        png: data.startsWith("\x89PNG"),
-        // JPEG
-        jpeg: data.startsWith("\xFF\xD8\xFF"),
-        // GIF
-        gif: data.startsWith("GIF87a") || data.startsWith("GIF89a"),
-        // Brotli
-        brotli: data.startsWith("\xCE\xB2\xCF\x81"),
-        // Zstandard
-        zstd: data.startsWith("\x28\xB5\x2F\xFD"),
-        // LZMA
-        lzma: data.startsWith("\x5D\x00\x00"),
-        // Protobuf
-        protobuf: /[\x00-\x1F]/.test(data) && !/[\x20-\x7E]/.test(data),
-      };
-
-      for (const [format, detect] of Object.entries(signatures)) {
-        if (detect) return format;
-      }
-      return null;
-    };
-
-    // バイナリMIMEタイプのリスト
-    const binaryMimeTypes = [
-      "application/octet-stream",
-      "application/x-protobuf",
-      "application/x-msgpack",
-      // "application/x-www-form-urlencoded",
-      "application/zip",
-      "application/x-gzip",
-      "application/pdf",
-      "image/",
-      "audio/",
-      "video/",
-      "application/x-binary",
-    ];
-
-    let requestPostData = null;
-    try {
-      // バイナリデータの検出
-      const isBinaryMimeType = binaryMimeTypes.some((type) =>
-        mimeType.startsWith(type),
-      );
-      const binaryFormat = postData.text
-        ? detectBinaryFormat(postData.text)
-        : null;
-
-      if (binaryFormat || isBinaryMimeType) {
-        return {
-          mimeType: mimeType,
-          text: binaryFormat
-            ? `[${binaryFormat.toUpperCase()} Data]`
-            : "[Binary Data]",
-          format: binaryFormat || "unknown",
-          isBinary: true,
-        };
-      }
-
-      if (mimeType === "application/x-www-form-urlencoded") {
-        try {
-          requestPostData = {
-            mimeType: mimeType,
-            text: decodeURIComponent(postData.text),
-            params: postData.params.map((param) => ({
-              name: decodeURIComponent(param.name),
-              value: escapeForSequence(decodeURIComponent(param.value)),
-            })),
-          };
-        } catch (e) {
-          requestPostData = {
-            mimeType: mimeType,
-            text: postData.text,
-            params: postData.params,
-          };
-        }
-      } else if (mimeType === "text/plain") {
-        try {
-          requestPostData = {
-            mimeType: mimeType,
-            text: escapeForSequence(decodeURIComponent(postData.text)),
-          };
-        } catch (e) {
-          requestPostData = {
-            mimeType: mimeType,
-            text: escapeForSequence(postData.text),
-          };
-        }
-      } else if (mimeType === "application/json") {
-        try {
-          const decodedText = decodeURIComponent(postData.text);
-          const jsonData = JSON.parse(decodedText);
-          requestPostData = {
-            mimeType: mimeType,
-            text: decodedText,
-            params: Object.entries(jsonData).map(([name, value]) => ({
-              name: decodeURIComponent(name),
-              value: escapeForSequence(String(value)),
-            })),
-          };
-        } catch (error) {
-          requestPostData = {
-            mimeType: mimeType,
-            text: postData.text,
-            error: true,
-          };
-        }
-      } else {
-        if (mimeType === "" || mimeType === null) {
-          requestPostData = null;
-        } else {
-          requestPostData = {
-            mimeType: mimeType,
-            text: "[Unsupported Data Type]",
-            isUnsupported: true,
-          };
-        }
-      }
-    } catch (e) {
-      console.error("Error in parsePostData:", e);
-      return {
-        mimeType: mimeType,
-        text: "[Parse Error]",
-        error: true,
-      };
-    }
-
-    return requestPostData;
-  }
+  
 
   $: isMethodFiltered = !allMethodsSelected;
   $: isStatusFiltered = !allStatusSelected;
@@ -1292,14 +1123,6 @@ function handleMouseLeave(type) {
     }
   }
 
-  // function handleTypeClick(type) {
-  //   if (selectedTypes.includes(type)) {
-  //     selectedTypes = selectedTypes.filter(t => t !== type);
-  //   } else {
-  //     selectedTypes = [...selectedTypes, type];
-  //   }
-  //   allSelected = selectedTypes.length === communicationTypes.length;
-  // }
   function handleTypeClick(type) {
     if (selectedTypes.includes(type)) {
       selectedTypes = selectedTypes.filter((t) => t !== type);
@@ -1309,14 +1132,6 @@ function handleMouseLeave(type) {
     allSelected = selectedTypes.length === communicationTypes.length;
   }
 
-  // function handleAllChange(event) {
-  //     allSelected = event.target.checked;
-  //   if (allSelected) {
-  //     selectedTypes = [...communicationTypes];
-  //   } else {
-  //     selectedTypes = [];
-  //   }
-  // }
   function handleAllChange(event) {
     allSelected = event.target.checked;
     if (allSelected) {
@@ -2565,48 +2380,6 @@ function handleMouseLeave(type) {
   tbody th.status {
     text-align: center;
   }
-  /* tbody th.status.info,
-  tbody th.status.success {
-    background: #99ffa2;
-  }
-  :global(tbody td.status.info) {
-    background: #99ffa2;
-  }
-  :global(tbody td.status.success) {
-    background: #99ffa2;
-  }
-
-  tbody th.status.redirect {
-    background: #eaff99;
-  }
-  :global(tbody td.status.redirect) {
-    background: #eaff99;
-  }
-  tbody th.status.cliError {
-    background: rgb(255, 153, 161);
-  }
-  :global(td.status.cliError) {
-    background: rgb(255, 153, 161);
-  }
-  tbody th.status.srvError {
-    background: #ff4554;
-    color: #fff;
-  }
-  :global(tbody th.status.srvError) {
-    background: #ff4554;
-    color: #fff;
-  } */
-  /* tbody td.setCookies,
-  tbody td.time,
-  tbody td.size,
-  tbody td.dns,
-  tbody td.connect,
-  tbody td.ssl,
-  tbody td.send,
-  tbody td.wait,
-  tbody td.receive {
-      text-align: right;
-  } */
 
   .truncate-icon {
     cursor: pointer;
