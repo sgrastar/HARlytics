@@ -29,7 +29,7 @@
 
   let windowWidth;
 
-  // SvelteのonMount相当の処理
+  // Equivalent to Svelte's onMount
   import { onMount } from "svelte";
 
   onMount(() => {
@@ -45,13 +45,17 @@
     };
   });
 
-  // より詳細な一意の識別子を生成する関数（EntryRowと同じ関数）
+  /**
+   * Generates a unique identifier for an entry
+   * @param {Object} entry - The HAR entry object
+   * @returns {string} A unique identifier string composed of pageref, url, timestamp, and startedDateTime
+   */
   const getEntryId = (entry) => {
     return [
-      entry.pageref || "no-page", // ページ参照
+      entry.pageref || "no-page", // Page reference
       entry.url, // URL
-      entry.timestamp, // タイムスタンプ
-      entry.startedDateTime, // 開始時刻
+      entry.timestamp, // Timestamp
+      entry.startedDateTime, // Start time
     ].join("|");
   };
 
@@ -77,7 +81,7 @@
 
   function handleDetailExportCSV() {
     const csvHeaderData = entries.map((entry) => [
-      entry.sequenceNumber, // 連番を追加
+      entry.sequenceNumber, // Add sequential number
       typeof entry.pageref !== "undefined" ? entry.pageref : "",
       entry.path,
       entry.domain,
@@ -119,7 +123,7 @@
     exportToCSV(
       csvHeaderData,
       [
-        "#", // 連番のヘッダーを追加
+        "#", // Add sequential number header
         "pageref",
         "Path",
         "Domain",
@@ -154,7 +158,10 @@
     );
   }
 
-  // IDベースのトグル関数
+  /**
+   * Toggles the display of entry details based on entry ID
+   * @param {Object} entry - The HAR entry object to toggle
+   */
   function toggleEntryDetails(entry) {
     const entryId = getEntryId(entry);
     if (selectedEntryIds.has(entryId)) {
@@ -208,7 +215,11 @@
     return String(value);
   }
 
-  // ヘッダーをイテラブルな配列に変換する関数
+  /**
+   * Converts headers to an iterable array format
+   * @param {Array|Object} headers - Headers in various formats
+   * @returns {Array} Normalized array of header objects with name and value properties
+   */
   function normalizeHeaders(headers) {
     if (!headers) return [];
     if (Array.isArray(headers)) {
@@ -231,14 +242,25 @@
     return [];
   }
 
-  // バーの幅を計算する関数（最大100%を超えないように制限）
+  /**
+   * Calculates bar width as a percentage (limited to max 100%)
+   * @param {number} timing - The timing value in milliseconds
+   * @param {number} totalTime - The total time in milliseconds
+   * @returns {number} The calculated width as a percentage
+   */
   function calculateBarWidth(timing, totalTime) {
     if (timing < 0) return 0;
     const percentage = (timing / totalTime) * 100;
     return Math.min(percentage, 100);
   }
 
-  // バーの開始位置を計算する関数（最大100%を超えないように制限）
+  /**
+   * Calculates bar start position as a percentage (limited to max 100%)
+   * @param {Object} timings - Object containing timing values for each phase
+   * @param {string} phase - The current phase name
+   * @param {number} totalTime - The total time in milliseconds
+   * @returns {number} The calculated left position as a percentage
+   */
   function calculateBarLeft(timings, phase, totalTime) {
     let left = 0;
     const phases = [

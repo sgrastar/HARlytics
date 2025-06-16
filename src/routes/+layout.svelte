@@ -23,7 +23,7 @@
     const response = await fetch("licenses.txt");
     licenseText = await response.text();
 
-    // スプラッシュスクリーンの制御
+    // Splash screen control
     setTimeout(() => {
       mounted = true;
     }, 100);
@@ -155,7 +155,7 @@
 </div>
 
 <style>
-  /* グローバルスタイルとして以下を追加 */
+  /* Add the following as global styles */
   :global(body) {
     transition: background-color 0.5s ease, color 0.5s ease;
   }
@@ -163,12 +163,12 @@
     transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
   }
   
-  /* ホバー効果など即時反応させたい要素のクラスを指定 */
+  /* Specify classes for elements that need immediate hover effects */
   :global(.entry-row) {
     transition: none !important;
   }
   
-  /* あるいは、ホバー状態のみを除外する場合 */
+  /* Or exclude only hover states */
   :global(.entry-row:hover) {
     transition: none !important;
   }

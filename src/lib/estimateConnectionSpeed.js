@@ -1,3 +1,8 @@
+/**
+ * Estimates upload and download connection speeds from HAR entries
+ * @param {Array} entries - Array of HAR entries
+ * @returns {Object} Object containing upload and download speed statistics
+ */
 export function estimateConnectionSpeed(entries) {
   const validEntries = entries.filter((entry) => {
     return entry.status >= 200 && entry.status < 300;
@@ -78,10 +83,21 @@ export function estimateConnectionSpeed(entries) {
   };
 }
 
+/**
+ * Removes query string from URL
+ * @param {string} url - URL to process
+ * @returns {string} URL without query string
+ */
 function removeQueryString(url) {
   return url.split("?")[0];
 }
 
+/**
+ * Removes outliers from data by trimming top and bottom percentiles
+ * @param {Array<number>} data - Array of numbers
+ * @param {number} threshold - Percentage to trim from each end (default 0.1)
+ * @returns {Array<number>} Trimmed array
+ */
 function trimOutliers(data, threshold = 0.1) {
   const sortedData = [...data].sort((a, b) => a - b);
   const n = sortedData.length;
@@ -90,6 +106,11 @@ function trimOutliers(data, threshold = 0.1) {
   return sortedData.slice(lowIndex, highIndex + 1);
 }
 
+/**
+ * Calculates average of an array of numbers
+ * @param {Array<number>} arr - Array of numbers
+ * @returns {number} Average value
+ */
 function getAverage(arr) {
   if (arr.length === 0) {
     return 0;
@@ -98,6 +119,11 @@ function getAverage(arr) {
   return sum / arr.length;
 }
 
+/**
+ * Calculates median of an array of numbers
+ * @param {Array<number>} arr - Array of numbers
+ * @returns {number} Median value
+ */
 function getMedian(arr) {
   if (arr.length === 0) {
     return 0;
@@ -109,6 +135,11 @@ function getMedian(arr) {
     : (sorted[mid - 1] + sorted[mid]) / 2;
 }
 
+/**
+ * Formats speed in bits per second to human-readable format
+ * @param {number} bps - Speed in bits per second
+ * @returns {string} Formatted speed string
+ */
 function formatSpeed(bps) {
   if (bps < 1000) {
     return `${bps.toFixed(2)} bps`;

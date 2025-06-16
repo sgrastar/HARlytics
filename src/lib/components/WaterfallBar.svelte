@@ -2,51 +2,51 @@
   export let entry;
   export let entries = [];
   export let hasPageInfo = false;
-  export let formatTime; // 時間のフォーマット関数を追加
+  export let formatTime; // Add time format function
 
-  // ページ単位での基準時間を取得
+  // Get base time per page
   $: pageEntries =
     hasPageInfo && entry?.pageref
       ? entries.filter((e) => e.pageref === entry.pageref)
       : entries;
 
-  // ページ内での最初のリクエスト時間を基準時間として取得
+  // Get the first request time within the page as base time
   $: baseTime = Math.min(
     ...pageEntries.map((e) => new Date(e.startedDateTime).getTime()),
   );
 
-  // ページ内での全体の時間幅を計算
+  // Calculate total time span within the page
   $: totalDuration = Math.max(
     ...pageEntries.map(
       (e) => new Date(e.startedDateTime).getTime() + e.time - baseTime,
     ),
   );
 
-  // エントリーの開始位置を計算（100%を超えないように制限）
+  // Calculate entry start position (limited to not exceed 100%)
   $: entryStartPosition = Math.min(
     ((new Date(entry.startedDateTime).getTime() - baseTime) / totalDuration) *
       100,
     100,
   );
 
-  // バーの幅を計算（100%から開始位置を引いた値を超えないように制限）
+  // Calculate bar width (limited to not exceed 100% minus start position)
   function calculateBarWidth(duration) {
     const width = (duration / totalDuration) * 100;
     const remainingSpace = 100 - entryStartPosition;
     return Math.min(width, remainingSpace);
   }
 
-  // ホバー情報の表示位置を計算
+  // Calculate hover info display position
   let tooltipVisible = false;
   let container;
 
   function handleMouseMove(event) {
     tooltipVisible = true;
-    // マウス位置の計算を単純化
+    // Simplify mouse position calculation
     const rect = container.getBoundingClientRect();
     const x = event.clientX - rect.left;
 
-    // CSSカスタムプロパティを使用して位置を設定
+    // Set position using CSS custom property
     container.style.setProperty("--tooltip-x", `${x}px`);
   }
 
@@ -54,7 +54,7 @@
     tooltipVisible = false;
   }
 
-  // 各タイミング値の取得と検証
+  // Get and validate each timing value
   $: timings = {
     blocked: entry?.timings?.blocked >= 0 ? entry.timings.blocked : 0,
     dns: entry?.timings?.dns >= 0 ? entry.timings.dns : 0,
@@ -65,7 +65,7 @@
     receive: entry?.timings?.receive >= 0 ? entry.timings.receive : 0,
   };
 
-  // 各フェーズの開始位置を計算（エントリーの開始位置からの相対位置）
+  // Calculate start position for each phase (relative position from entry start)
   $: startPositions = {
     blocked: 0,
     dns: Math.min(timings.blocked, totalDuration),
@@ -97,7 +97,7 @@
     ),
   };
 
-  // タイミングバーの表示計算を行う関数
+  // Function to calculate timing bar display
   function calculateBarPosition(startPos, duration) {
     const left = Math.min(
       entryStartPosition + (startPos / totalDuration) * 100,
@@ -124,7 +124,7 @@
         {/each}
     </div> -->
 
-  <!-- タイミングバー -->
+  <!-- Timing bars -->
   {#if timings.blocked > 0}
     {@const pos = calculateBarPosition(startPositions.blocked, timings.blocked)}
     <div
@@ -249,7 +249,7 @@
     /* background-color: #f3f4f6; */
     border-radius: 0.25rem;
     --tooltip-x: 0px;
-    /* overflow: hidden;  はみ出しを防ぐ */
+    /* overflow: hidden;  Prevent overflow */
   }
   /* 
     .grid-lines {
@@ -295,7 +295,7 @@
     align-items: center;
   }
 
-  /* カラー定義 */
+  /* Color definitions */
   /* .blocked { background-color: #9ca3af; } */
   .dns {
     color: #60a5fa;
@@ -316,7 +316,7 @@
     color: #3b82f6;
   }
 
-  /* 区切り線 */
+  /* Divider lines */
   .tooltip span:not(:last-child)::after {
     content: "|";
     margin-left: 8px;

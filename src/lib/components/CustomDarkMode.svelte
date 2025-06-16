@@ -5,7 +5,7 @@
     let darkMode = false;
     
     onMount(() => {
-      // クライアントサイドでのみ実行
+      // Execute only on client side
       if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         darkMode = document.documentElement.classList.contains('dark');
       }
