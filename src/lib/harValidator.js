@@ -1,6 +1,7 @@
 /**
- * HARファイルの内容を検証する関数
- * @param {string | object} harContent HARファイルの内容 (JSON文字列またはパース済みオブジェクト)
+ * Validates HAR file content
+ * @param {string | object} harContent - HAR file content (JSON string or parsed object)
+
  * @returns {{isValid: boolean, errors: Array<{path: string, message: string}>, parsedHar: object | null}}
  */
 export function validateHar(harContent) {
@@ -21,7 +22,7 @@ export function validateHar(harContent) {
         return { isValid: false, errors, parsedHar: null };
     }
 
-    // 2. ルートに 'log' オブジェクトが存在するか確認
+    // 2. Check if 'log' object exists at root
     if (!harData.log || typeof harData.log !== 'object') {
         errors.push({ path: 'log', message: 'The "log" object is missing or has an invalid type.' });
         return { isValid: errors.length === 0, errors, parsedHar: harData };
@@ -29,7 +30,7 @@ export function validateHar(harContent) {
 
     const log = harData.log;
 
-    // 3. 'log' オブジェクト内の必須フィールドを確認
+    // 3. Check required fields in 'log' object
     // if (typeof log.version !== 'string' || !log.version.match(/^\d+\.\d+$/)) {
     //     errors.push({ path: 'log.version', message: '"log.version" is required and must be a string like "1.1" or "1.2".' });
     // }
@@ -102,14 +103,14 @@ export function validateHar(harContent) {
                 if (req.postData && typeof req.postData !== 'object') {
                      errors.push({ path: `${reqPath}.postData`, message: 'If "postData" exists, it must be an object.' });
                 } else if (req.postData) {
-                    // Fiddler などのツールでは、mimeTypeがnullになることがあるため、コメントアウト
+                    // Commented out because mimeType can be null in tools like Fiddler
                     // if (typeof req.postData.mimeType !== 'string') {
                     //     errors.push({ path: `${reqPath}.postData.mimeType`, message: '"postData.mimeType" is required and must be a string.' });
                     // }
                 }
             }
 
-            // Response object (以下同様に必須フィールドのチェックを続ける)
+            // Response object (continue checking required fields similarly)
             if (!entry.response || typeof entry.response !== 'object') {
                 errors.push({ path: `${entryPath}.response`, message: 'The "response" object is required.' });
             } else {
@@ -118,7 +119,7 @@ export function validateHar(harContent) {
                 if (typeof res.status !== 'number') {
                     errors.push({ path: `${resPath}.status`, message: '"status" is required and must be a number.' });
                 }
-                // Fiddler などのツールでは、statusTextがnullになることがあるため、コメントアウト
+                // Commented out because statusText can be null in tools like Fiddler
                 // if (typeof res.statusText !== 'string') {
                 //     errors.push({ path: `${resPath}.statusText`, message: '"statusText" is required and must be a string.' });
                 // }
@@ -136,7 +137,7 @@ export function validateHar(harContent) {
                     if (typeof res.content.size !== 'number') {
                         errors.push({ path: `${resPath}.content.size`, message: '"content.size" is required and must be a number.' });
                     }
-                    //Fiddler などのツールでは、mimeTypeがnullになることがあるため、コメントアウト
+                    // Commented out because mimeType can be null in tools like Fiddler
                     // if (typeof res.content.mimeType !== 'string') {
                     //     errors.push({ path: `${resPath}.content.mimeType`, message: '"content.mimeType" is required and must be a string.' });
                     // }
@@ -150,7 +151,7 @@ export function validateHar(harContent) {
                 const timingsPath = `${entryPath}.timings`;
                 const requiredTimings = ['send', 'wait', 'receive'];
                 requiredTimings.forEach(timingName => {
-                    //charles では、timings の値が -1 の場合もあるため、コメントアウト
+                    // Commented out because timings values can be -1 in Charles
                     // if (typeof timings[timingName] !== 'number' || timings[timingName] < -1) {
                     //     errors.push({ path: `${timingsPath}.${timingName}`, message: `"${timingName}" is required and must be a number greater than or equal to -1.` });
                     // }
@@ -182,7 +183,7 @@ export function validateHar(harContent) {
                 if (typeof page.title !== 'string') {
                     errors.push({ path: `${pagePath}.title`, message: '"title" is required and must be a string.' });
                 }
-                // 取得タイミングによっては -1 になることがあるため、コメントアウト 
+                // Commented out because values can be -1 depending on timing 
                 // if (!page.pageTimings || typeof page.pageTimings !== 'object') {
                 //     errors.push({ path: `${pagePath}.pageTimings`, message: 'The "pageTimings" object is required.' });
                 // } else {
@@ -202,7 +203,11 @@ export function validateHar(harContent) {
 }
 
 /**
- * ヘルパー: name/valueペアの配列を検証
+ * Helper: Validate array of name/value pairs
+ * @param {Array} arr - Array to validate
+ * @param {string} basePath - Base path for error reporting
+ * @param {Array} errors - Error array to append to
+ * @param {string} itemType - Type of item being validated
  */
 function validateNameValueArray(arr, basePath, errors, itemType = "Item") {
     // if (!Array.isArray(arr)) {
@@ -228,7 +233,9 @@ function validateNameValueArray(arr, basePath, errors, itemType = "Item") {
 }
 
 /**
- * ヘルパー: ISO 8601 日時文字列か簡易的に検証
+ * Helper: Simple validation for ISO 8601 datetime string
+ * @param {string} str - String to validate
+ * @returns {boolean} True if valid ISO 8601 format
  */
 function isValidISO8601(str) {
     if (typeof str !== 'string') return false;

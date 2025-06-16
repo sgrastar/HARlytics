@@ -26,14 +26,14 @@
   export let calculateBarWidth;
   export let calculateBarLeft;
 
-  // エントリーのユニークIDを取得する関数
+  // Function to get unique ID for an entry
   const getEntryId = (entry) => {
     //console.log(entry);
     return [
-      entry.pageref || "no-page", // ページ参照
+      entry.pageref || "no-page", // Page reference
       entry.url, // URL
-      entry.timestamp, // タイムスタンプ
-      entry.startedDateTime, // 開始時刻
+      entry.timestamp, // Timestamp
+      entry.startedDateTime, // Start time
     ].join("|");
   };
 </script>
@@ -48,6 +48,7 @@
   tabindex="0"
   class:selected={selectedEntryIndexes.has(getEntryId(entry))}
 >
+  <div class="sequenceNumber cell">{entry.sequenceNumber}</div>
   <div class="path cell">
     {#if isIndented}
       <span class="entry-indent"></span>
@@ -307,7 +308,7 @@
                     <th class="payloadValue value-col">Value</th>
                   </tr>
                   
-                  <!-- #TODO postDataの値が2回表示されることがある -->
+                  <!-- #TODO postData values may be displayed twice -->
                   {#each postDataParams as param}
                     <tr>
                       <td class="payloadName name-col">{param.name}</td>
@@ -687,6 +688,10 @@
     overflow: visible;
   }
 
+  .sequenceNumber {
+    width: 40px;
+    text-align: center;
+  }
   .path {
     width: 20%;
     min-width: 150px;

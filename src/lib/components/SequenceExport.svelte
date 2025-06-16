@@ -35,10 +35,10 @@
     const svgData = new XMLSerializer().serializeToString(svg);
 
     if (imageFormat === "svg") {
-      // SVGの場合はMIMEタイプを修正
+      // For SVG, fix the MIME type
       return new Blob([svgData], { type: "image/svg+xml" });
     } else {
-      // PNG処理は変更なし
+      // PNG processing unchanged
       return new Promise((resolve) => {
         const canvas = document.createElement("canvas");
         const svgSize = svg.getBoundingClientRect();
@@ -106,11 +106,11 @@
       if (!svg) return;
 
       if (imageFormat === "svg") {
-        // SVGの場合はテキストとしてコピー
+        // For SVG, copy as text
         const svgData = new XMLSerializer().serializeToString(svg);
         await navigator.clipboard.writeText(svgData);
       } else {
-        // PNGの場合は画像としてコピー
+        // For PNG, copy as image
         const blob = await getImageBlob();
         if (!blob) return;
         await navigator.clipboard.write([
@@ -133,7 +133,7 @@
     if (!svg) return;
 
     if (imageFormat === "svg") {
-      // SVGの場合は直接HTMLとして新しいタブで開く
+      // For SVG, open directly as HTML in new tab
       const svgData = new XMLSerializer().serializeToString(svg);
       const html = `
             <!DOCTYPE html>
@@ -153,7 +153,7 @@
       window.open(url, "_blank");
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } else {
-      // PNGの場合は従来通り
+      // For PNG, use conventional method
       const blob = await getImageBlob();
       if (!blob) return;
       const url = URL.createObjectURL(blob);

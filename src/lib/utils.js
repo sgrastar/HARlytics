@@ -21,53 +21,69 @@ export function formatTimestamp(date, excludeMilliseconds = false) {
   }
 }
 
+/**
+ * Truncates text to a specified maximum length
+ * @param {*} text - The text to truncate
+ * @param {number} maxLength - Maximum length before truncation
+ * @returns {string} Truncated text with ellipsis if needed
+ */
 export function truncateText(text, maxLength) {
-  if (!text) return ""; // nullやundefinedの場合は空文字を返す
-  const str = String(text); // 数値などの場合も文字列に変換
+  if (!text) return ""; // Return empty string for null or undefined
+  const str = String(text); // Convert to string for numbers etc.
   if (str.length <= maxLength) return str;
   return str.slice(0, maxLength) + "...";
 }
 
+/**
+ * Escapes special characters for Mermaid diagram syntax
+ * @param {string} text - Text to escape
+ * @returns {string} Escaped text safe for Mermaid diagrams
+ */
 export const escapeForMermaid = (text) => {
   if (!text) return "";
 
   return (
     text
-      // 既存のエスケープ処理
-      .replace(/\\/g, "\\\\") // バックスラッシュ
-      .replace(/\$/g, "\\$") // ドル記号
-      .replace(/\#/g, "\\#") // ハッシュ記号
-      .replace(/\_/g, "\\_") // アンダースコア
-      .replace(/\~/g, "\\~") // チルダ
-      .replace(/\*/g, "\\*") // アスタリスク
-      .replace(/\+/g, "\\+") // プラス記号
-      .replace(/\=/g, "\\=") // イコール記号
-      .replace(/\|/g, "\\|") // バーティカルバー
-      .replace(/\[/g, "\\[") // 開き角括弧
-      .replace(/\]/g, "\\]") // 閉じ角括弧
-      .replace(/\{/g, "\\{") // 開き波括弧
-      .replace(/\}/g, "\\}") // 閉じ波括弧
-      .replace(/\(/g, "\\(") // 開き丸括弧
-      .replace(/\)/g, "\\)") // 閉じ丸括弧
-      .replace(/\>/g, "\\>") // 大なり記号
-      .replace(/\</g, "\\<") // 小なり記号
-      .replace(/\n/g, "\\n") // 改行
-      .replace(/\r/g, "\\r") // 復帰
-      .replace(/\t/g, "\\t") // タブq
-      .replace(/\'/g, "\\'") // シングルクォート
-      .replace(/\"/g, '\\"') // ダブルクォート
-      .replace(/:/g, "&#58;") // コロン
-      .replace(/;/g, "&#59;") // セミコロン
-      .replace(/@/g, "&#64;") // アットマーク
+      // Existing escape processing
+      .replace(/\\/g, "\\\\") // Backslash
+      .replace(/\$/g, "\\$") // Dollar sign
+      .replace(/\#/g, "\\#") // Hash sign
+      .replace(/\_/g, "\\_") // Underscore
+      .replace(/\~/g, "\\~") // Tilde
+      .replace(/\*/g, "\\*") // Asterisk
+      .replace(/\+/g, "\\+") // Plus sign
+      .replace(/\=/g, "\\=") // Equals sign
+      .replace(/\|/g, "\\|") // Vertical bar
+      .replace(/\[/g, "\\[") // Opening square bracket
+      .replace(/\]/g, "\\]") // Closing square bracket
+      .replace(/\{/g, "\\{") // Opening curly brace
+      .replace(/\}/g, "\\}") // Closing curly brace
+      .replace(/\(/g, "\\(") // Opening parenthesis
+      .replace(/\)/g, "\\)") // Closing parenthesis
+      .replace(/\>/g, "\\>") // Greater than sign
+      .replace(/\</g, "\\<") // Less than sign
+      .replace(/\n/g, "\\n") // Newline
+      .replace(/\r/g, "\\r") // Carriage return
+      .replace(/\t/g, "\\t") // Tab
+      .replace(/\'/g, "\\'") // Single quote
+      .replace(/\"/g, '\\"') // Double quote
+      .replace(/:/g, "&#58;") // Colon
+      .replace(/;/g, "&#59;") // Semicolon
+      .replace(/@/g, "&#64;") // At sign
       .replace(/&(?![#a-zA-Z0-9]+;)/g, "&amp;")
-  ); // エスケープされていないアンパサンド
+  ); // Unescaped ampersand
 };
 
-// 複雑な値の処理用の関数
+/**
+ * Processes complex values by truncating and escaping
+ * @param {string} str - String to process
+ * @param {number} length - Maximum length before truncation
+ * @returns {string} Processed string
+ */
 export function truncateAndEscape(str, length) {
   if (!str) return "";
 
-  // フォントのクエリパラメータなど、複雑な値の場合は簡略化
+  // Simplify complex values like font query parameters
   if (str.includes(";") && str.includes("@")) {
     return "[Complex Value]";
   }
@@ -91,6 +107,11 @@ export function truncateAndEscape(str, length) {
 //   }
 // }
 
+/**
+ * Returns CSS classes for HTTP status code styling
+ * @param {number} status - HTTP status code
+ * @returns {string} CSS class string for the status code
+ */
 export function httpStatusCSSClass(status) {
   if (!status) return "other";
   
@@ -109,6 +130,11 @@ export function httpStatusCSSClass(status) {
   }
 }
 
+/**
+ * Returns CSS classes for priority level styling
+ * @param {string} priority - Priority level (VeryLow, Low, Medium, High, VeryHigh)
+ * @returns {string} CSS class string for the priority level
+ */
 export function priorityCSSClass(priority){
   if (priority === "VeryLow") {
     return "verylow text-green-800 dark:text-green-300 bg-green-100 dark:bg-green-900 font-bold";
@@ -128,25 +154,30 @@ export function priorityCSSClass(priority){
   }
 }
 
+/**
+ * Formats time in milliseconds to human-readable format
+ * @param {number} time - Time in milliseconds
+ * @returns {string} Formatted time string (e.g., "123ms", "1.23s", "1min 23s")
+ */
 export function formatTime(time) {
   if (time < 1000) {
     return `${Math.floor(time)}ms`;
   } else if (time < 60000) {
-    // 秒単位での表示（60秒未満）
+    // Display in seconds (less than 60 seconds)
     const seconds = time / 1000;
-    // 59.99秒のような境界値を適切に処理
+    // Handle edge cases like 59.99 seconds properly
     return `${Math.min(seconds, 59.99).toFixed(2)}s`;
   } else if (time < 3600000) {
-    // 分と秒での表示（60分未満）
+    // Display in minutes and seconds (less than 60 minutes)
     const minutes = Math.floor(time / 60000);
     const seconds = Math.floor((time % 60000) / 1000);
-    // 秒が60になるのを防ぐ
+    // Prevent seconds from being 60
     if (seconds === 60) {
       return `${minutes + 1}min 00s`;
     }
     return `${minutes}min ${String(seconds).padStart(2, "0")}s`;
   } else {
-    // 時、分、秒での表示
+    // Display in hours, minutes, and seconds
     const hours = Math.floor(time / 3600000);
     const minutes = Math.floor((time % 3600000) / 60000);
     const seconds = Math.floor((time % 60000) / 1000);
@@ -156,8 +187,13 @@ export function formatTime(time) {
   }
 }
 
+/**
+ * Formats bytes to human-readable format
+ * @param {number} bytes - Number of bytes
+ * @returns {string} Formatted byte string (e.g., "1.5 KB", "2.3 MB")
+ */
 export function formatBytes(bytes) {
-  // undefinedやNaNのチェックを追加
+  // Check for undefined, NaN, or invalid values
   if (bytes === undefined || bytes === null || isNaN(bytes) || bytes === -1) {
     return "-";
   }
@@ -168,13 +204,20 @@ export function formatBytes(bytes) {
   bytes = Math.abs(bytes);
 
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  // toFixedを必ず適用して、小数点以下1桁を表示
+  // Always apply toFixed to show 1 decimal place
   const value = (bytes / Math.pow(1024, i)).toFixed(1);
   // console.log('bytes:'+bytes+" / " + sign < 0 ? "-" + value + " " + units[i] : value + " " + units[i])
 
   return sign < 0 ? "-" + value + " " + units[i] : value + " " + units[i];
 }
 
+/**
+ * Exports data to CSV file
+ * @param {Array<Array>} data - 2D array of data rows
+ * @param {Array<string>} headers - Column headers
+ * @param {string} logFilename - Base filename
+ * @param {string} suffix - Filename suffix
+ */
 export function exportToCSV(data, headers, logFilename, suffix) {
   const csvContent = [
     headers.join(","),
@@ -197,6 +240,12 @@ export function exportToCSV(data, headers, logFilename, suffix) {
   document.body.removeChild(link);
 }
 
+/**
+ * Splits text into chunks of specified length
+ * @param {string} text - Text to split
+ * @param {number} length - Length of each chunk
+ * @returns {Array<string>} Array of text chunks
+ */
 export function splitByLength(text, length) {
   const lines = [];
   for (let i = 0; i < text.length; i += length) {
@@ -205,8 +254,13 @@ export function splitByLength(text, length) {
   return lines;
 }
 
+/**
+ * Parses Cache-Control header into an object
+ * @param {string} cacheControlHeader - Cache-Control header value
+ * @returns {Object} Parsed cache control directives
+ */
 export function parseCacheControl(cacheControlHeader) {
-  // 空文字列や未定義の場合は空オブジェクトを返す
+  // Return empty object for empty string or undefined
   if (!cacheControlHeader) {
     return {};
   }
@@ -217,7 +271,7 @@ export function parseCacheControl(cacheControlHeader) {
   const parsedDirectives = {};
 
   for (const directive of directives) {
-    // 空の項目をスキップ
+    // Skip empty items
     if (!directive) {
       continue;
     }
@@ -225,7 +279,7 @@ export function parseCacheControl(cacheControlHeader) {
     const [key, value] = directive.split("=");
     const trimmedKey = key.trim();
 
-    // キーが空の場合はスキップ
+    // Skip if key is empty
     if (!trimmedKey) {
       continue;
     }
@@ -236,6 +290,12 @@ export function parseCacheControl(cacheControlHeader) {
   return parsedDirectives;
 }
 
+/**
+ * Checks if a response is cached based on age and cache control
+ * @param {number|null} ageInSeconds - Age of the response in seconds
+ * @param {Object} parsedCacheControl - Parsed cache control directives
+ * @returns {boolean} True if response is cached
+ */
 export function isResponseCached(ageInSeconds, parsedCacheControl) {
   if (ageInSeconds !== null) {
     return true;
@@ -250,12 +310,12 @@ export function isResponseCached(ageInSeconds, parsedCacheControl) {
 }
 
 /**
- * リソースのキャッシュ鮮度（Browser & CDN）を計算するための関数
- * @param {Object} entry - HARファイルのエントリー
- * @returns {Object} ブラウザとCDNのキャッシュ状態
+ * Calculates resource cache freshness for Browser & CDN
+ * @param {Object} entry - HAR file entry
+ * @returns {Object} Browser and CDN cache status
  */
 export function calculateFreshness(entry) {
-  // 必要なヘッダー情報を取得
+  // Get necessary header information
   const headers = entry.response.headers || [];
   const cacheControlHeader = headers.find(h => h.name.toLowerCase() === 'cache-control')?.value || '';
   const expiresHeader = headers.find(h => h.name.toLowerCase() === 'expires')?.value || '';
@@ -263,7 +323,7 @@ export function calculateFreshness(entry) {
   const xCacheHeader = headers.find(h => h.name.toLowerCase() === 'x-cache')?.value || '';
   const cfCacheStatusHeader = headers.find(h => h.name.toLowerCase() === 'cf-cache-status')?.value || '';
   
-  // レスポンス時刻を取得 (ミリ秒単位)
+  // Get response time (in milliseconds)
   let responseTime;
   if (dateHeader) {
     responseTime = new Date(dateHeader).getTime();
@@ -275,7 +335,7 @@ export function calculateFreshness(entry) {
   
   const currentTime = Date.now();
   
-  // Cache-Control から max-age と s-maxage を抽出
+  // Extract max-age and s-maxage from Cache-Control
   let maxAge = null;
   let sMaxAge = null;
   
@@ -289,13 +349,13 @@ export function calculateFreshness(entry) {
     sMaxAge = parseInt(sMaxAgeMatch[1], 10);
   }
   
-  // Expires ヘッダーから有効期限を計算
+  // Calculate expiration from Expires header
   let expiresTime = null;
   if (expiresHeader) {
     expiresTime = new Date(expiresHeader).getTime();
   }
   
-  // ブラウザキャッシュの状態を計算
+  // Calculate browser cache status
   let browserStatus = 'Unknown';
   let browserExpiryTime = null;
   
@@ -309,12 +369,12 @@ export function calculateFreshness(entry) {
     browserStatus = currentTime < browserExpiryTime ? 'Fresh' : 'Stale';
   }
   
-  // CDN キャッシュの状態を計算
+  // Calculate CDN cache status
   let cdnStatus = 'Unknown';
   let cdnExpiryTime = null;
   let cdnProvider = null;
   
-  // CDNプロバイダーを特定
+  // Identify CDN provider
   if (cfCacheStatusHeader) {
     cdnProvider = 'Cloudflare';
   } else if (xCacheHeader && xCacheHeader.includes('cloudfront')) {
@@ -323,51 +383,51 @@ export function calculateFreshness(entry) {
     cdnProvider = 'Fastly/Other';
   }
   
-  // Cloudflareの場合
+  // For Cloudflare
   if (cdnProvider === 'Cloudflare') {
     switch (cfCacheStatusHeader.toUpperCase()) {
       case 'HIT':
-        // リソースがCloudflareのキャッシュで見つかった
+        // Resource found in Cloudflare's cache
         cdnStatus = 'Fresh';
         break;
       case 'MISS':
-        // キャッシュされていないが、オリジンから新しく取得されたのでFresh
+        // Not cached but freshly fetched from origin so Fresh
         cdnStatus = 'Fresh';
         break;
       case 'EXPIRED':
-        // キャッシュ内で見つかったが期限切れ、オリジンから再取得
-        cdnStatus = 'Fresh'; // オリジンから再取得したので結果的にFresh
+        // Found in cache but expired, refetched from origin
+        cdnStatus = 'Fresh'; // Refetched from origin so ultimately Fresh
         break;
       case 'STALE':
-        // 期限切れだがオリジンに接続できないためキャッシュから提供
+        // Expired but served from cache as origin unreachable
         cdnStatus = 'Stale';
         break;
       case 'BYPASS':
-        // キャッシュがバイパスされた（no-cache, private, max-age=0など）
+        // Cache bypassed (no-cache, private, max-age=0, etc.)
         cdnStatus = 'Not Cacheable';
         break;
       case 'REVALIDATED':
-        // 有効期限の再検証が行われた
+        // Expiration revalidated
         cdnStatus = 'Fresh';
         break;
       case 'UPDATING':
-        // 期限切れだが人気のあるリソースなので更新中
+        // Expired but popular resource so updating
         cdnStatus = 'Fresh';
         break;
       case 'DYNAMIC':
-        // キャッシュ対象外と判断されたリソース
+        // Resource determined to be non-cacheable
         cdnStatus = 'Not Cacheable';
         break;
       case 'NONE':
       case 'UNKNOWN':
-        // キャッシュ対象外（Workerレスポンス、リダイレクト、WAFブロックなど）
+        // Non-cacheable (Worker response, redirect, WAF block, etc.)
         cdnStatus = 'Not Cacheable';
         break;
       default:
         cdnStatus = 'Unknown';
     }
   }
-  // CloudFrontの場合（既存のロジック）
+  // For CloudFront (existing logic)
   else if (cdnProvider === 'CloudFront') {
     if (xCacheHeader.includes('Miss from cloudfront')) {
       cdnStatus = 'Fresh';
@@ -379,7 +439,7 @@ export function calculateFreshness(entry) {
       cdnStatus = 'Unknown';
     }
   }
-  // Fastlyまたはその他のCDN
+  // Fastly or other CDN
   else if (cdnProvider === 'Fastly/Other') {
     if (xCacheHeader.includes('Hit')) {
       cdnStatus = 'Fresh';
@@ -387,7 +447,7 @@ export function calculateFreshness(entry) {
       cdnStatus = 'Fresh';
     }
   }
-  // x-cacheヘッダーもcf-cache-statusもない場合は通常のキャッシュ計算
+  // If no x-cache or cf-cache-status headers, use normal cache calculation
   else {
     if (cacheControlHeader.includes('no-store')) {
       cdnStatus = 'Not Cacheable';
@@ -395,7 +455,7 @@ export function calculateFreshness(entry) {
       cdnExpiryTime = responseTime + (sMaxAge * 1000);
       cdnStatus = currentTime < cdnExpiryTime ? 'Fresh' : 'Stale';
     } else if (maxAge !== null) {
-      // s-maxage がない場合は max-age を CDN も使用
+      // If no s-maxage, CDN also uses max-age
       cdnExpiryTime = responseTime + (maxAge * 1000);
       cdnStatus = currentTime < cdnExpiryTime ? 'Fresh' : 'Stale';
     } else if (expiresTime) {
@@ -404,7 +464,7 @@ export function calculateFreshness(entry) {
     }
   }
   
-  // 結果をオブジェクトとして返す
+  // Return result as object
   return {
     browser: {
       status: browserStatus,
@@ -548,6 +608,11 @@ export function getHttpStatusDescription(statusCode) {
   return `${statusInfo.code} ${statusInfo.description}`;
 }
 
+/**
+ * Determines the communication type based on entry characteristics
+ * @param {Object} entry - HAR file entry
+ * @returns {string} Communication type (e.g., "WS", "Doc", "CSS", "JS", etc.)
+ */
 export function getCommunicationType(entry) {
   //console.log(entry);
   if (entry._webSocketMessages) {
@@ -678,6 +743,11 @@ export function getCommunicationType(entry) {
   return "Other";
 }
 
+/**
+ * Extracts the top-level domain from a full domain
+ * @param {string} domain - Full domain name
+ * @returns {string} Top-level domain
+ */
 export function getTopDomain(domain) {
   const parts = domain.split(".");
   if (parts.length > 2) {
@@ -686,6 +756,12 @@ export function getTopDomain(domain) {
   return domain;
 }
 
+/**
+ * Aggregates data by counting occurrences of a specific key
+ * @param {Array} entries - Array of entries to aggregate
+ * @param {string} key - Key to aggregate by
+ * @returns {Array<{name: string, value: number}>} Aggregated data
+ */
 export function aggregateData(entries, key) {
   const aggregatedData = entries.reduce((acc, entry) => {
     const value = entry[key].replace(/\//g, "/");
@@ -703,6 +779,10 @@ export function aggregateData(entries, key) {
   }));
 }
 
+/**
+ * Copies the value of a textarea element to clipboard
+ * @param {string} elemId - ID of the textarea element
+ */
 export function copyTextarea(elemId) {
   const element = document.getElementById(elemId);
   if (element && element.value) {
@@ -710,6 +790,11 @@ export function copyTextarea(elemId) {
   }
 }
 
+/**
+ * Formats a GMT date string to UTC format
+ * @param {string} gmtDateString - GMT date string
+ * @returns {string} UTC formatted date string
+ */
 export function formatGMTtoUTC(gmtDateString) {
   if (!gmtDateString) return "";
 
@@ -723,6 +808,11 @@ export function formatGMTtoUTC(gmtDateString) {
   }
 }
 
+/**
+ * Formats a GMT date string to local time with timezone info
+ * @param {string} gmtDateString - GMT date string
+ * @returns {string} Local time string with timezone
+ */
 export function formatToLocalTime(gmtDateString) {
   if (!gmtDateString) return "";
 
@@ -730,9 +820,9 @@ export function formatToLocalTime(gmtDateString) {
     const date = new Date(gmtDateString);
     if (isNaN(date.getTime())) return "";
 
-    // タイムゾーン名を取得（例：'JST'）
+    // Get timezone name (e.g., 'JST')
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    // タイムゾーンのオフセットを取得（例：'+0900'）
+    // Get timezone offset (e.g., '+0900')
     const offset = date.getTimezoneOffset();
     const offsetHours = Math.abs(Math.floor(offset / 60))
       .toString()
@@ -749,21 +839,26 @@ export function formatToLocalTime(gmtDateString) {
   }
 }
 
+/**
+ * Formats POST data values for display
+ * @param {*} value - Value to format
+ * @returns {string} Formatted value string
+ */
 export function formatPostDataValue(value) {
-  // nullやundefinedの処理
+  // Handle null or undefined
   if (value === null || value === undefined) {
     return "[null]";
   }
 
-  // ArrayBufferとTypedArrayの処理
+  // Handle ArrayBuffer and TypedArray
   if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer) {
     return "[Binary Data]";
   }
 
-  // オブジェクトや配列の処理
+  // Handle objects and arrays
   if (typeof value === "object") {
     try {
-      // 深いネストされたオブジェクトの場合は概要のみ表示
+      // For deeply nested objects, show summary only
       if (JSON.stringify(value).length > 1000) {
         return "[Complex Object]";
       }
@@ -773,38 +868,42 @@ export function formatPostDataValue(value) {
     }
   }
 
-  // 長いテキストの処理
+  // Handle long text
   if (typeof value === "string") {
-    // URLエンコードされている可能性のあるデータのデコードを試みる
+    // Try to decode potentially URL-encoded data
     try {
       const decoded = decodeURIComponent(value);
-      // デコードしたデータが元のデータと異なり、かつ読みやすい場合のみデコード結果を使用
+      // Use decoded result only if different from original and readable
       if (decoded !== value && /^[\x20-\x7E\s]+$/.test(decoded)) {
         return decoded;
       }
     } catch (e) {
-      // デコードに失敗した場合は元のデータを使用
+      // Use original data if decoding fails
     }
 
-    // 長すぎるテキストの truncate
+    // Truncate text that's too long
     if (value.length > 500) {
       return value.substring(0, 500) + "... [Text Truncated]";
     }
     return value;
   }
 
-  // その他の基本型はそのまま文字列化
+  // Convert other primitive types to string as-is
   return String(value);
 }
 
-// postDataの表示用に整形する関数
+/**
+ * Normalizes POST data for display
+ * @param {Object} postData - POST data object
+ * @returns {Array<{name: string, value: string}>} Normalized data array
+ */
 export function normalizePostData(postData) {
   if (!postData) return [];
 
-  // mimeTypeに基づいて適切な処理を行う
+  // Process based on mimeType
   const result = [];
 
-  // Content-Type に基づく処理
+  // Process based on Content-Type
   if (postData.mimeType) {
     result.push({
       name: "Content-Type",
@@ -812,10 +911,10 @@ export function normalizePostData(postData) {
     });
   }
 
-  // text/plainの場合
+  // For text/plain
   if (postData.text) {
     try {
-      // URLエンコードされたデータの処理
+      // Process URL-encoded data
       if (postData.mimeType?.includes("application/x-www-form-urlencoded")) {
         const params = new URLSearchParams(postData.text);
         for (const [key, value] of params) {
@@ -838,7 +937,7 @@ export function normalizePostData(postData) {
     }
   }
 
-  // paramsがある場合（マルチパートフォームデータなど）
+  // If params exist (multipart form data, etc.)
   if (postData.params) {
     postData.params.forEach((param) => {
       result.push({
@@ -850,3 +949,156 @@ export function normalizePostData(postData) {
 
   return result;
 }
+
+
+/**
+ * Parses POST data for display and analysis
+ * @param {Object} postData - POST data object
+ * @returns {Object|null} Parsed POST data or null
+ */
+export function parsePostData(postData) {
+    if (!postData) {
+      return null;
+    }
+
+    const mimeType = postData.mimeType
+      ? postData.mimeType.split(";")[0].trim()
+      : "";
+
+    // Function to detect binary data
+    const detectBinaryFormat = (data) => {
+      const signatures = {
+        // GZIP
+        gzip: data.startsWith("\x1F\x8B"),
+        // ZIP
+        zip: data.startsWith("PK\x03\x04"),
+        // PDF
+        pdf: data.startsWith("%PDF"),
+        // PNG
+        png: data.startsWith("\x89PNG"),
+        // JPEG
+        jpeg: data.startsWith("\xFF\xD8\xFF"),
+        // GIF
+        gif: data.startsWith("GIF87a") || data.startsWith("GIF89a"),
+        // Brotli
+        brotli: data.startsWith("\xCE\xB2\xCF\x81"),
+        // Zstandard
+        zstd: data.startsWith("\x28\xB5\x2F\xFD"),
+        // LZMA
+        lzma: data.startsWith("\x5D\x00\x00"),
+        // Protobuf
+        protobuf: /[\x00-\x1F]/.test(data) && !/[\x20-\x7E]/.test(data),
+      };
+
+      for (const [format, detect] of Object.entries(signatures)) {
+        if (detect) return format;
+      }
+      return null;
+    };
+
+    // List of binary MIME types
+    const binaryMimeTypes = [
+      "application/octet-stream",
+      "application/x-protobuf",
+      "application/x-msgpack",
+      // "application/x-www-form-urlencoded",
+      "application/zip",
+      "application/x-gzip",
+      "application/pdf",
+      "image/",
+      "audio/",
+      "video/",
+      "application/x-binary",
+    ];
+
+    let requestPostData = null;
+    try {
+      // Detect binary data
+      const isBinaryMimeType = binaryMimeTypes.some((type) =>
+        mimeType.startsWith(type),
+      );
+      const binaryFormat = postData.text
+        ? detectBinaryFormat(postData.text)
+        : null;
+
+      if (binaryFormat || isBinaryMimeType) {
+        return {
+          mimeType: mimeType,
+          text: binaryFormat
+            ? `[${binaryFormat.toUpperCase()} Data]`
+            : "[Binary Data]",
+          format: binaryFormat || "unknown",
+          isBinary: true,
+        };
+      }
+
+      if (mimeType === "application/x-www-form-urlencoded") {
+        try {
+          requestPostData = {
+            mimeType: mimeType,
+            text: decodeURIComponent(postData.text),
+            params: postData.params.map((param) => ({
+              name: decodeURIComponent(param.name),
+              value: escapeForMermaid(decodeURIComponent(param.value)), // escapeForMermaidを直接使用
+            })),
+          };
+        } catch (e) {
+          requestPostData = {
+            mimeType: mimeType,
+            text: postData.text,
+            params: postData.params,
+          };
+        }
+      } else if (mimeType === "text/plain") {
+        try {
+          requestPostData = {
+            mimeType: mimeType,
+            text: escapeForMermaid(decodeURIComponent(postData.text)), // escapeForMermaidを直接使用
+          };
+        } catch (e) {
+          requestPostData = {
+            mimeType: mimeType,
+            text: escapeForMermaid(postData.text), // escapeForMermaidを直接使用
+          };
+        }
+      } else if (mimeType === "application/json") {
+        try {
+          const decodedText = decodeURIComponent(postData.text);
+          const jsonData = JSON.parse(decodedText);
+          requestPostData = {
+            mimeType: mimeType,
+            text: decodedText,
+            params: Object.entries(jsonData).map(([name, value]) => ({
+              name: decodeURIComponent(name),
+              value: escapeForMermaid(String(value)), // escapeForMermaidを直接使用
+            })),
+          };
+        } catch (error) {
+          requestPostData = {
+            mimeType: mimeType,
+            text: postData.text,
+            error: true,
+          };
+        }
+      } else {
+        if (mimeType === "" || mimeType === null) {
+          requestPostData = null;
+        } else {
+          requestPostData = {
+            mimeType: mimeType,
+            text: "[Unsupported Data Type]",
+            isUnsupported: true,
+          };
+        }
+      }
+    } catch (e) {
+      console.error("Error in parsePostData:", e);
+      return {
+        mimeType: mimeType,
+        text: "[Parse Error]",
+        error: true,
+      };
+    }
+
+    return requestPostData;
+  }

@@ -4,11 +4,24 @@ import { truncateText, splitByLength } from "$lib/utils";
 //   return str.replace(/:/g, "&#58;").replace(/\n/g, "<br>");
 // }
 
+/**
+ * Truncates and escapes string for Mermaid diagrams
+ * @param {string} str - String to process
+ * @param {number} length - Maximum length
+ * @returns {string} Processed string
+ */
 export function truncateAndEscapeMarmaid(str, length) {
   if (!str) return "";
   return escapeForMermaid(truncateText(str, length));
 }
 
+/**
+ * Generates Mermaid diagram header and title
+ * @param {boolean} addTitle - Whether to add title
+ * @param {string} sequenceTitle - Title text
+ * @param {boolean} addAutoNumber - Whether to add auto-numbering
+ * @returns {string} Mermaid code
+ */
 export function generateMermaidHeaderAndTitle(
   addTitle,
   sequenceTitle,
@@ -24,6 +37,16 @@ export function generateMermaidHeaderAndTitle(
   return mermaidCode;
 }
 
+/**
+ * Generates Mermaid request arrow
+ * @param {Object} entry - HAR entry
+ * @param {boolean} addLifeline - Whether to add lifeline
+ * @param {boolean} reqShowMethod - Show HTTP method
+ * @param {boolean} reqShowPath - Show URL path
+ * @param {boolean} reqShowScheme - Show URL scheme
+ * @param {boolean} reqShowSecFetchMode - Show Sec-Fetch-Mode header
+ * @returns {string} Mermaid code
+ */
 export function generateMermaidRequest(
   entry,
   addLifeline,
@@ -60,10 +83,10 @@ export function generateMermaidRequest(
   
   // Add scheme if selected
   if (reqShowScheme) {
-    let scheme = 'unknown'; // デフォルト値
+    let scheme = 'unknown'; // Default value
     try {
       const urlObj = new URL(entry.url);
-      scheme = urlObj.protocol.replace(/:$/, ''); // "https:" -> "https"
+      scheme = urlObj.protocol.replace(/:$/, ''); // Remove trailing colon
     } catch (e) {
       console.warn(`Could not parse URL to extract scheme: ${entry.url}`, e);
       const schemeMatch = entry.url.match(/^([a-zA-Z0-9.+-]+):/);
@@ -93,6 +116,14 @@ export function generateMermaidRequest(
   return line;
 }
 
+/**
+ * Generates Mermaid query string note
+ * @param {Object} entry - HAR entry
+ * @param {boolean} addRequestQueryString - Whether to add query string
+ * @param {boolean} truncateQueryStrings - Whether to truncate
+ * @param {number} truncateQueryStringsLength - Max length
+ * @returns {string} Mermaid code
+ */
 export function generateMermaidQueryString(
   entry,
   addRequestQueryString,
@@ -207,6 +238,14 @@ export function generateMermaidQueryString(
   }
 }
 
+/**
+ * Generates Mermaid POST data note
+ * @param {Object} entry - HAR entry
+ * @param {boolean} addRequestPostData - Whether to add POST data
+ * @param {boolean} truncatePostData - Whether to truncate
+ * @param {number} truncatePostDataLength - Max length
+ * @returns {string} Mermaid code
+ */
 export function generateMermaidPostData(
   entry,
   addRequestPostData,
@@ -281,6 +320,11 @@ export function generateMermaidPostData(
   }
 }
 
+/**
+ * Escapes special characters for Mermaid syntax
+ * @param {string} str - String to escape
+ * @returns {string} Escaped string
+ */
 export function escapeForMermaid(str) {
   if (!str) return "";
 
@@ -309,6 +353,14 @@ export function escapeForMermaid(str) {
     //.replace(/&(?![#a-zA-Z0-9]+;)/g, '&amp;');
 }
 
+/**
+ * Generates Mermaid request cookies note
+ * @param {Object} entry - HAR entry
+ * @param {boolean} addRequestCookies - Whether to add cookies
+ * @param {boolean} truncateReqCookie - Whether to truncate
+ * @param {number} truncateReqCookieLength - Max length
+ * @returns {string} Mermaid code
+ */
 export function generateMermaidRequestCookies(
   entry,
   addRequestCookies,
@@ -341,6 +393,21 @@ export function generateMermaidRequestCookies(
   return "";
 }
 
+/**
+ * Generates Mermaid response arrow
+ * @param {Object} entry - HAR entry
+ * @param {boolean} addLifeline - Whether to add lifeline
+ * @param {boolean} resShowStatus - Show status code
+ * @param {boolean} resShowMimeType - Show MIME type
+ * @param {boolean} resShowPriority - Show priority
+ * @param {boolean} resShowTimeFormatted - Show formatted time
+ * @param {boolean} resShowTimeMs - Show time in ms
+ * @param {boolean} resShowSizeFormatted - Show formatted size
+ * @param {boolean} resShowSizeBytes - Show size in bytes
+ * @param {Function} formatTime - Time formatter function
+ * @param {Function} formatBytes - Bytes formatter function
+ * @returns {string} Mermaid code
+ */
 export function generateMermaidResponse(
   entry, 
   addLifeline,
@@ -411,6 +478,14 @@ export function generateMermaidResponse(
   return responseCode;
 }
 
+/**
+ * Generates Mermaid response cookies note
+ * @param {Object} entry - HAR entry
+ * @param {boolean} addResponseCookies - Whether to add cookies
+ * @param {boolean} truncateResCookie - Whether to truncate
+ * @param {number} truncateResCookieLength - Max length
+ * @returns {string} Mermaid code
+ */
 export function generateMermaidResponseCookies(
   entry,
   addResponseCookies,
@@ -443,14 +518,32 @@ export function generateMermaidResponseCookies(
   return "";
 }
 
+/**
+ * Escapes special characters for PlantUML syntax
+ * @param {string} str - String to escape
+ * @returns {string} Escaped string
+ */
 function escapeForPlantUML(str) {
   return str.replace(/:/g, "&#58;").replace(/\n/g, "\\n");
 }
 
+/**
+ * Truncates and escapes string for PlantUML
+ * @param {string} str - String to process
+ * @param {number} length - Maximum length
+ * @returns {string} Processed string
+ */
 function truncateAndEscapePlantUML(str, length) {
   return escapeForPlantUML(truncateText(str, length));
 }
 
+/**
+ * Generates PlantUML diagram header and title
+ * @param {boolean} addTitle - Whether to add title
+ * @param {string} sequenceTitle - Title text
+ * @param {boolean} addAutoNumber - Whether to add auto-numbering
+ * @returns {string} PlantUML code
+ */
 export function generatePlantUMLHeaderAndTitle(
   addTitle,
   sequenceTitle,
@@ -466,6 +559,16 @@ export function generatePlantUMLHeaderAndTitle(
   return plantUMLCode;
 }
 
+/**
+ * Generates PlantUML request arrow
+ * @param {Object} entry - HAR entry
+ * @param {boolean} addLifeline - Whether to add lifeline
+ * @param {boolean} reqShowMethod - Show HTTP method
+ * @param {boolean} reqShowPath - Show URL path
+ * @param {boolean} reqShowScheme - Show URL scheme
+ * @param {boolean} reqShowSecFetchMode - Show Sec-Fetch-Mode header
+ * @returns {string} PlantUML code
+ */
 export function generatePlantUMLRequest(
   entry,
   addLifeline,
@@ -489,11 +592,11 @@ export function generatePlantUMLRequest(
   
   // Add scheme if selected
   if (reqShowScheme) {
-    let scheme = 'unknown'; // デフォルト値
+    let scheme = 'unknown'; // Default value
     try {
       const urlObj = new URL(entry.url);
-      scheme = urlObj.protocol.replace(/:$/, ''); // "https:" -> "https"
-    } catch (e) {
+      scheme = urlObj.protocol.replace(/:$/, ''); // Remove trailing colon
+   } catch (e) {
       console.warn(`Could not parse URL to extract scheme: ${entry.url}`, e);
       const schemeMatch = entry.url.match(/^([a-zA-Z0-9.+-]+):/);
       if (schemeMatch && schemeMatch[1]) {
@@ -523,6 +626,14 @@ export function generatePlantUMLRequest(
   return line;
 }
 
+/**
+ * Generates PlantUML query string note
+ * @param {Object} entry - HAR entry
+ * @param {boolean} addRequestQueryString - Whether to add query string
+ * @param {boolean} truncateQueryStrings - Whether to truncate
+ * @param {number} truncateQueryStringsLength - Max length
+ * @returns {string} PlantUML code
+ */
 export function generatePlantUMLQueryString(
   entry,
   addRequestQueryString,
@@ -562,6 +673,14 @@ export function generatePlantUMLQueryString(
   return "";
 }
 
+/**
+ * Generates PlantUML POST data note
+ * @param {Object} entry - HAR entry
+ * @param {boolean} addRequestPostData - Whether to add POST data
+ * @param {boolean} truncatePostData - Whether to truncate
+ * @param {number} truncatePostDataLength - Max length
+ * @returns {string} PlantUML code
+ */
 export function generatePlantUMLPostData(
   entry,
   addRequestPostData,
@@ -606,6 +725,14 @@ export function generatePlantUMLPostData(
   return "";
 }
 
+/**
+ * Generates PlantUML request cookies note
+ * @param {Object} entry - HAR entry
+ * @param {boolean} addRequestCookies - Whether to add cookies
+ * @param {boolean} truncateReqCookie - Whether to truncate
+ * @param {number} truncateReqCookieLength - Max length
+ * @returns {string} PlantUML code
+ */
 export function generatePlantUMLRequestCookies(
   entry,
   addRequestCookies,
@@ -641,6 +768,21 @@ export function generatePlantUMLRequestCookies(
   return "";
 }
 
+/**
+ * Generates PlantUML response arrow
+ * @param {Object} entry - HAR entry
+ * @param {boolean} addLifeline - Whether to add lifeline
+ * @param {boolean} resShowStatus - Show status code
+ * @param {boolean} resShowMimeType - Show MIME type
+ * @param {boolean} resShowPriority - Show priority
+ * @param {boolean} resShowTimeFormatted - Show formatted time
+ * @param {boolean} resShowTimeMs - Show time in ms
+ * @param {boolean} resShowSizeFormatted - Show formatted size
+ * @param {boolean} resShowSizeBytes - Show size in bytes
+ * @param {Function} formatTime - Time formatter function
+ * @param {Function} formatBytes - Bytes formatter function
+ * @returns {string} PlantUML code
+ */
 export function generatePlantUMLResponse(
   entry, 
   addLifeline,
@@ -711,6 +853,14 @@ export function generatePlantUMLResponse(
   return responseCode;
 }
 
+/**
+ * Generates PlantUML response cookies note
+ * @param {Object} entry - HAR entry
+ * @param {boolean} addResponseCookies - Whether to add cookies
+ * @param {boolean} truncateResCookie - Whether to truncate
+ * @param {number} truncateResCookieLength - Max length
+ * @returns {string} PlantUML code
+ */
 export function generatePlantUMLResponseCookies(
   entry,
   addResponseCookies,

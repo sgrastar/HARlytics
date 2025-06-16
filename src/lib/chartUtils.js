@@ -1,5 +1,10 @@
 // /src/lib/chartUtils.js
 
+/**
+ * Aggregates entries by HTTP status code ranges
+ * @param {Array} filteredEntries - Array of filtered HAR entries
+ * @returns {Array<{name: string, value: number}>} Status code data for charts
+ */
 export function getStatusCodeData(filteredEntries) {
   if (!filteredEntries || filteredEntries.length === 0) {
     return [];
@@ -35,6 +40,11 @@ export function getStatusCodeData(filteredEntries) {
   }));
 }
 
+/**
+ * Aggregates entries by MIME type categories
+ * @param {Array} filteredEntries - Array of filtered HAR entries
+ * @returns {Array<{name: string, value: number}>} MIME type data for charts
+ */
 export function getMimeTypeData(filteredEntries) {
   if (!filteredEntries || filteredEntries.length === 0) {
     return [];

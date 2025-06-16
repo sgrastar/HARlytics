@@ -1,11 +1,11 @@
-name: Test and Release
+name: Test
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [ develop ]
   pull_request:
-    types: [closed]
-    branches: [ master, main ]
+    branches: [ develop ]
+    types: [ closed ]
 
 jobs:
   test:
@@ -14,6 +14,7 @@ jobs:
       pull-requests: write
 
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
 
     steps:
       - uses: actions/checkout@v4
@@ -45,145 +46,3 @@ jobs:
         uses: davelosert/vitest-coverage-report-action@v2.7.0
         with:
           file-coverage-mode: 'all'
-
-  build-and-release:
-    needs: test
-    permissions:
-      contents: write
-
-    runs-on: ubuntu-latest
-    if: |
-      (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip-release]')) || 
-      (github.event_name == 'pull_request' && github.event.pull_request.merged == true && !contains(github.event.pull_request.title, '[skip-release]'))
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: ${{ runner.os }}-pnpm-
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build extension
-        run: pnpm run build
-
-      - name: Create extension archive
-        run: |
-          node chromePackage.js
-          if [ ! -f extension.zip ]; then
-            echo "Failed to create extension.zip"
-            exit 1
-          fi
-
-      # Chrome Web Store deployment
-      - name: Submit to Chrome Web Store
-        if: |
-          (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip-release]') && !contains(github.event.head_commit.message, '[skip-release-chrome]')) || 
-          (github.event_name == 'pull_request' && github.event.pull_request.merged == true && !contains(github.event.pull_request.title, '[skip-release]') && !contains(github.event.pull_request.title, '[skip-release-chrome]'))
-        run: |
-          npx chrome-webstore-upload-cli@2 upload --source extension.zip --auto-publish
-        env:
-          EXTENSION_ID: ${{ secrets.EXTENSION_ID }}
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
-
-      # Microsoft Edge Add-ons deployment
-      - name: Submit to Microsoft Edge Add-ons
-        if: |
-          (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip-release]') && !contains(github.event.head_commit.message, '[skip-release-edge]')) || 
-          (github.event_name == 'pull_request' && github.event.pull_request.merged == true && !contains(github.event.pull_request.title, '[skip-release]') && !contains(github.event.pull_request.title, '[skip-release-edge]'))
-        run: |
-          echo "Uploading package to Edge Add-ons..."
-          UPLOAD_RESPONSE=$(curl -s -i -w "\n%{http_code}" -X POST \
-            -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
-            -H "X-ClientID: ${{ secrets.EDGE_CLIENT_ID }}" \
-            -H "Content-Type: application/zip" \
-            -T extension.zip \
-            https://api.addons.microsoftedge.microsoft.com/v1/products/${{ secrets.EDGE_PRODUCT_ID }}/submissions/draft/package)
-          
-          UPLOAD_HTTP_CODE=$(echo "$UPLOAD_RESPONSE" | tail -n1)
-          UPLOAD_BODY=$(echo "$UPLOAD_RESPONSE" | sed '$d')
-          
-          if [ "$UPLOAD_HTTP_CODE" != "202" ]; then
-            echo "Failed to upload package. HTTP Code: $UPLOAD_HTTP_CODE"
-            exit 1
-          fi
-          
-          OPERATION_ID=$(echo "$UPLOAD_RESPONSE" | grep -i "Location:" | awk '{print $2}' | tr -d '\r')
-          
-          if [ -z "$OPERATION_ID" ]; then
-            echo "Failed to get operation ID from response"
-            exit 1
-          fi
-          
-          echo "Package uploaded. Operation ID: $OPERATION_ID"
-          echo "Waiting for upload to complete..."
-          MAX_ATTEMPTS=30
-          ATTEMPT=1
-          
-          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-            echo "Checking upload status (attempt $ATTEMPT of $MAX_ATTEMPTS)..."
-            
-            STATUS_RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
-              -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
-              -H "X-ClientID: ${{ secrets.EDGE_CLIENT_ID }}" \
-              "https://api.addons.microsoftedge.microsoft.com/v1/products/${{ secrets.EDGE_PRODUCT_ID }}/submissions/draft/package/operations/$OPERATION_ID")
-            
-            STATUS_HTTP_CODE=$(echo "$STATUS_RESPONSE" | tail -n1)
-            STATUS_BODY=$(echo "$STATUS_RESPONSE" | sed '$d')
-            
-            if [ "$STATUS_HTTP_CODE" != "200" ] && [ "$STATUS_HTTP_CODE" != "202" ]; then
-              echo "Failed to get status. HTTP Code: $STATUS_HTTP_CODE"
-              exit 1
-            fi
-            
-            STATUS=$(echo "$STATUS_BODY" | jq -r '.status')
-            
-            if [ "$STATUS" = "Succeeded" ]; then
-              echo "Upload completed successfully"
-              break
-            elif [ "$STATUS" = "Failed" ]; then
-              echo "Upload failed"
-              exit 1
-            fi
-            
-            if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
-              echo "Timed out waiting for upload to complete"
-              exit 1
-            fi
-            
-            ATTEMPT=$((ATTEMPT + 1))
-            sleep 10
-          done
-          
-          echo "Publishing submission..."
-          PUBLISH_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            -H "Authorization: ApiKey ${{ secrets.EDGE_API_KEY }}" \
-            -H "X-ClientID: ${{ secrets.EDGE_CLIENT_ID }}" \
-            -H "Content-Type: application/json" \
-            -d '{"notes":"Automated deployment"}' \
-            https://api.addons.microsoftedge.microsoft.com/v1/products/${{ secrets.EDGE_PRODUCT_ID }}/submissions)
-            
-          PUBLISH_HTTP_CODE=$(echo "$PUBLISH_RESPONSE" | tail -n1)
-          if [ "$PUBLISH_HTTP_CODE" != "202" ]; then
-            echo "Failed to publish submission. HTTP Code: $PUBLISH_HTTP_CODE"
-            exit 1
-          fi
-          
-          echo "Submission published successfully"

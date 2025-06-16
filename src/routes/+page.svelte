@@ -18,6 +18,7 @@
     formatGMTtoUTC,
     formatToLocalTime,
     calculateFreshness,
+    parsePostData
   } from "$lib/utils";
 
   import { getStatusCodeData, getMimeTypeData } from "$lib/chartUtils";
@@ -101,7 +102,7 @@
 
   let showEmptyFileAlert = false;
   let showFileErrorAlert = false;
-  let validationErrors = []; // ★ バリデーションエラーの詳細を格納
+  let validationErrors = []; // Store validation error details
   let logFilename = "";
   let logVersion = "";
   let logCreator = "";
@@ -225,6 +226,10 @@
     //console.log(marmaidDivElem);
   });
 
+  /**
+   * Analyzes a HAR file loaded by the user
+   * @param {Event} event - The file input change event
+   */
   function analyzeHAR(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -244,9 +249,9 @@
     hasHeaderAuthData = false;
     showEmptyFileAlert = false;
     showFileErrorAlert = false;
-    validationErrors = []; // ★ エラーメッセージをリセット
+    validationErrors = []; // Reset error messages
 
-    // リセット
+    // Reset
     entryIdCounter = 0;
     pages = [];
     entries = [];
@@ -267,24 +272,25 @@
         const fileContent = e.target.result;
         const validationResult = validateHar(fileContent);
 
-        let harContent = validationResult.parsedHar; // バリデーターがパースしたオブジェクトを使用
+        let harContent = validationResult.parsedHar; // Use the object parsed by the validator
 
         if (!validationResult.isValid) {
           showFileErrorAlert = true;
           validationErrors = validationResult.errors;
-          // 致命的なエラーでharContentがnullなら、ここで処理を中断
+          // If harContent is null due to a fatal error, stop processing here
           if (!harContent) {
             console.error("HAR validation failed and no data could be parsed.", validationResult.errors);
             return;
           }
-          // エラーがあっても、部分的にパースされたデータで処理を試みる (以降の処理はharContentを使用)
+          // Even if there are errors, try to process with partially parsed data (subsequent processing uses harContent)
           console.warn("HAR validation issues found, but attempting to process partial data:", validationResult.errors);
         }
 
-        // バリデーション後、harContentの基本的な存在チェック
+        // Basic existence check of harContent after validation
         if (!harContent || !harContent.log || !harContent.log.entries) {
           showFileErrorAlert = true;
-          if (validationErrors.length === 0) { // validateHarで補足されなかった場合
+          if (validationErrors.length === 0) { // If not caught by validateHar
+
             validationErrors.push({ path: "log", message: "The 'log' object or 'entries' array is missing or invalid in the HAR file." });
           }
           return;
@@ -292,16 +298,16 @@
 
         if (harContent.log.entries.length === 0) {
           showEmptyFileAlert = true;
-          // 空でもメタ情報は表示できる可能性があるので、returnの前に設定
+          // Even if empty, meta information might be displayable, so set before return
           if (harContent.log.version) logVersion = harContent.log.version;
           if (harContent.log.creator) logCreator = `${harContent.log.creator.name}${harContent.log.creator.version ? ' (' + harContent.log.creator.version + ')' : ''}`;
           if (harContent.log.comment) logComment = harContent.log.comment;
           return;
         }
 
-        // 以降の処理はharContentを使用
+        // Subsequent processing uses harContent
         pages = harContent.log.pages || [];
-        entries = harContent.log.entries; // ここで entries が設定される
+        entries = harContent.log.entries; // entries are set here
         logVersion = harContent.log.version;
         if (harContent.log.creator && harContent.log.creator.name) {
             logCreator = harContent.log.creator.name;
@@ -309,23 +315,24 @@
                 logCreator += ` (${harContent.log.creator.version})`;
             }
         } else {
-            logCreator = "Unknown"; // creator情報がない場合
+            logCreator = "Unknown"; // When creator info is missing
         }
         logComment = harContent.log.comment || "";
 
         hasPagesInfo = pages.length > 0;
 
-        // _initiator のチェックは entries が設定された後に行う
+        // Check _initiator after entries are set
         if (entries.length > 0 && entries[0] && entries[0]._initiator) {
             hasInitiatorInfo = true;
         } else {
             hasInitiatorInfo = false;
         }
         
-        // entries の map処理 (既存のロジック)
-        // この時点で entries は harContent.log.entries で初期化されている
-        entries = entries.map((entry) => {
+        // Map processing of entries (existing logic)
+        // At this point, entries is initialized with harContent.log.entries
+        entries = entries.map((entry, index) => {
           const uniqueId = `${entryIdCounter++}`;
+          const sequenceNumber = index + 1;
           const pageref =
             hasPagesInfo && entry.pageref ? entry.pageref : "NoPageRef";
           const priority = entry._priority ? entry._priority : "";
@@ -503,48 +510,24 @@
           const cdnInfo = analyzeCDN(entry);
           const cdnDataSource = cdnInfo.isFromCDN ? "CDN" : cdnInfo.isFromOrigin ? "Origin" : 'Disc Cache';
           const cdnEdgeLocation = cdnInfo.details.edgeLocation || '';
-          //console.log(`CDN Provider: ${cdnInfo.provider}`);
-          //console.log(`Cache Status: ${cdnInfo.cacheStatus}`);
-          //console.log(`From Origin: ${cdnInfo.isFromOrigin ? 'Yes' : 'No'}`);
-          //console.log(`Edge Location: ${cdnInfo.details.edgeLocation || 'N/A'}`);
-          //           {
-          //     "provider": "CloudFront",
-          //     "cacheStatus": "RefreshHit from cloudfront",
-          //     "isFromCDN": true,
-          //     "isFromDiskCache": false,
-          //     "isFromOrigin": false,
-          //     "details": {
-          //         "edgeLocation": "NRT57-P4",
-          //         "requestId": "uabJUnRP6qUyZeob6EqoZzyjXaLCEpds150D3nOVeebtAnjx_fGOEg==",
-          //         "cacheStatus": "RefreshHit from cloudfront",
-          //         "allCdnHeaders": {
-          //             "via": "1.1 bcfb7019cb107c82ee911cac73b0dfbc.cloudfront.net (CloudFront)",
-          //             "x-amz-cf-id": "uabJUnRP6qUyZeob6EqoZzyjXaLCEpds150D3nOVeebtAnjx_fGOEg==",
-          //             "x-amz-cf-pop": "NRT57-P4",
-          //             "x-cache": "RefreshHit from cloudfront"
-          //         }
-          //     }
-          // }
-          //console.log(`CDN: ${cdnInfo.provider}` +  `/ Cache Status: ${cdnInfo.cacheStatus}` + ` / isFromCDN: ${cdnInfo.isFromCDN}`+` /  isFromDiskCache: ${cdnInfo.isFromDiskCache}`);
-          //console.log(cdnInfo);
 
           const parseCacheControlHeaders = (entry) => {
-            // キャッシュコントロールヘッダーを取得
+            // Get cache control headers
             const cacheControl = entry.response.headers.find(
               (header) => header.name.toLowerCase() === "cache-control"
             )?.value || "";
             
-            // Expiresヘッダーを取得
+            // Get Expires header
             const expires = entry.response.headers.find(
               (header) => header.name.toLowerCase() === "expires"
             )?.value || "";
             
-            // Cache-Controlをディレクティブに分割
+            // Split Cache-Control into directives
             const directives = cacheControl.split(',')
               .map(directive => directive.trim().toLowerCase())
               .filter(directive => directive !== "");
             
-            // Storage (キャッシュ可否)
+            // Storage (cacheability)
             //let storage = "Default";
             let storage = "";
             if (directives.includes("public")) {
@@ -555,25 +538,25 @@
               storage = "No-Store";
             }
             
-            // TTL (有効期間)
+            // TTL (time to live)
             // let ttl = "Not specified";
             let ttl = "";
             
-            // max-ageの抽出
+            // Extract max-age
             const maxAgeMatch = cacheControl.match(/max-age=(\d+)/i);
             if (maxAgeMatch && maxAgeMatch[1]) {
               const maxAge = parseInt(maxAgeMatch[1], 10);
               ttl = formatTTL(maxAge);
             }
             
-            // s-maxageの抽出
+            // Extract s-maxage
             const sMaxAgeMatch = cacheControl.match(/s-maxage=(\d+)/i);
             if (sMaxAgeMatch && sMaxAgeMatch[1]) {
               const sMaxAge = parseInt(sMaxAgeMatch[1], 10);
               ttl = `${ttl}, s-maxage: ${formatTTL(sMaxAge)}`;
             }
             
-            // max-ageがなくExpiresがある場合
+            // When there's no max-age but Expires exists
             if (!maxAgeMatch && !sMaxAgeMatch && expires) {
               const expiresDate = new Date(expires);
               const now = new Date();
@@ -588,7 +571,7 @@
               }
             }
             
-            // Policy (その他のディレクティブ)
+            // Policy (other directives)
             const policyDirectives = directives.filter(dir => {
               return !dir.includes("public") && 
                     !dir.includes("private") && 
@@ -606,7 +589,7 @@
             };
           };
 
-          // TTLを読みやすい形式にフォーマットする補助関数
+          // Helper function to format TTL in readable format
           const formatTTL = (seconds) => {
             if (seconds === 0) return "0s (No caching)";
             
@@ -622,7 +605,7 @@
               return `${hours}h`;
             }
             
-            // 1日以上
+            // More than 1 day
             const days = Math.floor(seconds / 86400);
             return `${days}d`;
           };
@@ -636,6 +619,7 @@
           const  dataFreshness = calculateFreshness(entry);
 
           return {
+            sequenceNumber: sequenceNumber,
             uniqueEntryId: uniqueId, 
             pages: pages,
             pageref: pageref,
@@ -668,10 +652,7 @@
               const total = validHeaderSize + validBodySize;
               return total > 0 ? total : "undefined";
             })(),
-            // responseContentLength:
-            //   entry.response.headers.find(
-            //     (header) => header.name.toLowerCase() === "content-length",
-            //   )?.value || "undefined",
+
             responseContentLength: responseContentLength,
             timestamp: formatTimestamp(new Date(entry.startedDateTime)),
             age: ageInSeconds,
@@ -751,7 +732,7 @@
           if (entry.setCookieCount > 0) {
             acc["Set-Cookie"] = (acc["Set-Cookie"] || 0) + 1;
           }
-          if (!hasAnyMessageElement(entry)) {  // Plain用のカウント追加
+          if (!hasAnyMessageElement(entry)) {  // Add count for Plain
             acc["Plain"] = (acc["Plain"] || 0) + 1;
           }
           return acc;
@@ -787,6 +768,11 @@
     reader.readAsText(file);
   }
 
+  /**
+   * Checks if an entry has any message elements (auth, query params, post data, or cookies)
+   * @param {Object} entry - The HAR entry object
+   * @returns {boolean} True if the entry has any message elements
+   */
   function hasAnyMessageElement(entry) {
     return entry.hasHeaderAuthData || 
           (entry.requestQueryString && entry.requestQueryString.length > 0) ||
@@ -794,159 +780,14 @@
           entry.setCookieCount > 0;
   }
 
-  function parsePostData(postData) {
-    if (!postData) {
-      return null;
-    }
-
-    const mimeType = postData.mimeType
-      ? postData.mimeType.split(";")[0].trim()
-      : "";
-
-    // バイナリデータを検出する関数
-    const detectBinaryFormat = (data) => {
-      const signatures = {
-        // GZIP
-        gzip: data.startsWith("\x1F\x8B"),
-        // ZIP
-        zip: data.startsWith("PK\x03\x04"),
-        // PDF
-        pdf: data.startsWith("%PDF"),
-        // PNG
-        png: data.startsWith("\x89PNG"),
-        // JPEG
-        jpeg: data.startsWith("\xFF\xD8\xFF"),
-        // GIF
-        gif: data.startsWith("GIF87a") || data.startsWith("GIF89a"),
-        // Brotli
-        brotli: data.startsWith("\xCE\xB2\xCF\x81"),
-        // Zstandard
-        zstd: data.startsWith("\x28\xB5\x2F\xFD"),
-        // LZMA
-        lzma: data.startsWith("\x5D\x00\x00"),
-        // Protobuf
-        protobuf: /[\x00-\x1F]/.test(data) && !/[\x20-\x7E]/.test(data),
-      };
-
-      for (const [format, detect] of Object.entries(signatures)) {
-        if (detect) return format;
-      }
-      return null;
-    };
-
-    // バイナリMIMEタイプのリスト
-    const binaryMimeTypes = [
-      "application/octet-stream",
-      "application/x-protobuf",
-      "application/x-msgpack",
-      // "application/x-www-form-urlencoded",
-      "application/zip",
-      "application/x-gzip",
-      "application/pdf",
-      "image/",
-      "audio/",
-      "video/",
-      "application/x-binary",
-    ];
-
-    let requestPostData = null;
-    try {
-      // バイナリデータの検出
-      const isBinaryMimeType = binaryMimeTypes.some((type) =>
-        mimeType.startsWith(type),
-      );
-      const binaryFormat = postData.text
-        ? detectBinaryFormat(postData.text)
-        : null;
-
-      if (binaryFormat || isBinaryMimeType) {
-        return {
-          mimeType: mimeType,
-          text: binaryFormat
-            ? `[${binaryFormat.toUpperCase()} Data]`
-            : "[Binary Data]",
-          format: binaryFormat || "unknown",
-          isBinary: true,
-        };
-      }
-
-      if (mimeType === "application/x-www-form-urlencoded") {
-        try {
-          requestPostData = {
-            mimeType: mimeType,
-            text: decodeURIComponent(postData.text),
-            params: postData.params.map((param) => ({
-              name: decodeURIComponent(param.name),
-              value: escapeForSequence(decodeURIComponent(param.value)),
-            })),
-          };
-        } catch (e) {
-          requestPostData = {
-            mimeType: mimeType,
-            text: postData.text,
-            params: postData.params,
-          };
-        }
-      } else if (mimeType === "text/plain") {
-        try {
-          requestPostData = {
-            mimeType: mimeType,
-            text: escapeForSequence(decodeURIComponent(postData.text)),
-          };
-        } catch (e) {
-          requestPostData = {
-            mimeType: mimeType,
-            text: escapeForSequence(postData.text),
-          };
-        }
-      } else if (mimeType === "application/json") {
-        try {
-          const decodedText = decodeURIComponent(postData.text);
-          const jsonData = JSON.parse(decodedText);
-          requestPostData = {
-            mimeType: mimeType,
-            text: decodedText,
-            params: Object.entries(jsonData).map(([name, value]) => ({
-              name: decodeURIComponent(name),
-              value: escapeForSequence(String(value)),
-            })),
-          };
-        } catch (error) {
-          requestPostData = {
-            mimeType: mimeType,
-            text: postData.text,
-            error: true,
-          };
-        }
-      } else {
-        if (mimeType === "" || mimeType === null) {
-          requestPostData = null;
-        } else {
-          requestPostData = {
-            mimeType: mimeType,
-            text: "[Unsupported Data Type]",
-            isUnsupported: true,
-          };
-        }
-      }
-    } catch (e) {
-      console.error("Error in parsePostData:", e);
-      return {
-        mimeType: mimeType,
-        text: "[Parse Error]",
-        error: true,
-      };
-    }
-
-    return requestPostData;
-  }
+  
 
   $: isMethodFiltered = !allMethodsSelected;
   $: isStatusFiltered = !allStatusSelected;
   $: isTypeFiltered = !allSelected;
   $: isMessageElementFiltered = !allMessageElementsSelected;
 
-  // ボタンのスタイルを動的に設定
+  // Dynamically set button styles
   $: methodFilterStyle = isMethodFiltered ? "primary" : "light";
   $: statusFilterStyle = isStatusFiltered ? "primary" : "light";
   $: typeFilterStyle = isTypeFiltered ? "primary" : "light";
@@ -1176,25 +1017,35 @@
     );
   }
 
-  // ドロップダウンの表示状態を管理
+  /**
+   * Manage dropdown display state
+   */
   let methodDropdownOpen = false;
   let statusDropdownOpen = false;
   let typeDropdownOpen = false;
   let messageElementDropdownOpen = false;
   
 
-  // ホバー状態とクリック状態を管理するタイマー
+  /**
+   * Timer to manage hover and click states
+   */
   let methodTimer;
   let statusTimer;
   let typeTimer;
   let messageElementTimer;
 
-  // マウスが離れてからドロップダウンを閉じるまでの遅延時間（ミリ秒）
+  /**
+   * Delay time in milliseconds from when the mouse leaves until the dropdown closes
+   */
   const CLOSE_DELAY = 200;
   let activeDropdown = null;
 
+  /**
+   * Handles mouse enter event for dropdown menus
+   * @param {string} type - The type of dropdown ('method', 'status', 'type', or 'messageElement')
+   */
   function handleMouseEnter(type) {
-  // 前のドロップダウンを閉じる
+  // Close the previous dropdown
   if (activeDropdown && activeDropdown !== type) {
     handleMouseLeave(activeDropdown);
   }
@@ -1234,6 +1085,10 @@
   }
 }
 
+/**
+ * Handles mouse leave event for dropdown menus with a delay
+ * @param {string} type - The type of dropdown ('method', 'status', 'type', or 'messageElement')
+ */
 function handleMouseLeave(type) {
   const timer = setTimeout(() => {
     if (activeDropdown === type) {
@@ -1292,14 +1147,6 @@ function handleMouseLeave(type) {
     }
   }
 
-  // function handleTypeClick(type) {
-  //   if (selectedTypes.includes(type)) {
-  //     selectedTypes = selectedTypes.filter(t => t !== type);
-  //   } else {
-  //     selectedTypes = [...selectedTypes, type];
-  //   }
-  //   allSelected = selectedTypes.length === communicationTypes.length;
-  // }
   function handleTypeClick(type) {
     if (selectedTypes.includes(type)) {
       selectedTypes = selectedTypes.filter((t) => t !== type);
@@ -1309,14 +1156,6 @@ function handleMouseLeave(type) {
     allSelected = selectedTypes.length === communicationTypes.length;
   }
 
-  // function handleAllChange(event) {
-  //     allSelected = event.target.checked;
-  //   if (allSelected) {
-  //     selectedTypes = [...communicationTypes];
-  //   } else {
-  //     selectedTypes = [];
-  //   }
-  // }
   function handleAllChange(event) {
     allSelected = event.target.checked;
     if (allSelected) {
@@ -1370,7 +1209,9 @@ function handleMouseLeave(type) {
     selectedMethods = allMethodsSelected ? [...httpMethods] : [];
   }
 
-  // エントリーの解析部分で methodCounts を計算
+  /**
+   * Calculate methodCounts in the entry analysis part
+   */
   $: methodCounts = entries.reduce((acc, entry) => {
     acc[entry.method] = (acc[entry.method] || 0) + 1;
     return acc;
@@ -1416,6 +1257,10 @@ function handleMouseLeave(type) {
     }
   };
 
+  /**
+   * Generates Mermaid sequence diagram code from filtered entries
+   * @returns {string} The generated Mermaid code
+   */
   function generateMermaidSequence() {
   if (!filteredEntries || filteredEntries.length === 0) {
     return "";
@@ -1596,7 +1441,7 @@ function handleMouseLeave(type) {
           </Alert>
         {/if}
 
-        <!-- TODO オンラインバージョンでサンプルharファイルの用意&読み込み機能         -->
+        <!-- TODO: Prepare and load sample har file function for online version         -->
         <div class="mb-2 text-gray-900 dark:text-gray-300">
           {#if logCreator}
           <span>{logCreator}</span><br>
@@ -2442,10 +2287,10 @@ function handleMouseLeave(type) {
   }
 
   .relative.inline-block {
-    margin-right: 0.5rem; /* フィルター間の間隔 */
+    margin-right: 0.5rem; /* Space between filters */
   }
 
-  /* ドロップダウンの位置調整が必要な場合 */
+  /* When dropdown position adjustment is needed */
   .absolute {
     top: 100%;
     left: 0;
@@ -2565,48 +2410,6 @@ function handleMouseLeave(type) {
   tbody th.status {
     text-align: center;
   }
-  /* tbody th.status.info,
-  tbody th.status.success {
-    background: #99ffa2;
-  }
-  :global(tbody td.status.info) {
-    background: #99ffa2;
-  }
-  :global(tbody td.status.success) {
-    background: #99ffa2;
-  }
-
-  tbody th.status.redirect {
-    background: #eaff99;
-  }
-  :global(tbody td.status.redirect) {
-    background: #eaff99;
-  }
-  tbody th.status.cliError {
-    background: rgb(255, 153, 161);
-  }
-  :global(td.status.cliError) {
-    background: rgb(255, 153, 161);
-  }
-  tbody th.status.srvError {
-    background: #ff4554;
-    color: #fff;
-  }
-  :global(tbody th.status.srvError) {
-    background: #ff4554;
-    color: #fff;
-  } */
-  /* tbody td.setCookies,
-  tbody td.time,
-  tbody td.size,
-  tbody td.dns,
-  tbody td.connect,
-  tbody td.ssl,
-  tbody td.send,
-  tbody td.wait,
-  tbody td.receive {
-      text-align: right;
-  } */
 
   .truncate-icon {
     cursor: pointer;

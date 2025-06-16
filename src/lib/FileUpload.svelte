@@ -5,7 +5,7 @@
 
   function handleFileChange(event) {
     const file = event.target.files[0];
-    // ファイルが選択されている場合のみイベントを発火
+    // Fire event only when a file is selected
     if (file) {
       dispatch("upload", file);
     }

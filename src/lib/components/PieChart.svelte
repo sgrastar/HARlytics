@@ -38,10 +38,10 @@ function createChart() {
 
   const color = d3.scaleOrdinal(colorScheme);
 
-  // 新しいデータを適用
+  // Apply new data
   arcs = pie(data);
 
-  // パイチャートのパスを選択して更新（トランジション追加）
+  // Select and update pie chart paths (with transition)
   d3.select(chartElement)
     .selectAll("path")
     .data(arcs)
@@ -63,7 +63,7 @@ function createChart() {
         })
     );
 
-  // ラベルを選択して更新（トランジション追加）
+  // Select and update labels (with transition)
   const labels = d3
     .select(chartElement)
     .selectAll("text")
@@ -92,7 +92,7 @@ function createChart() {
         })
     );
 
-  // ポリラインを選択して更新（トランジション追加）
+  // Select and update polylines (with transition)
   d3.select(chartElement)
     .selectAll("polyline")
     .data(arcs.filter((d) => d.value > 0))
@@ -107,31 +107,31 @@ function createChart() {
         .duration(750)
     );
 
-  // ラベル位置調整のための衝突回避処理 + 表示領域制限
+  // Collision avoidance for label positioning + display area limits
   const labelPositions = [];
   labels.each(function(d) {
     let pos = labelArc.centroid(d);
     let midangle = d.startAngle + (d.endAngle - d.startAngle) / 2;
     pos[0] = outerRadius * 0.99 * (midangle < Math.PI ? 1 : -1);
 
-    // 衝突検知と位置調整
+    // Collision detection and position adjustment
     for (let i = 0; i < labelPositions.length; i++) {
       const other = labelPositions[i];
       if (Math.abs(pos[1] - other[1]) < 14) {
-        // 距離が近い場合
-        pos[1] = other[1] + 14 * (pos[1] > other[1] ? 1 : -1); // 上下にずらす
+        // If too close
+        pos[1] = other[1] + 14 * (pos[1] > other[1] ? 1 : -1); // Shift vertically
       }
     }
     labelPositions.push(pos);
 
-    // 表示領域制限 (x座標が範囲外に出ないように調整)
+    // Display area limits (adjust x coordinate to stay within bounds)
     if (pos[0] > width / 2 - 20) {
-      pos[0] = width / 2 - 20; // 右端に収まるように調整
+      pos[0] = width / 2 - 20; // Adjust to fit right edge
     } else if (pos[0] < -(width / 2 - 20)) {
-      pos[0] = -(width / 2 - 20); // 左端に収まるように調整
+      pos[0] = -(width / 2 - 20); // Adjust to fit left edge
     }
 
-    // トランジションで位置を更新
+    // Update position with transition
     d3.select(this)
       .transition()
       .duration(750)
@@ -139,7 +139,7 @@ function createChart() {
       .attr("opacity", 1);
   });
   
-  // ポリラインの位置を更新（トランジション追加）
+  // Update polyline positions (with transition)
   d3.select(chartElement)
     .selectAll("polyline")
     .each(function(d, i) {
@@ -155,7 +155,7 @@ function createChart() {
         .attr("opacity", 1);
     });
 
-  // 初期化時に各要素に現在の状態を保存
+  // Save current state to each element on initialization
   d3.select(chartElement).selectAll("path").each(function(d) {
     this._current = d;
   });
