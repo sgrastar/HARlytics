@@ -1,14 +1,19 @@
 name: Create Release
 
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., v1.0.0)'
+        required: true
+        type: string
+      release_notes:
+        description: 'Release notes'
+        required: false
+        type: string
 
 jobs:
   build:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -16,18 +21,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get version from PR title or commit
-        id: get_version
+      - name: Validate version format
         run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          if [[ $PR_TITLE =~ v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
-            VERSION=$(echo $PR_TITLE | grep -o 'v[0-9]\+\.[0-9]\+\.[0-9]\+')
-          else
-            # デフォルトバージョン取得ロジック（パッケージJSONなどから）
-            VERSION=$(grep -o '"version": "[^"]*"' package.json | cut -d'"' -f4)
-            VERSION="v$VERSION"
+          VERSION="${{ github.event.inputs.version }}"
+          if [[ ! $VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Version must be in format vX.Y.Z (e.g., v1.0.0)"
+            exit 1
           fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Create Release
         id: create_release
@@ -35,9 +35,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.get_version.outputs.version }}
-          release_name: ${{ steps.get_version.outputs.version }}
+          tag_name: ${{ github.event.inputs.version }}
+          release_name: ${{ github.event.inputs.version }}
           body: |
-            ${{ github.event.pull_request.body }}
+            ${{ github.event.inputs.release_notes }}
           draft: false
           prerelease: false
