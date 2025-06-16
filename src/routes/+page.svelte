@@ -290,6 +290,7 @@
         if (!harContent || !harContent.log || !harContent.log.entries) {
           showFileErrorAlert = true;
           if (validationErrors.length === 0) { // If not caught by validateHar
+
             validationErrors.push({ path: "log", message: "The 'log' object or 'entries' array is missing or invalid in the HAR file." });
           }
           return;

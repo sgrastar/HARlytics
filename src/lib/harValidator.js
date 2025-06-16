@@ -1,6 +1,7 @@
 /**
  * Validates HAR file content
  * @param {string | object} harContent - HAR file content (JSON string or parsed object)
+
  * @returns {{isValid: boolean, errors: Array<{path: string, message: string}>, parsedHar: object | null}}
  */
 export function validateHar(harContent) {

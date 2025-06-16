@@ -596,7 +596,7 @@ export function generatePlantUMLRequest(
     try {
       const urlObj = new URL(entry.url);
       scheme = urlObj.protocol.replace(/:$/, ''); // Remove trailing colon
-    } catch (e) {
+   } catch (e) {
       console.warn(`Could not parse URL to extract scheme: ${entry.url}`, e);
       const schemeMatch = entry.url.match(/^([a-zA-Z0-9.+-]+):/);
       if (schemeMatch && schemeMatch[1]) {
