@@ -148,8 +148,9 @@ export function priorityCSSClass(priority){
     return "veryhigh text-red-800 dark:text-red-300 bg-red-100 dark:bg-red-900 font-bold";
     // } else if (priority === "VeryHigh") {
     // return "srvError text-white dark:text-white bg-red-600 dark:bg-red-700";
+
   } else {
-    return "other";
+    return "other text-gray-800 dark:text-gray-300 bg-gray-200 dark:bg-gray-700";
   }
 }
 
