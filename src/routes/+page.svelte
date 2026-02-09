@@ -123,6 +123,14 @@
   let notUrlFilter = "";
   let allSelected = true;
   let filterTimer = null;
+
+  // Real-time capture variables
+  let realtimeMode = false;
+  let isCapturing = false;
+  let realtimeEntries = [];
+  let displayContext = 'standalone'; // 'devtools-panel', 'devtools-tab', or 'standalone'
+  let mermaidUpdateTimer = null;
+  let activeTabIndex = 0; // Track active tab: 0=overview, 1=cache, 2=sequence, 3=cookie, 4=chart
   let statusCounts = {};
   let typeCounts = {};
   let messageTypeCounts = {};
@@ -201,16 +209,67 @@
     // initialize
     if (typeof window !== 'undefined' && typeof document !== 'undefined') {
       const initTheme = () => {
-        if (localStorage.getItem('color-theme') === 'dark' || 
-            (!('color-theme' in localStorage) && 
+        if (localStorage.getItem('color-theme') === 'dark' ||
+            (!('color-theme' in localStorage) &&
              window.matchMedia('(prefers-color-scheme: dark)').matches)) {
           document.documentElement.classList.add('dark');
         } else {
           document.documentElement.classList.remove('dark');
         }
       };
-      
+
       initTheme();
+
+      // Check if running in real-time mode (opened from DevTools panel)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('mode') === 'realtime') {
+        displayContext = 'devtools-tab';
+        realtimeMode = true;
+        console.log('Real-time mode activated via URL parameter');
+
+        // Notify DevTools that this tab is ready
+        if (globalThis.chrome?.runtime?.sendMessage) {
+          globalThis.chrome.runtime.sendMessage({
+            type: 'TAB_READY'
+          }).catch(err => console.warn('TAB_READY send failed:', err));
+        }
+      }
+
+      // Listen for messages from DevTools (via chrome.runtime.sendMessage broadcast)
+      if (globalThis.chrome?.runtime?.onMessage) {
+        globalThis.chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+          // Handle forwarded messages from DevTools
+          if (message.type === 'DEVTOOLS_FORWARD') {
+            const payload = message.payload;
+            console.log('Tab received forwarded message:', payload.type);
+
+            if (payload.type === 'DEVTOOLS_READY') {
+              displayContext = payload.context || 'devtools-tab';
+              realtimeMode = true;
+              if (payload.isCapturing) {
+                isCapturing = true;
+              }
+              console.log('DevTools ready, context:', displayContext);
+            }
+            else if (payload.type === 'REALTIME_ENTRIES') {
+              handleRealtimeEntries(payload.entries);
+            }
+            else if (payload.type === 'CAPTURE_STARTED') {
+              isCapturing = true;
+              console.log('Capture started');
+            }
+            else if (payload.type === 'CAPTURE_STOPPED') {
+              isCapturing = false;
+              console.log('Capture stopped');
+            }
+            else if (payload.type === 'CLEAR_ENTRIES') {
+              clearRealtimeEntries();
+            }
+          }
+          sendResponse({ success: true });
+          return true;
+        });
+      }
     }
 
     //console.log("the component has mounted");
@@ -766,6 +825,387 @@
     };
 
     reader.readAsText(file);
+  }
+
+  /**
+   * Handle real-time entries from DevTools
+   * @param {Array} newEntries - Array of HAR entries from DevTools
+   */
+  function handleRealtimeEntries(newEntries) {
+    if (!realtimeMode || !isCapturing) return;
+
+    console.log(`Received ${newEntries.length} real-time entries`);
+
+    newEntries.forEach(entry => {
+      const processedEntry = processEntry(entry, entryIdCounter++);
+      realtimeEntries.push(processedEntry);
+    });
+
+    // Update entries reference
+    entries = [...realtimeEntries];
+
+    // Update statistics
+    updateStatistics();
+
+    // Trigger Mermaid update if on sequence tab (index 2)
+    if (activeTabIndex === 2) {
+      debounceMermaidUpdate();
+    }
+  }
+
+  /**
+   * Process a single HAR entry (extracted from analyzeHAR for reuse)
+   * @param {Object} entry - Raw HAR entry
+   * @param {number} id - Unique ID for the entry
+   * @returns {Object} Processed entry
+   */
+  function processEntry(entry, id) {
+    const uniqueId = `${id}`;
+    let domain = '';
+    let path = '';
+    try {
+      const url = new URL(entry.request.url);
+      domain = url.hostname || url.protocol.replace(/:$/, '');
+      path = url.pathname || '/';
+    } catch (e) {
+      // Handle data: URLs, blob: URLs, or malformed URLs
+      const rawUrl = entry.request.url || '';
+      const protoMatch = rawUrl.match(/^([a-zA-Z0-9.+-]+):/);
+      domain = protoMatch ? protoMatch[1] : 'unknown';
+      path = rawUrl.length > 80 ? rawUrl.substring(0, 80) + '...' : rawUrl;
+    }
+    if (!domain) domain = 'unknown';
+
+    // Extract various properties
+    const priority = entry._priority || "";
+    const resourceType = entry._resourceType || "";
+    const pageref = "NoPageRef"; // Real-time mode doesn't have page info
+
+    // Check for post data
+    if (entry.request.postData) {
+      hasPostData = true;
+    }
+
+    // Check for cookies
+    if (entry.response.headers.filter(h => h.name.toLowerCase() === "set-cookie").length) {
+      hasCookieData = true;
+    }
+
+    // Check for auth headers
+    function hasHeader(headers, name) {
+      return headers.some(h => h.name.toLowerCase() === name.toLowerCase());
+    }
+
+    const hasAuthHeader = hasHeader(entry.request.headers, "Authorization");
+    const hasApiKey = hasHeader(entry.request.headers, "x-api-key") || hasHeader(entry.request.headers, "api-key");
+    const hasBearerToken = hasAuthHeader && entry.request.headers.find(h => h.name.toLowerCase() === "authorization")?.value.toLowerCase().startsWith("bearer");
+
+    if (hasAuthHeader || hasApiKey || hasBearerToken) {
+      hasHeaderAuthData = true;
+    }
+
+    // Get communication type (entry object is needed by getCommunicationType)
+    const mimeType = (entry.response.content && entry.response.content.mimeType) || '';
+    const communicationType = getCommunicationType(entry);
+
+    // Update counts
+    const status = entry.response.status;
+    statusCounts[status] = (statusCounts[status] || 0) + 1;
+    typeCounts[communicationType] = (typeCounts[communicationType] || 0) + 1;
+    domainCounts[domain] = (domainCounts[domain] || 0) + 1;
+
+    if (!uniqueDomains.includes(domain)) {
+      uniqueDomains.push(domain);
+    }
+
+    // CDN analysis
+    const cdnInfo = analyzeCDN(domain, entry.response.headers);
+
+    // Calculate freshness
+    const freshness = calculateFreshness(entry);
+
+    // Cache-related processing
+    const cacheControlHeaderValue = (entry.response.headers.find(h => h.name.toLowerCase() === 'cache-control') || {}).value || '';
+    const parsedCacheControl = parseCacheControl(cacheControlHeaderValue);
+    const ageHeader = entry.response.headers.find(h => h.name.toLowerCase() === 'age');
+    const ageInSeconds = ageHeader ? parseInt(ageHeader.value, 10) : null;
+
+    // Set-Cookie count
+    const setCookieCount = entry.response.headers.filter(h => h.name.toLowerCase() === "set-cookie").length;
+
+    // Parse post data
+    const parsedPostData = entry.request.postData ? parsePostData(entry.request.postData) : null;
+
+    // Response content length
+    const responseContentLength = (entry.response.content && entry.response.content.size) || 0;
+
+    // Response MIME type (cleaned)
+    const responseMimeType = mimeType ? mimeType.split(';')[0] : '';
+
+    // Timestamp
+    const timestamp = formatTimestamp(new Date(entry.startedDateTime));
+
+    // Cache info headers
+    const lastModifiedHeader = entry.response.headers.find(h => h.name.toLowerCase() === 'last-modified');
+    const etagHeader = entry.response.headers.find(h => h.name.toLowerCase() === 'etag');
+    const contentEncodingHeader = entry.response.headers.find(h => h.name.toLowerCase() === 'content-encoding');
+    const varyHeader = entry.response.headers.find(h => h.name.toLowerCase() === 'vary');
+
+    return {
+      _id: uniqueId,
+      sequenceNumber: id + 1,
+      pageref: pageref,
+      priority: priority,
+      resourceType: resourceType,
+      startedDateTime: entry.startedDateTime,
+      time: entry.time,
+      method: entry.request.method,
+      url: entry.request.url,
+      domain: domain,
+      topDomain: getTopDomain(domain),
+      path: path,
+      httpVersion: entry.request.httpVersion,
+      status: status,
+      statusText: entry.response.statusText,
+      responseHttpVersion: entry.response.httpVersion,
+      type: communicationType,
+      communicationType: communicationType,
+      mimeType: mimeType,
+      responseMimeType: responseMimeType,
+      requestHeaders: entry.request.headers,
+      requestQueryString: entry.request.queryString || [],
+      requestPostData: entry.request.postData,
+      requestCookies: entry.request.cookies || [],
+      responseHeaders: entry.response.headers,
+      responseHeaderAll: entry.response.headers,
+      responseCookies: entry.response.cookies || [],
+      responseHeaderSize: entry.response.headersSize || 0,
+      responseBodySize: entry.response.bodySize || 0,
+      responseTotalSize: (() => {
+        const headerSize = entry.response.headersSize || 0;
+        const bodySize = entry.response.bodySize || 0;
+        if (headerSize === -1 && bodySize === -1) return 'undefined';
+        const validHeaderSize = headerSize === -1 ? 0 : headerSize;
+        const validBodySize = bodySize === -1 ? 0 : bodySize;
+        const total = validHeaderSize + validBodySize;
+        return total > 0 ? total : 'undefined';
+      })(),
+      responseContentLength: responseContentLength,
+      timestamp: timestamp,
+      age: ageInSeconds,
+      cacheControl: parsedCacheControl,
+      isCached: isResponseCached(ageInSeconds, parsedCacheControl),
+      contentSize: responseContentLength,
+      transferSize: entry.response._transferSize || 0,
+      hasHeaderAuthData: hasAuthHeader || hasApiKey || hasBearerToken,
+      values: entry.request.cookies || [],
+      cdnProvider: cdnInfo.provider,
+      cdnDetectionMethod: cdnInfo.detectionMethod,
+      isFromCDN: cdnInfo.isFromCDN || false,
+      isFromOrigin: cdnInfo.isFromOrigin || false,
+      isFromDiskCache: cdnInfo.isFromDiskCache || false,
+      cdnCacheStatus: cdnInfo.cacheStatus || '',
+      cdnDetails: cdnInfo.details || '',
+      freshness: freshness,
+      lastModified: lastModifiedHeader ? formatTimestamp(new Date(lastModifiedHeader.value), true) : '',
+      etag: etagHeader ? etagHeader.value : '',
+      contentEncoding: contentEncodingHeader ? contentEncodingHeader.value : '',
+      vary: varyHeader ? varyHeader.value : '',
+      setCookieCount: setCookieCount,
+      parsedPostData: parsedPostData
+    };
+  }
+
+  /**
+   * Update statistics for real-time display
+   */
+  function updateStatistics() {
+    statusCounts = {};
+    typeCounts = {};
+    domainCounts = {};
+    uniqueDomains = [];
+
+    entries.forEach(entry => {
+      const status = entry.status;
+      statusCounts[status] = (statusCounts[status] || 0) + 1;
+
+      const type = entry.type;
+      typeCounts[type] = (typeCounts[type] || 0) + 1;
+
+      const domain = entry.domain;
+      domainCounts[domain] = (domainCounts[domain] || 0) + 1;
+
+      if (!uniqueDomains.includes(domain)) {
+        uniqueDomains.push(domain);
+      }
+    });
+
+    // Update chart data
+    statusCodeData = getStatusCodeData(entries);
+    mimeTypeData = getMimeTypeData(entries);
+  }
+
+  /**
+   * Debounced Mermaid diagram update
+   */
+  function debounceMermaidUpdate() {
+    if (mermaidUpdateTimer) clearTimeout(mermaidUpdateTimer);
+
+    mermaidUpdateTimer = setTimeout(() => {
+      updateMermaidDiagram();
+    }, 300);
+  }
+
+  /**
+   * Update Mermaid diagram for real-time mode
+   */
+  async function updateMermaidDiagram() {
+    if (!realtimeMode || entries.length === 0) return;
+
+    if (entries.length > 200) {
+      console.warn('Too many entries for real-time Mermaid update');
+      return;
+    }
+
+    generateMermaidSequence();
+
+    if (marmaidDivElem && mermaidCode) {
+      try {
+        const { svg } = await mermaid.render('mermaid-diagram', mermaidCode);
+        marmaidDivElem.textContent = '';
+        marmaidDivElem.insertAdjacentHTML('beforeend', svg);
+      } catch (error) {
+        console.error('Mermaid rendering error:', error);
+      }
+    }
+  }
+
+  /**
+   * Start real-time capture
+   */
+  function startCapture() {
+    console.log('startCapture() called, isCapturing:', isCapturing);
+
+    if (isCapturing) {
+      console.log('Already capturing, returning');
+      return;
+    }
+
+    console.log('Requesting capture start');
+    realtimeEntries = [];
+    entries = [];
+    entryIdCounter = 0;
+
+    // Send message to DevTools via background script
+    if (globalThis.chrome?.runtime?.sendMessage) {
+      globalThis.chrome.runtime.sendMessage({ type: 'START_CAPTURE' })
+        .catch(err => console.error('Failed to send START_CAPTURE:', err));
+    }
+  }
+
+  /**
+   * Stop real-time capture
+   */
+  function stopCapture() {
+    if (!isCapturing) return;
+
+    console.log('Requesting capture stop');
+
+    if (globalThis.chrome?.runtime?.sendMessage) {
+      globalThis.chrome.runtime.sendMessage({ type: 'STOP_CAPTURE' })
+        .catch(err => console.error('Failed to send STOP_CAPTURE:', err));
+    }
+  }
+
+  /**
+   * Clear all real-time entries
+   */
+  function clearRealtimeEntries() {
+    console.log('Clearing real-time entries');
+    realtimeEntries = [];
+    entries = [];
+    entryIdCounter = 0;
+    statusCounts = {};
+    typeCounts = {};
+    domainCounts = {};
+    uniqueDomains = [];
+    selectedDomains = [];
+  }
+
+  /**
+   * Export captured HAR data
+   */
+  function exportCapturedHAR() {
+    if (realtimeEntries.length === 0) {
+      alert('No entries to export');
+      return;
+    }
+
+    const harLog = {
+      version: "1.2",
+      creator: {
+        name: "HARlytics",
+        version: "0.6.0"
+      },
+      entries: realtimeEntries.map(e => {
+        // Convert back to standard HAR format
+        return {
+          startedDateTime: e.startedDateTime,
+          time: e.time,
+          request: {
+            method: e.method,
+            url: e.url,
+            httpVersion: e.httpVersion,
+            headers: e.requestHeaders,
+            queryString: e.requestQueryString || [],
+            cookies: e.requestCookies || [],
+            headersSize: -1,
+            bodySize: -1,
+            postData: e.requestPostData
+          },
+          response: {
+            status: e.status,
+            statusText: e.statusText,
+            httpVersion: e.responseHttpVersion,
+            headers: e.responseHeaders,
+            cookies: e.responseCookies || [],
+            content: {
+              size: e.contentSize,
+              mimeType: e.mimeType
+            },
+            redirectURL: "",
+            headersSize: -1,
+            bodySize: -1,
+            _transferSize: e.transferSize
+          },
+          cache: {},
+          timings: {
+            blocked: -1,
+            dns: -1,
+            connect: -1,
+            send: -1,
+            wait: -1,
+            receive: -1,
+            ssl: -1
+          }
+        };
+      }),
+      pages: [{
+        startedDateTime: new Date().toISOString(),
+        id: "page_1",
+        title: "Real-time Capture",
+        pageTimings: {}
+      }]
+    };
+
+    const harData = JSON.stringify({ log: harLog }, null, 2);
+    const blob = new Blob([harData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `harlytics-capture-${Date.now()}.har`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   /**
@@ -1401,17 +1841,50 @@ function handleMouseLeave(type) {
   <div id="action">
     <div class="grid grid-cols-12 mb-2 space-x-1">
       <div class="col-span-3 p-2 rounded">
-        <div class="mb-2">
-          <Label for="fileUpload">Select HAR file</Label>
-          <Fileupload
-            id="fileUpload"
-            accept=".har"
-            on:change={analyzeHAR}
-            size="sm"
-          />
-        </div>
+        <!-- Real-time Capture Mode UI -->
+        {#if realtimeMode}
+          <div class="mb-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center gap-2 mb-2">
+              <Badge color={isCapturing ? 'green' : 'gray'}>
+                {isCapturing ? 'Capturing' : 'Ready'}
+              </Badge>
+              <span class="text-sm text-gray-700 dark:text-gray-300">
+                {entries.length} entries (filtered: {filteredEntries.length})
+              </span>
+            </div>
 
-        {#if showEmptyFileAlert}
+            <div class="flex gap-2 mb-2">
+              <Button size="xs" color="green" on:click={startCapture} disabled={isCapturing}>
+                Start Capture
+              </Button>
+              <Button size="xs" color="red" on:click={stopCapture} disabled={!isCapturing}>
+                Stop
+              </Button>
+              <Button size="xs" color="light" on:click={clearRealtimeEntries}>
+                Clear
+              </Button>
+            </div>
+
+            <div class="flex gap-2">
+              <Button size="xs" color="blue" on:click={exportCapturedHAR} disabled={entries.length === 0}>
+                Export HAR
+              </Button>
+            </div>
+
+          </div>
+        {:else}
+          <div class="mb-2">
+            <Label for="fileUpload">Select HAR file</Label>
+            <Fileupload
+              id="fileUpload"
+              accept=".har"
+              on:change={analyzeHAR}
+              size="sm"
+            />
+          </div>
+        {/if}
+
+        {#if !realtimeMode && showEmptyFileAlert}
           <Alert color="yellow" dismissable on:close={() => showEmptyFileAlert = false}>
             <span class="font-medium">Caution!</span>
             The selected HAR file ({logFilename}) contains no entries.
@@ -1420,7 +1893,7 @@ function handleMouseLeave(type) {
           </Alert>
         {/if}
 
-        {#if showFileErrorAlert}
+        {#if !realtimeMode && showFileErrorAlert}
           <Alert color="red" dismissable on:close={() => { showFileErrorAlert = false; validationErrors = []; }}>
             <span class="font-medium">Error!</span>
             {#if validationErrors.length > 0}

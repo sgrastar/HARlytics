@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "HARlytics",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "HARlytics is a powerful HAR file analyzer that transforms complex HTTP Archive files into actionable insights.",
   "icons": {
     "16": "favicon.png",
@@ -17,5 +17,15 @@
   },
   "background": {
     "service_worker": "background.js"
+  },
+  "devtools_page": "devtools.html",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   }
 }
