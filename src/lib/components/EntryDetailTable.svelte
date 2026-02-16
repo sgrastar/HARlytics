@@ -17,6 +17,7 @@
   import { FileCsvOutline, QuestionCircleSolid } from "flowbite-svelte-icons";
 
   import EntryRow from "$lib/components/EntryRowGeneral.svelte";
+  import VirtualList from "svelte-tiny-virtual-list";
 
   export let entries = [];
   export let pages = [];
@@ -384,34 +385,75 @@
               <div class="receive header-cell">receive</div> -->
           </div>
 
-          {#each entries.filter((entry) => entry.pageref === page.id) as entry}
-            <EntryRow
-              {entry}
-              {entries}
-              isIndented={false}
-              hasPageInfo={true}
-              {hasPriority}
-              selectedEntryIndexes={selectedEntryIds}
-              {isPathTruncated}
-              {isDomainTruncated}
-              toggleEntryDetails={() => toggleEntryDetails(entry)}
-              handleKeyDown={(e) => handleKeyDown(e, entry)}
-              {selectedTabs}
-              selectTab={(entryId, tab) => selectTab(getEntryId(entry), tab)}
-              {normalizeHeaders}
-              {normalizePostData}
-              {httpStatusCSSClass}
-              {priorityCSSClass}
-              {formatTime}
-              {getHttpStatusDescription}
-              {formatBytes}
-              {truncateText}
-              {formatGMTtoUTC}
-              {formatToLocalTime}
-              {calculateBarWidth}
-              {calculateBarLeft}
-            />
-          {/each}
+          {@const pageEntries = entries.filter((entry) => entry.pageref === page.id)}
+          {#if pageEntries.length > 100}
+            <!-- Use virtual list for large page datasets -->
+            <VirtualList
+              width="100%"
+              height={600}
+              itemCount={pageEntries.length}
+              itemSize={27}
+            >
+              <div slot="item" let:style let:index style={style}>
+                {@const entry = pageEntries[index]}
+                <EntryRow
+                  {entry}
+                  {entries}
+                  isIndented={false}
+                  hasPageInfo={true}
+                  {hasPriority}
+                  selectedEntryIndexes={selectedEntryIds}
+                  {isPathTruncated}
+                  {isDomainTruncated}
+                  toggleEntryDetails={() => toggleEntryDetails(entry)}
+                  handleKeyDown={(e) => handleKeyDown(e, entry)}
+                  {selectedTabs}
+                  selectTab={(entryId, tab) => selectTab(getEntryId(entry), tab)}
+                  {normalizeHeaders}
+                  {normalizePostData}
+                  {httpStatusCSSClass}
+                  {priorityCSSClass}
+                  {formatTime}
+                  {getHttpStatusDescription}
+                  {formatBytes}
+                  {truncateText}
+                  {formatGMTtoUTC}
+                  {formatToLocalTime}
+                  {calculateBarWidth}
+                  {calculateBarLeft}
+                />
+              </div>
+            </VirtualList>
+          {:else}
+            {#each pageEntries as entry}
+              <EntryRow
+                {entry}
+                {entries}
+                isIndented={false}
+                hasPageInfo={true}
+                {hasPriority}
+                selectedEntryIndexes={selectedEntryIds}
+                {isPathTruncated}
+                {isDomainTruncated}
+                toggleEntryDetails={() => toggleEntryDetails(entry)}
+                handleKeyDown={(e) => handleKeyDown(e, entry)}
+                {selectedTabs}
+                selectTab={(entryId, tab) => selectTab(getEntryId(entry), tab)}
+                {normalizeHeaders}
+                {normalizePostData}
+                {httpStatusCSSClass}
+                {priorityCSSClass}
+                {formatTime}
+                {getHttpStatusDescription}
+                {formatBytes}
+                {truncateText}
+                {formatGMTtoUTC}
+                {formatToLocalTime}
+                {calculateBarWidth}
+                {calculateBarLeft}
+              />
+            {/each}
+          {/if}
         {/each}
       {:else}
         <div class="table-header bg-white dark:bg-gray-700 dark:text-gray-300">
@@ -458,34 +500,75 @@
             <div class="receive header-cell">receive</div> -->
         </div>
 
-        {#each entries as entry}
-          <EntryRow
-            {entry}
-            {entries}
-            isIndented={false}
-            hasPageInfo={false}
-            {hasPriority}
-            selectedEntryIndexes={selectedEntryIds}
-            {isPathTruncated}
-            {isDomainTruncated}
-            toggleEntryDetails={() => toggleEntryDetails(entry)}
-            handleKeyDown={(e) => handleKeyDown(e, entry)}
-            {selectedTabs}
-            selectTab={(entryId, tab) => selectTab(getEntryId(entry), tab)}
-            {normalizeHeaders}
-            {normalizePostData}
-            {httpStatusCSSClass}
-            {priorityCSSClass}
-            {formatTime}
-            {getHttpStatusDescription}
-            {formatBytes}
-            {truncateText}
-            {formatGMTtoUTC}
-            {formatToLocalTime}
-            {calculateBarWidth}
-            {calculateBarLeft}
-          />
-        {/each}
+        {#if entries.length > 100}
+          <!-- Use virtual list for large datasets -->
+          <VirtualList
+            width="100%"
+            height={600}
+            itemCount={entries.length}
+            itemSize={27}
+          >
+            <div slot="item" let:style let:index style={style}>
+              {@const entry = entries[index]}
+              <EntryRow
+                {entry}
+                {entries}
+                isIndented={false}
+                hasPageInfo={false}
+                {hasPriority}
+                selectedEntryIndexes={selectedEntryIds}
+                {isPathTruncated}
+                {isDomainTruncated}
+                toggleEntryDetails={() => toggleEntryDetails(entry)}
+                handleKeyDown={(e) => handleKeyDown(e, entry)}
+                {selectedTabs}
+                selectTab={(entryId, tab) => selectTab(getEntryId(entry), tab)}
+                {normalizeHeaders}
+                {normalizePostData}
+                {httpStatusCSSClass}
+                {priorityCSSClass}
+                {formatTime}
+                {getHttpStatusDescription}
+                {formatBytes}
+                {truncateText}
+                {formatGMTtoUTC}
+                {formatToLocalTime}
+                {calculateBarWidth}
+                {calculateBarLeft}
+              />
+            </div>
+          </VirtualList>
+        {:else}
+          <!-- Regular rendering for smaller datasets -->
+          {#each entries as entry}
+            <EntryRow
+              {entry}
+              {entries}
+              isIndented={false}
+              hasPageInfo={false}
+              {hasPriority}
+              selectedEntryIndexes={selectedEntryIds}
+              {isPathTruncated}
+              {isDomainTruncated}
+              toggleEntryDetails={() => toggleEntryDetails(entry)}
+              handleKeyDown={(e) => handleKeyDown(e, entry)}
+              {selectedTabs}
+              selectTab={(entryId, tab) => selectTab(getEntryId(entry), tab)}
+              {normalizeHeaders}
+              {normalizePostData}
+              {httpStatusCSSClass}
+              {priorityCSSClass}
+              {formatTime}
+              {getHttpStatusDescription}
+              {formatBytes}
+              {truncateText}
+              {formatGMTtoUTC}
+              {formatToLocalTime}
+              {calculateBarWidth}
+              {calculateBarLeft}
+            />
+          {/each}
+        {/if}
       {/if}
     </div>
   {/if}

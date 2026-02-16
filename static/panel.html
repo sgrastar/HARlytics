@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>HARlytics</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background: #1f2937;
+      color: #e5e7eb;
+    }
+    .container {
+      text-align: center;
+      padding: 2rem;
+      max-width: 100%;
+      width: 100%;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .logo img {
+      width: 24px;
+      height: 24px;
+    }
+    .logo h1 {
+      font-size: 1.25rem;
+      margin: 0;
+      font-weight: 600;
+    }
+    .status {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin-bottom: 1.5rem;
+      min-height: 1.5em;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-left: 0.5rem;
+    }
+    .badge.capturing {
+      background: #065f46;
+      color: #6ee7b7;
+    }
+    .badge.stopped {
+      background: #374151;
+      color: #9ca3af;
+    }
+    #btnOpen {
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: #3b82f6;
+      color: white;
+      transition: background 0.2s;
+    }
+    #btnOpen:hover {
+      background: #2563eb;
+    }
+
+    /* Button Group */
+    .button-group {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-top: 0.75rem;
+    }
+
+    #btnCapture {
+      padding: 0.5rem 1.5rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: white;
+      transition: background 0.2s;
+      min-width: 120px;
+    }
+
+    #btnCapture.start {
+      background: #059669;
+    }
+
+    #btnCapture.start:hover {
+      background: #047857;
+    }
+
+    #btnCapture.stop {
+      background: #dc2626;
+    }
+
+    #btnCapture.stop:hover {
+      background: #b91c1c;
+    }
+
+    #btnCapture:disabled {
+      background: #374151;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    #btnClear {
+      padding: 0.5rem 1.5rem;
+      border: 1px solid #374151;
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: #1f2937;
+      color: #e5e7eb;
+      transition: background 0.2s;
+    }
+
+    #btnClear:hover {
+      background: #374151;
+    }
+
+    #btnClear:disabled {
+      background: #111827;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    /* Filter Section */
+    .filter-section {
+      width: 100%;
+      max-width: 600px;
+      margin-top: 1.5rem;
+      border: 1px solid #374151;
+      border-radius: 0.5rem;
+      background: #111827;
+    }
+
+    /* Responsive: wider layout for horizontal DevTools */
+    @media (min-width: 800px) {
+      .filter-section {
+        max-width: 900px;
+      }
+
+      .filter-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+
+      .filter-actions {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .filter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #e5e7eb;
+    }
+
+    .filter-header:hover {
+      background: #1f2937;
+      border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .filter-badge {
+      background: #374151;
+      color: #9ca3af;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .filter-badge.active {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .filter-content {
+      padding: 1rem;
+      border-top: 1px solid #374151;
+      font-size: 0.8rem;
+    }
+
+    .filter-group {
+      margin-bottom: 1rem;
+    }
+
+    .filter-group:last-of-type {
+      margin-bottom: 0.75rem;
+    }
+
+    .filter-group-header {
+      margin-bottom: 0.5rem;
+    }
+
+    .filter-group-header label {
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      color: #e5e7eb;
+      cursor: pointer;
+    }
+
+    .filter-group-header input[type="checkbox"] {
+      margin-right: 0.5rem;
+    }
+
+    .filter-checkboxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 0.4rem;
+      margin-left: 1.5rem;
+    }
+
+    .filter-checkboxes label {
+      display: flex;
+      align-items: center;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 0.75rem;
+      white-space: nowrap;
+    }
+
+    .filter-checkboxes label:hover {
+      color: #e5e7eb;
+    }
+
+    .filter-checkboxes input[type="checkbox"] {
+      margin-right: 0.35rem;
+      cursor: pointer;
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #374151;
+    }
+
+    .btn-secondary {
+      flex: 1;
+      padding: 0.5rem 1rem;
+      border: 1px solid #374151;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: #1f2937;
+      color: #e5e7eb;
+      transition: background 0.2s;
+    }
+
+    .btn-secondary:hover {
+      background: #374151;
+    }
+
+    .btn-secondary:active {
+      background: #4b5563;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <img src="favicon.png" alt="logo" />
+      <h1>HARlytics</h1>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <button id="btnOpen">Open HARlytics in New Tab</button>
+
+    <!-- Capture Control Buttons -->
+    <div class="button-group">
+      <button id="btnCapture" class="start">Start Capture</button>
+      <button id="btnClear">Clear</button>
+    </div>
+
+    <!-- Capture Filters Section -->
+    <details class="filter-section" open>
+      <summary class="filter-header">
+        <span>Capture Filters</span>
+        <span class="filter-badge" id="filterBadge">All</span>
+      </summary>
+
+      <div class="filter-content">
+        <!-- HTTP Methods Group -->
+        <div class="filter-group">
+          <div class="filter-group-header">
+            <label>
+              <input type="checkbox" id="allMethods" checked>
+              <span>HTTP Methods</span>
+            </label>
+          </div>
+          <div class="filter-checkboxes">
+            <label><input type="checkbox" class="method-filter" value="GET" checked> GET</label>
+            <label><input type="checkbox" class="method-filter" value="POST" checked> POST</label>
+            <label><input type="checkbox" class="method-filter" value="PUT" checked> PUT</label>
+            <label><input type="checkbox" class="method-filter" value="DELETE" checked> DELETE</label>
+            <label><input type="checkbox" class="method-filter" value="PATCH" checked> PATCH</label>
+            <label><input type="checkbox" class="method-filter" value="OPTIONS" checked> OPTIONS</label>
+            <label><input type="checkbox" class="method-filter" value="CONNECT" checked> CONNECT</label>
+            <label><input type="checkbox" class="method-filter" value="HEAD" checked> HEAD</label>
+          </div>
+        </div>
+
+        <!-- Status Code Ranges Group -->
+        <div class="filter-group">
+          <div class="filter-group-header">
+            <label>
+              <input type="checkbox" id="allStatus" checked>
+              <span>Status Codes</span>
+            </label>
+          </div>
+          <div class="filter-checkboxes">
+            <label><input type="checkbox" class="status-filter" value="1xx" checked> 1xx</label>
+            <label><input type="checkbox" class="status-filter" value="2xx" checked> 2xx</label>
+            <label><input type="checkbox" class="status-filter" value="3xx" checked> 3xx</label>
+            <label><input type="checkbox" class="status-filter" value="4xx" checked> 4xx</label>
+            <label><input type="checkbox" class="status-filter" value="5xx" checked> 5xx</label>
+            <label><input type="checkbox" class="status-filter" value="Other" checked> Other</label>
+          </div>
+        </div>
+
+        <!-- Resource Types Group -->
+        <div class="filter-group">
+          <div class="filter-group-header">
+            <label>
+              <input type="checkbox" id="allTypes" checked>
+              <span>Resource Types</span>
+            </label>
+          </div>
+          <div class="filter-checkboxes">
+            <label><input type="checkbox" class="type-filter" value="xhr" checked> XHR</label>
+            <label><input type="checkbox" class="type-filter" value="fetch" checked> Fetch</label>
+            <label><input type="checkbox" class="type-filter" value="document" checked> Doc</label>
+            <label><input type="checkbox" class="type-filter" value="stylesheet" checked> CSS</label>
+            <label><input type="checkbox" class="type-filter" value="script" checked> JS</label>
+            <label><input type="checkbox" class="type-filter" value="font" checked> Font</label>
+            <label><input type="checkbox" class="type-filter" value="image" checked> Img</label>
+            <label><input type="checkbox" class="type-filter" value="media" checked> Media</label>
+            <label><input type="checkbox" class="type-filter" value="manifest" checked> Manifest</label>
+            <label><input type="checkbox" class="type-filter" value="websocket" checked> WS</label>
+            <label><input type="checkbox" class="type-filter" value="webtransport" checked> WebTransport</label>
+            <label><input type="checkbox" class="type-filter" value="other" checked> Other</label>
+          </div>
+        </div>
+
+        <!-- Message Elements Group -->
+        <div class="filter-group">
+          <div class="filter-group-header">
+            <label>
+              <input type="checkbox" id="allMessages" checked>
+              <span>Message Elements</span>
+            </label>
+          </div>
+          <div class="filter-checkboxes">
+            <label><input type="checkbox" class="message-filter" value="Authorization" checked> Auth</label>
+            <label><input type="checkbox" class="message-filter" value="PostData" checked> PostData</label>
+            <label><input type="checkbox" class="message-filter" value="QueryParameter" checked> Query</label>
+            <label><input type="checkbox" class="message-filter" value="Set-Cookie" checked> Cookie</label>
+            <label><input type="checkbox" class="message-filter" value="Plain" checked> Plain</label>
+          </div>
+        </div>
+
+        <!-- Filter Actions -->
+        <div class="filter-actions">
+          <button id="btnResetFilters" class="btn-secondary">Reset All</button>
+          <button id="btnSaveFilters" class="btn-secondary">Save as Default</button>
+        </div>
+      </div>
+    </details>
+  </div>
+
+  <script src="panel.js"></script>
+</body>
+</html>
