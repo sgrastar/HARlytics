@@ -1,6 +1,6 @@
 {
   "name": "harlytics",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
     "preinstall": "npx only-allow pnpm",
@@ -50,5 +50,8 @@
   "volta": {
     "node": "20.18.1",
     "pnpm": "10.28.2"
+  },
+  "dependencies": {
+    "svelte-tiny-virtual-list": "3.0.1"
   }
 }

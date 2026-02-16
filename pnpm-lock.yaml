@@ -18,6 +18,10 @@ overrides:
 importers:
 
   .:
+    dependencies:
+      svelte-tiny-virtual-list:
+        specifier: 3.0.1
+        version: 3.0.1(svelte@4.2.20)
     devDependencies:
       '@sveltejs/adapter-auto':
         specifier: ^3.3.1
@@ -1900,6 +1904,12 @@ packages:
     engines: {node: ^12.20 || ^14.13.1 || >= 16}
     peerDependencies:
       svelte: ^3.19.0 || ^4.0.0
+
+  svelte-tiny-virtual-list@3.0.1:
+    resolution: {integrity: sha512-KUvqkY5Sw+6tHjjsJFTV2bahtqiKKkV5+aDq/wialp76tWD7WuNY2ymufVkRAa+AMbPhmJ/VgmOGbsp2FMrNIg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      svelte: ^4.2.19
 
   svelte@4.2.20:
     resolution: {integrity: sha512-eeEgGc2DtiUil5ANdtd8vPwt9AgaMdnuUFnPft9F5oMvU/FHu5IHFic+p1dR/UOB7XU2mX2yHW+NcTch4DCh5Q==}
@@ -3989,6 +3999,10 @@ snapshots:
   supports-preserve-symlinks-flag@1.0.0: {}
 
   svelte-hmr@0.16.0(svelte@4.2.20):
+    dependencies:
+      svelte: 4.2.20
+
+  svelte-tiny-virtual-list@3.0.1(svelte@4.2.20):
     dependencies:
       svelte: 4.2.20
 

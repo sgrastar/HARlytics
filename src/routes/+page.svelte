@@ -402,9 +402,20 @@
           if (entry._resourceType){
             hasResourceType = true
           }
-          const url = new URL(entry.request.url);
-          const domain = url.hostname;
-          const path = url.pathname;
+          let domain = '';
+          let path = '';
+          try {
+            const url = new URL(entry.request.url);
+            domain = url.hostname || url.protocol.replace(/:$/, '');
+            path = url.pathname || '/';
+          } catch (e) {
+            // Handle data: URLs, blob: URLs, or malformed URLs
+            const rawUrl = entry.request.url || '';
+            const protoMatch = rawUrl.match(/^([a-zA-Z0-9.+-]+):/);
+            domain = protoMatch ? protoMatch[1] : 'unknown';
+            path = rawUrl.length > 80 ? rawUrl.substring(0, 80) + '...' : rawUrl;
+          }
+          if (!domain) domain = 'unknown';
 
           if (entry.request.postData) {
             hasPostData = true;
@@ -959,6 +970,15 @@
       resourceType: resourceType,
       startedDateTime: entry.startedDateTime,
       time: entry.time,
+      timings: entry.timings || {
+        blocked: -1,
+        dns: -1,
+        connect: -1,
+        ssl: -1,
+        send: 0,
+        wait: 0,
+        receive: 0
+      },
       method: entry.request.method,
       url: entry.request.url,
       domain: domain,
@@ -1235,7 +1255,8 @@
 
   $: filteredEntries = entries.filter((entry) => {
     try {
-      if (!entry?.domain || !entry?.path) {
+      // Allow empty strings but not null/undefined
+      if (entry?.domain == null || entry?.path == null) {
         console.warn("Entry missing domain or path:", entry);
         return false;
       }
