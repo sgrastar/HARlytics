@@ -7,26 +7,29 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       margin: 0;
       background: #1f2937;
       color: #e5e7eb;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
     .container {
       text-align: center;
-      padding: 2rem;
+      padding: 1rem;
       max-width: 100%;
       width: 100%;
+      box-sizing: border-box;
     }
     .logo {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      margin-top: 1rem;
-      margin-bottom: 1.5rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
     }
     .logo img {
       width: 24px;
@@ -146,17 +149,18 @@
       border: 1px solid #374151;
       border-radius: 0.5rem;
       background: #111827;
+      box-sizing: border-box;
     }
 
     /* Responsive: wider layout for horizontal DevTools */
     @media (min-width: 800px) {
       .filter-section {
-        max-width: 900px;
+        max-width: 100%;
       }
 
       .filter-content {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
         gap: 1rem;
       }
 
@@ -228,9 +232,10 @@
 
     .filter-checkboxes {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(85px, 1fr));
       gap: 0.4rem;
       margin-left: 1.5rem;
+      overflow: hidden;
     }
 
     .filter-checkboxes label {
