@@ -243,15 +243,15 @@
     class="mb-5 flex gap-2"
     style="display: flex; flex-direction: column; align-content: center; flex-wrap: wrap;"
   >
-    <Button size="xs" color="light" on:click={copyToClipboard}>
+    <Button size="xs" color="light" onclick={copyToClipboard}>
       <FileCopySolid class="w-4 h-4 me-2" />{copyStatus || "Copy to Clipboard"}
     </Button>
 
-    <Button size="xs" color="light" on:click={showPreview}>
+    <Button size="xs" color="light" onclick={showPreview}>
       <WindowSolid class="w-4 h-4 me-2" />Preview in New Tab
     </Button>
 
-    <Button size="sm" on:click={exportDiagram}>
+    <Button size="sm" onclick={exportDiagram}>
       <DownloadSolid class="w-4 h-4 me-2" />Export to {imageFormat ==
       "png"
         ? "PNG"

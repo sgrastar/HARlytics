@@ -284,13 +284,13 @@
         <Radio
           bind:group={viewMode}
           value="entry"
-          on:click={() => (showByPage = false)}>Entry View</Radio
+          onclick={() => (showByPage = false)}>Entry View</Radio
         >
         {#if hasPagesInfo}
           <Radio
             bind:group={viewMode}
             value="page"
-            on:click={() => (showByPage = true)}>Page View</Radio
+            onclick={() => (showByPage = true)}>Page View</Radio
           >
 
           <QuestionCircleSolid id="placement-4" size="sm" />
@@ -304,7 +304,7 @@
       <div class="col-span-9">
         {#if entries.length > 0}
           <div class="flex flex-row-reverse">
-            <Button size="xs" on:click={handleDetailExportCSV}
+            <Button size="xs" onclick={handleDetailExportCSV}
               ><FileCsvOutline class="w-4 h-4 me-2" />Export Data to CSV</Button
             >
           </div>

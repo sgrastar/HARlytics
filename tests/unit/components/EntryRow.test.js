@@ -462,7 +462,7 @@ describe("EntryRow advanced functionality", () => {
         Cookies: ".cookies-container",
       };
 
-      const { container, component } = render(EntryRow, {
+      const { container, rerender } = render(EntryRow, {
         props: {
           ...mockProps,
           selectedEntryIndexes: new Set([entryId]),
@@ -471,7 +471,7 @@ describe("EntryRow advanced functionality", () => {
       });
 
       for (const [tabName, selector] of Object.entries(tabContents)) {
-        await component.$set({
+        await rerender({
           selectedTabs: new Map([[entryId, tabName]]),
         });
 
@@ -485,7 +485,7 @@ describe("EntryRow advanced functionality", () => {
       const entryId = getEntryId(mockEntry);
       const selectedTab = "Headers";
 
-      const { container, component } = render(EntryRow, {
+      const { container, rerender } = render(EntryRow, {
         props: {
           ...mockProps,
           selectedEntryIndexes: new Set([entryId]),
@@ -501,7 +501,7 @@ describe("EntryRow advanced functionality", () => {
 
       // 詳細を再表示
       const newSet = new Set([entryId]);
-      await component.$set({
+      await rerender({
         selectedEntryIndexes: newSet,
         selectedTabs: new Map([[entryId, selectedTab]]),
       });

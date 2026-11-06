@@ -1875,19 +1875,19 @@ function handleMouseLeave(type) {
             </div>
 
             <div class="flex gap-2 mb-2">
-              <Button size="xs" color="green" on:click={startCapture} disabled={isCapturing}>
+              <Button size="xs" color="green" onclick={startCapture} disabled={isCapturing}>
                 Start Capture
               </Button>
-              <Button size="xs" color="red" on:click={stopCapture} disabled={!isCapturing}>
+              <Button size="xs" color="red" onclick={stopCapture} disabled={!isCapturing}>
                 Stop
               </Button>
-              <Button size="xs" color="light" on:click={clearRealtimeEntries}>
+              <Button size="xs" color="light" onclick={clearRealtimeEntries}>
                 Clear
               </Button>
             </div>
 
             <div class="flex gap-2">
-              <Button size="xs" color="blue" on:click={exportCapturedHAR} disabled={entries.length === 0}>
+              <Button size="xs" color="blue" onclick={exportCapturedHAR} disabled={entries.length === 0}>
                 Export HAR
               </Button>
             </div>
@@ -1899,14 +1899,14 @@ function handleMouseLeave(type) {
             <Fileupload
               id="fileUpload"
               accept=".har"
-              on:change={analyzeHAR}
+              onchange={analyzeHAR}
               size="sm"
             />
           </div>
         {/if}
 
         {#if !realtimeMode && showEmptyFileAlert}
-          <Alert color="yellow" dismissable on:close={() => showEmptyFileAlert = false}>
+          <Alert color="yellow" dismissable onclose={() => showEmptyFileAlert = false}>
             <span class="font-medium">Caution!</span>
             The selected HAR file ({logFilename}) contains no entries.
             <br />
@@ -1915,7 +1915,7 @@ function handleMouseLeave(type) {
         {/if}
 
         {#if !realtimeMode && showFileErrorAlert}
-          <Alert color="red" dismissable on:close={() => { showFileErrorAlert = false; validationErrors = []; }}>
+          <Alert color="red" dismissable onclose={() => { showFileErrorAlert = false; validationErrors = []; }}>
             <span class="font-medium">Error!</span>
             {#if validationErrors.length > 0}
               The HAR file has the following issues:
@@ -1982,7 +1982,7 @@ function handleMouseLeave(type) {
             />
           </div>
           <div class="col-span-2 flex justify-center">
-            <Button size="xs" color="light" on:click={handleSelectAllDomains}
+            <Button size="xs" color="light" onclick={handleSelectAllDomains}
               >Select All Domains</Button
             >
           </div>
@@ -2026,7 +2026,7 @@ function handleMouseLeave(type) {
                         class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600"
                         size="small"
                         bind:checked={allMethodsSelected}
-                        on:change={handleAllMethodsChange}
+                        onchange={handleAllMethodsChange}
                       >
                         All
                       </Toggle>
@@ -2039,7 +2039,7 @@ function handleMouseLeave(type) {
                     >
                       <Checkbox
                         checked={selectedMethods.includes(method)}
-                        on:click={() => handleMethodClick(method)}
+                        onclick={() => handleMethodClick(method)}
                       >
                         {method} ({filteredEntries.filter(
                           (entry) => entry.method === method,
@@ -2077,7 +2077,7 @@ function handleMouseLeave(type) {
                         class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600"
                         size="small"
                         bind:checked={allStatusSelected}
-                        on:change={handleAllStatusChange}
+                        onchange={handleAllStatusChange}
                       >
                         All
                       </Toggle>
@@ -2090,7 +2090,7 @@ function handleMouseLeave(type) {
                     >
                       <Checkbox
                         checked={selectedStatusRanges.includes(statusRange)}
-                        on:click={() => handleStatusRangeClick(statusRange)}
+                        onclick={() => handleStatusRangeClick(statusRange)}
                       >
                         {statusRange.label} ({filteredEntries.filter(
                           (entry) =>
@@ -2134,7 +2134,7 @@ function handleMouseLeave(type) {
                         class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600"
                         size="small"
                         bind:checked={allSelected}
-                        on:change={handleAllChange}
+                        onchange={handleAllChange}
                       >
                         All
                       </Toggle>
@@ -2147,7 +2147,7 @@ function handleMouseLeave(type) {
                     >
                       <Checkbox
                         checked={selectedTypes.includes(type)}
-                        on:click={() => handleTypeClick(type)}
+                        onclick={() => handleTypeClick(type)}
                       >
                         {type} ({filteredEntries.filter(
                           (entry) => entry.type === type,
@@ -2183,7 +2183,7 @@ function handleMouseLeave(type) {
                       class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-600"
                       size="small"
                       bind:checked={allMessageElementsSelected}
-                      on:change={handleAllMessageElementsChange}
+                      onchange={handleAllMessageElementsChange}
                     >
                       All
                     </Toggle>
@@ -2194,7 +2194,7 @@ function handleMouseLeave(type) {
                   <div class="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-600">
                     <Checkbox
                       checked={selectedMessageElements.includes(type)}
-                      on:click={() => handleMessageElementClick(type)}
+                      onclick={() => handleMessageElementClick(type)}
                     >
                       {type} ({filteredEntries.filter(entry => {
                         switch (type) {
@@ -2477,7 +2477,7 @@ function handleMouseLeave(type) {
                 <Button
                   size="xs"
                   class="px-2 py-0.5 font-light"
-                  on:click={() => copyTextarea("mermaidCodeTextarea")}
+                  onclick={() => copyTextarea("mermaidCodeTextarea")}
                   >Copy</Button
                 >
               </div>
@@ -2496,7 +2496,7 @@ function handleMouseLeave(type) {
                 <Button
                   size="xs"
                   class="px-2 py-0.5 font-light"
-                  on:click={() => copyTextarea("plantUMLCodeTextarea")}
+                  onclick={() => copyTextarea("plantUMLCodeTextarea")}
                   >Copy</Button
                 >
               </div>
@@ -2506,7 +2506,7 @@ function handleMouseLeave(type) {
                 rows="5"
                 readonly
                 bind:value={plantUMLCode}
-                on:change={textFieldUpdated}
+                onchange={textFieldUpdated}
               ></Textarea>
             </div>
           </Card>
@@ -2522,7 +2522,7 @@ function handleMouseLeave(type) {
         <div>
           {#if filteredEntries.length > 0}
             <div class="flex flex-row-reverse mb-2">
-              <Button size="xs" on:click={handleCookieExportCSV}
+              <Button size="xs" onclick={handleCookieExportCSV}
                 ><FileCsvOutline class="w-4 h-4 me-2" />Export Data to CSV</Button
               >
             </div>

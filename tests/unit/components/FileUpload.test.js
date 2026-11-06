@@ -12,7 +12,8 @@ describe("FileUpload Component", () => {
   });
 
   it("should dispatch upload event with file when file is selected", async () => {
-    const component = render(FileUpload);
+    const mockHandler = vi.fn();
+    const component = render(FileUpload, { events: { upload: mockHandler } });
     const fileInput = component.container.querySelector('input[type="file"]');
 
     // モックファイルの作成
@@ -20,9 +21,6 @@ describe("FileUpload Component", () => {
       type: "application/json",
     });
 
-    // イベントハンドラーのモック作成
-    const mockHandler = vi.fn();
-    component.component.$on("upload", mockHandler);
 
     // ファイル選択イベントの発火
     await fireEvent.change(fileInput, {
@@ -39,11 +37,10 @@ describe("FileUpload Component", () => {
   });
 
   it("should handle no file selected", async () => {
-    const component = render(FileUpload);
+    const mockHandler = vi.fn();
+    const component = render(FileUpload, { events: { upload: mockHandler } });
     const fileInput = component.container.querySelector('input[type="file"]');
 
-    const mockHandler = vi.fn();
-    component.component.$on("upload", mockHandler);
 
     // 空のファイルリストでイベントを発火
     await fireEvent.change(fileInput, {

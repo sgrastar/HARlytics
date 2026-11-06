@@ -17,6 +17,7 @@ export default defineConfig({
   },
   envPrefix: "MERMAID_",
   resolve: {
+    conditions: process.env.VITEST ? ["browser"] : [],
     alias: {
       $lib: path.resolve(__dirname, "./src/lib"),
     },

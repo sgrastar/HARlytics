@@ -98,7 +98,7 @@
           color="light"
           size="sm"
           class=" px-2 py-0"
-          on:click={() => (scrollingModal = true)}
+          onclick={() => (scrollingModal = true)}
           autoclose>License</Button
         >
         <a href="https://harlytics.com/" target="_blank" title="HARlytics.com">

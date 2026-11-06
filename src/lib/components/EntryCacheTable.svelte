@@ -294,13 +294,13 @@
         <Radio
           bind:group={viewMode}
           value="entry"
-          on:click={() => (showByPage = false)}>Entry View</Radio
+          onclick={() => (showByPage = false)}>Entry View</Radio
         >
         {#if hasPagesInfo}
           <Radio
             bind:group={viewMode}
             value="page"
-            on:click={() => (showByPage = true)}>Page View</Radio
+            onclick={() => (showByPage = true)}>Page View</Radio
           >
 
           <QuestionCircleSolid id="placement-4" size="sm" />
@@ -314,15 +314,15 @@
       <div class="col-span-6 flex">
           <div class="flex items-center gap-4">
             <span class="text-gray-600 dark:text-gray-400">Display Mode:</span>
-            <Radio bind:group={displayMode} value="cacheStatus" on:click={() => (displayMode = 'cacheStatus')}>Cache Status</Radio>
-            <Radio bind:group={displayMode} value="CDNDeliveryStatus" on:click={() => (displayMode = 'CDNDeliveryStatus')}>CDN Delivery Status</Radio>
-            <Radio bind:group={displayMode} value="resourceValidation" on:click={() => (displayMode = 'resourceValidation')}>Resource Validation</Radio>
+            <Radio bind:group={displayMode} value="cacheStatus" onclick={() => (displayMode = 'cacheStatus')}>Cache Status</Radio>
+            <Radio bind:group={displayMode} value="CDNDeliveryStatus" onclick={() => (displayMode = 'CDNDeliveryStatus')}>CDN Delivery Status</Radio>
+            <Radio bind:group={displayMode} value="resourceValidation" onclick={() => (displayMode = 'resourceValidation')}>Resource Validation</Radio>
           </div>
       </div>
       <div class="col-span-3">
         {#if entries.length > 0}
           <div class="flex flex-row-reverse">
-            <Button size="xs" on:click={handleDetailExportCSV}
+            <Button size="xs" onclick={handleDetailExportCSV}
               ><FileCsvOutline class="w-4 h-4 me-2" />Export Data to CSV</Button
             >
           </div>
