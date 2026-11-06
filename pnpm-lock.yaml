@@ -8,12 +8,20 @@ overrides:
   cross-spawn: ^7.0.5
   rollup: '>=4.22.4'
   cookie: '>=0.7.0'
+  form-data: '>=4.0.4'
+  devalue: '>=5.6.2'
+  glob: '>=10.5.0'
+  undici: '>=6.23.0'
   esbuild: '>=0.25.0'
   lodash-es: '>=4.17.23'
 
 importers:
 
   .:
+    dependencies:
+      svelte-tiny-virtual-list:
+        specifier: 3.0.1
+        version: 3.0.1(svelte@5.50.0)
     devDependencies:
       '@sveltejs/adapter-auto':
         specifier: ^3.3.1
@@ -52,13 +60,13 @@ importers:
         specifier: ^3.1.0
         version: 3.1.0(svelte@5.50.0)
       jsdom:
-        specifier: ^26.0.0
+        specifier: ^26.1.0
         version: 26.1.0
       mermaid:
-        specifier: ^11.6.0
+        specifier: ^11.10.0
         version: 11.12.2
       pnpm:
-        specifier: ^10.7.0
+        specifier: ^10.28.2
         version: 10.28.2
       postcss:
         specifier: ^8.5.3
@@ -76,7 +84,7 @@ importers:
         specifier: ^6.4.1
         version: 6.4.1(jiti@1.21.7)
       vitest:
-        specifier: ^3.1.1
+        specifier: ^3.2.0
         version: 3.2.4(jiti@1.21.7)(jsdom@26.1.0)
 
 packages:
@@ -1990,6 +1998,12 @@ packages:
   supports-preserve-symlinks-flag@1.0.0:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
+
+  svelte-tiny-virtual-list@3.0.1:
+    resolution: {integrity: sha512-KUvqkY5Sw+6tHjjsJFTV2bahtqiKKkV5+aDq/wialp76tWD7WuNY2ymufVkRAa+AMbPhmJ/VgmOGbsp2FMrNIg==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      svelte: ^4.2.19
 
   svelte@5.50.0:
     resolution: {integrity: sha512-FR9kTLmX5i0oyeQ5j/+w8DuagIkQ7MWMuPpPVioW2zx9Dw77q+1ufLzF1IqNtcTXPRnIIio4PlasliVn43OnbQ==}
@@ -4181,6 +4195,10 @@ snapshots:
       has-flag: 4.0.0
 
   supports-preserve-symlinks-flag@1.0.0: {}
+
+  svelte-tiny-virtual-list@3.0.1(svelte@5.50.0):
+    dependencies:
+      svelte: 5.50.0
 
   svelte@5.50.0:
     dependencies:

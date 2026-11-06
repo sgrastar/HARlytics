@@ -1,6 +1,6 @@
 {
   "name": "harlytics",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "scripts": {
     "preinstall": "npx only-allow pnpm",
@@ -23,15 +23,15 @@
     "flowbite": "^2.5.2",
     "flowbite-svelte": "^1.31.0",
     "flowbite-svelte-icons": "^3.1.0",
-    "jsdom": "^26.0.0",
-    "mermaid": "^11.6.0",
-    "pnpm": "^10.7.0",
+    "jsdom": "^26.1.0",
+    "mermaid": "^11.10.0",
+    "pnpm": "^10.28.2",
     "postcss": "^8.5.3",
     "svelte": "^5.0.0",
     "sveltekit-adapter-chrome-extension": "^2.0.1",
     "tailwindcss": "^3.4.17",
     "vite": "^6.4.1",
-    "vitest": "^3.1.1"
+    "vitest": "^3.2.0"
   },
   "type": "module",
   "pnpm": {
@@ -39,12 +39,19 @@
       "cross-spawn": "^7.0.5",
       "rollup": ">=4.22.4",
       "cookie": ">=0.7.0",
+      "form-data": ">=4.0.4",
+      "devalue": ">=5.6.2",
+      "glob": ">=10.5.0",
+      "undici": ">=6.23.0",
       "esbuild": ">=0.25.0",
       "lodash-es": ">=4.17.23"
     }
   },
   "volta": {
-    "node": "20.12.2",
-    "pnpm": "10.7.0"
+    "node": "20.18.1",
+    "pnpm": "10.28.2"
+  },
+  "dependencies": {
+    "svelte-tiny-virtual-list": "3.0.1"
   }
 }

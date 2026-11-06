@@ -626,7 +626,7 @@ export function getCommunicationType(entry) {
     return "Other";
   }
   
-  const contentType = entry.response.content.mimeType;
+  const contentType = entry.response.content?.mimeType || '';
   if (!contentType) {
     return "Other";
   }
