@@ -351,16 +351,18 @@
             {/if}
             <div class="sign">
               <table>
-                <tr>
-                  <td class="auth"
-                    ><span title="Authorization Header">A</span></td
-                  >
-                  <td class="postData"><span title="Post Data">P</span></td>
-                  <td class="queryParameter"
-                    ><span title="Query Parameter">Q</span></td
-                  >
-                  <td class="cookies"><span title="Set-Cookie">C</span></td>
-                </tr>
+                <tbody>
+                  <tr>
+                    <td class="auth"
+                      ><span title="Authorization Header">A</span></td
+                    >
+                    <td class="postData"><span title="Post Data">P</span></td>
+                    <td class="queryParameter"
+                      ><span title="Query Parameter">Q</span></td
+                    >
+                    <td class="cookies"><span title="Set-Cookie">C</span></td>
+                  </tr>
+                </tbody>
               </table>
             </div>
             {#if window.innerWidth >= 980}
@@ -426,15 +428,17 @@
           {/if}
           <div class="sign">
             <table>
-              <tr>
-                <td class="auth"><span title="Authorization Header">A</span></td
-                >
-                <td class="postData"><span title="Post Data">P</span></td>
-                <td class="queryParameter"
-                  ><span title="Query Parameter">Q</span></td
-                >
-                <td class="cookies"><span title="Set-Cookie">C</span></td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td class="auth"><span title="Authorization Header">A</span></td
+                  >
+                  <td class="postData"><span title="Post Data">P</span></td>
+                  <td class="queryParameter"
+                    ><span title="Query Parameter">Q</span></td
+                  >
+                  <td class="cookies"><span title="Set-Cookie">C</span></td>
+                </tr>
+              </tbody>
             </table>
           </div>
           {#if window.innerWidth >= 980}

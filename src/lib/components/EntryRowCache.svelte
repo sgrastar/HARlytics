@@ -200,13 +200,15 @@
             <div class="header-general">
               <div class="header-title">General</div>
               <table>
-                <tr><th>Request URL</th><td>{entry.url}</td></tr>
-                <tr><th>Request Method</th><td>{entry.method}</td></tr>
-                <tr><th>Status Code</th><td>{entry.status}</td></tr>
-                <tr
-                  ><th>Referer</th><td>{entry.referer ? entry.referer : ""}</td
-                  ></tr
-                >
+                <tbody>
+                  <tr><th>Request URL</th><td>{entry.url}</td></tr>
+                  <tr><th>Request Method</th><td>{entry.method}</td></tr>
+                  <tr><th>Status Code</th><td>{entry.status}</td></tr>
+                  <tr
+                    ><th>Referer</th><td>{entry.referer ? entry.referer : ""}</td
+                    ></tr
+                  >
+                </tbody>
               </table>
             </div>
 
@@ -278,20 +280,24 @@
               {#if entry.requestQueryString.length > 0}
                 <div class="payload-title">Querty Parameter</div>
                 <table div class="payload-table queryParameter">
-                  <tr>
-                    <th class="payloadName name-col">Name</th>
-                    <th class="payloadValue value-col">Value</th>
-                  </tr>
-                  {#each entry.requestQueryString as requestQueryString}
+                  <thead>
                     <tr>
-                      <td class="payloadName name-col"
-                        >{requestQueryString.name}</td
-                      >
-                      <td class="payloadValue value-col"
-                        >{requestQueryString.value}</td
-                      >
+                      <th class="payloadName name-col">Name</th>
+                      <th class="payloadValue value-col">Value</th>
                     </tr>
-                  {/each}
+                  </thead>
+                  <tbody>
+                    {#each entry.requestQueryString as requestQueryString}
+                      <tr>
+                        <td class="payloadName name-col"
+                          >{requestQueryString.name}</td
+                        >
+                        <td class="payloadValue value-col"
+                          >{requestQueryString.value}</td
+                        >
+                      </tr>
+                    {/each}
+                  </tbody>
                 </table>
               {/if}
 
@@ -302,18 +308,21 @@
                 <div class="payload-title">Post Data</div>
                 MimeType : {entry.requestPostData.mimeType}
                 <table div class="payload-table postData">
-                  <tr>
-                    <th class="payloadName name-col">Name</th>
-                    <th class="payloadValue value-col">Value</th>
-                  </tr>
-                  
-                  <!-- #TODO postData values may be displayed twice -->
-                  {#each postDataParams as param}
+                  <thead>
                     <tr>
-                      <td class="payloadName name-col">{param.name}</td>
-                      <td class="payloadValue value-col">{param.value}</td>
+                      <th class="payloadName name-col">Name</th>
+                      <th class="payloadValue value-col">Value</th>
                     </tr>
-                  {/each}
+                  </thead>
+                  <tbody>
+                    <!-- #TODO postData values may be displayed twice -->
+                    {#each postDataParams as param}
+                      <tr>
+                        <td class="payloadName name-col">{param.name}</td>
+                        <td class="payloadValue value-col">{param.value}</td>
+                      </tr>
+                    {/each}
+                  </tbody>
                 </table>
               {/if}
             </div>
@@ -544,62 +553,68 @@
                 <div class="cookies-table">
                   <table>
                     {#if entry.responseCookies.length > 0}
-                      <tr>
-                        <th class="cookieName">Name</th>
-                        <th class="cookieValue">Value</th>
-                        <th class="cookiePath">Path</th>
-                        <th class="cookieDomain">Domain</th>
-                        <th class="cookieExpires">Expires</th>
-                        <th class="cookieHttpOnly">HttpOnly</th>
-                        <th class="cookieSecure">Secure</th>
-                        <th class="cookieMaxAge">MaxAge</th>
-                        <th class="cookieComment">Comment</th>
-                      </tr>
-                      {#each entry.responseCookies as entryResponseCookie}
+                      <thead>
                         <tr>
-                          <td class="cookieName">{entryResponseCookie.name}</td>
-                          <td class="cookieValue"
-                            >{entryResponseCookie.value}</td
-                          >
-                          <td class="cookiePath">{entryResponseCookie.path}</td>
-                          <td class="cookieDomain"
-                            >{entryResponseCookie.domain
-                              ? entryResponseCookie.domain
-                              : "null (" + entry.domain + ")"}</td
-                          >
-                          <!-- <td class="cookieExpires">{entryResponseCookie.expires ? entryResponseCookie.expires : '(Session Cookie)'}</td> -->
-                          <td
-                            class="cookieExpires"
-                            title={entryResponseCookie.expires
-                              ? formatToLocalTime(entryResponseCookie.expires)
-                              : ""}
-                          >
-                            {entryResponseCookie.expires
-                              ? formatGMTtoUTC(entryResponseCookie.expires)
-                              : "(Session Cookie)"}
-                          </td>
-                          <td class="cookieHttpOnly"
-                            >{entryResponseCookie.httpOnly
-                              ? entryResponseCookie.httpOnly
-                              : ""}</td
-                          >
-                          <td class="cookieSecure"
-                            >{entryResponseCookie.secure}</td
-                          >
-                          <td class="cookieMaxAge"
-                            >{entryResponseCookie._maxAge
-                              ? entryResponseCookie._maxAge
-                              : ""}</td
-                          >
-                          <td class="cookieComment"
-                            >{entryResponseCookie.comment
-                              ? entryResponseCookie.comment
-                              : ""}</td
-                          >
+                          <th class="cookieName">Name</th>
+                          <th class="cookieValue">Value</th>
+                          <th class="cookiePath">Path</th>
+                          <th class="cookieDomain">Domain</th>
+                          <th class="cookieExpires">Expires</th>
+                          <th class="cookieHttpOnly">HttpOnly</th>
+                          <th class="cookieSecure">Secure</th>
+                          <th class="cookieMaxAge">MaxAge</th>
+                          <th class="cookieComment">Comment</th>
                         </tr>
-                      {/each}
+                      </thead>
+                      <tbody>
+                        {#each entry.responseCookies as entryResponseCookie}
+                          <tr>
+                            <td class="cookieName">{entryResponseCookie.name}</td>
+                            <td class="cookieValue"
+                              >{entryResponseCookie.value}</td
+                            >
+                            <td class="cookiePath">{entryResponseCookie.path}</td>
+                            <td class="cookieDomain"
+                              >{entryResponseCookie.domain
+                                ? entryResponseCookie.domain
+                                : "null (" + entry.domain + ")"}</td
+                            >
+                            <!-- <td class="cookieExpires">{entryResponseCookie.expires ? entryResponseCookie.expires : '(Session Cookie)'}</td> -->
+                            <td
+                              class="cookieExpires"
+                              title={entryResponseCookie.expires
+                                ? formatToLocalTime(entryResponseCookie.expires)
+                                : ""}
+                            >
+                              {entryResponseCookie.expires
+                                ? formatGMTtoUTC(entryResponseCookie.expires)
+                                : "(Session Cookie)"}
+                            </td>
+                            <td class="cookieHttpOnly"
+                              >{entryResponseCookie.httpOnly
+                                ? entryResponseCookie.httpOnly
+                                : ""}</td
+                            >
+                            <td class="cookieSecure"
+                              >{entryResponseCookie.secure}</td
+                            >
+                            <td class="cookieMaxAge"
+                              >{entryResponseCookie._maxAge
+                                ? entryResponseCookie._maxAge
+                                : ""}</td
+                            >
+                            <td class="cookieComment"
+                              >{entryResponseCookie.comment
+                                ? entryResponseCookie.comment
+                                : ""}</td
+                            >
+                          </tr>
+                        {/each}
+                      </tbody>
                     {:else}
-                      <tr><td>No Set-Cookies (Response Cookies)</td></tr>
+                      <tbody>
+                        <tr><td>No Set-Cookies (Response Cookies)</td></tr>
+                      </tbody>
                     {/if}
                   </table>
                 </div>
@@ -610,19 +625,25 @@
                 <div class="cookies-table">
                   <table>
                     {#if entry.requestCookies.length > 0}
-                      <tr>
-                        <th class="cookieName">Name</th>
-                        <th class="cookieValue">Value</th>
-                      </tr>
-                      {#each entry.requestCookies as entryRequestCookie}
+                      <thead>
                         <tr>
-                          <td class="cookieName">{entryRequestCookie.name}</td>
-                          <td class="cookieValue">{entryRequestCookie.value}</td
-                          >
+                          <th class="cookieName">Name</th>
+                          <th class="cookieValue">Value</th>
                         </tr>
-                      {/each}
+                      </thead>
+                      <tbody>
+                        {#each entry.requestCookies as entryRequestCookie}
+                          <tr>
+                            <td class="cookieName">{entryRequestCookie.name}</td>
+                            <td class="cookieValue">{entryRequestCookie.value}</td
+                            >
+                          </tr>
+                        {/each}
+                      </tbody>
                     {:else}
-                      <tr><td>No request Cookies</td></tr>
+                      <tbody>
+                        <tr><td>No request Cookies</td></tr>
+                      </tbody>
                     {/if}
                   </table>
                 </div>
